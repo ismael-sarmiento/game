@@ -11,6 +11,8 @@ import { save } from './core/save.js';
 import { loadLang, t, pickLang } from './core/i18n.js';
 import { buildCity } from './world/city.js';
 import { buildSky } from './world/sky.js';
+import { TimeOfDay } from './world/timeofday.js';
+import { Weather } from './world/weather.js';
 import { buildSigns } from './world/signs.js';
 import { Traffic } from './world/traffic.js';
 import { Walkers, Mentors } from './world/npcs.js';
@@ -59,7 +61,12 @@ async function boot() {
 
   progress(30, 'boot.loadingCity'); await nextFrame();
   const city = buildCity(ctx);
-  const sky = buildSky(ctx);
+  const clock = new TimeOfDay(17.4);   // golden hour; night falls about a minute later (24-minute day)
+  clock.set(settings.time, settings.cycle);
+  const weather = new Weather(settings.weather === 'auto' ? 'clear' : settings.weather);
+  weather.set(settings.weather);
+  clock.update(0);
+  const sky = buildSky(ctx, clock, weather);
   progress(48, 'boot.loadingSigns'); await nextFrame();
   const signs = buildSigns(ctx, city.signAnchors, city.tower, t);
 
@@ -85,7 +92,7 @@ async function boot() {
   for (let i = 0; i < 6; i++) { const l = new THREE.PointLight(0xffffff, 0, 26, 1.8); scene.add(l); pool.push(l); }
 
   const game = {
-    ctx, city, sky, signs, audio, input, traffic, walkers, mentors, car, avatar, chase, save, t, backend,
+    ctx, city, sky, signs, audio, clock, weather, input, traffic, walkers, mentors, car, avatar, chase, save, t, backend,
     mode: 'foot', paused: true, started: false, time: 0, level,
     focus: new THREE.Vector3(),
     get player() { return this.mode === 'car' ? this.car.position : this.avatar.position; },
@@ -130,8 +137,6 @@ async function boot() {
   playBtn.addEventListener('click', () => {
     audio.start();
     audio.setVolumes(settings.music, settings.sfx);
-    audio.setRain(settings.rain);
-    sky.rain.setOn(settings.rain);
     $('boot').hidden = true;
     $('hud').hidden = false;
     if (isTouch()) $('touch').hidden = false;
@@ -234,7 +239,7 @@ async function boot() {
           const n = near[i];
           if (!n) { l.intensity = 0; return; }
           l.position.set(n.s.x, n.s.y, n.s.z); l.color.copy(n.s.color);
-          l.userData.target = 120;
+          l.userData.target = 120 * clock.night;
         });
       }
       pool.forEach((l) => { l.intensity = THREE.MathUtils.damp(l.intensity, l.userData.target || 0, 4, dt); });
@@ -245,7 +250,19 @@ async function boot() {
       camera.lookAt(0, 30, 0);
     }
 
-    sky.follow(game.started ? game.player : camera.position, camera, dt);
+    // clock and weather run on the title screen too, so the backdrop is alive
+    if (!game.paused || !game.started) {
+      const before = clock.hour;
+      clock.update(dt);
+      const hours = ((clock.hour - before) + 24) % 24;
+      weather.update(dt, hours, (delay, strength) => setTimeout(() => audio.play('thunder', strength), delay * 1000));
+    }
+    sky.update(dt, game.started ? game.player : tmp.set(0, 0, 0), camera);
+    renderer.toneMappingExposure = sky.exposure();
+    pipeline.setNight(clock.night);
+    car.spot.intensity = 40 + 220 * clock.night;
+    audio.setRain(game.started ? weather.p.rain : 0);
+    audio.setNight(clock.night);
     pipeline.render();
 
     frames++; fpsTime += dt;
@@ -271,6 +288,8 @@ async function boot() {
       teleport(x, z) { if (game.mode === 'car') car.teleport(x, z, car.heading); else avatar.place(x, 0.2, z); },
       complete(id) { game.missions.debugComplete(id); },
       collectAll() { game.collectibles.debugCollectAll(); },
+      time(h) { clock.mode = 'fixed'; clock.hour = h; },
+      sky(state) { weather.set(state); weather.p = { ...weather.p, ...((s) => s)(Object.fromEntries(Object.entries(weather.p))) }; },
       info() { return { backend, level, fps: Math.round(game.fps), calls: renderer.info.render.drawCalls, triangles: renderer.info.render.triangles, mode: game.mode, player: game.player.toArray().map((v) => +v.toFixed(1)) }; },
     };
     $('fps').hidden = false;

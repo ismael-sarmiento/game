@@ -103,6 +103,11 @@ export class Hud {
     const d = districtAt(p.x, p.z).key;
     if (d !== this.lastDistrict) { this.lastDistrict = d; $('district').textContent = g.t(`districts.${d}`); }
 
+    // clock and weather
+    const w = g.weather, icon = w.state === 'clear' && g.clock.night > 0.5 ? '☾' : w.icon;
+    const clockText = `${icon} ${g.clock.label}`;
+    if (clockText !== this.clockText) { this.clockText = clockText; $('clock').textContent = clockText; $('clock').title = g.t(`settings.${w.state === 'rain' ? 'rainy' : w.state}`); }
+
     // speedometer
     const speedo = $('speedo');
     speedo.hidden = g.mode !== 'car';

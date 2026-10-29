@@ -37,5 +37,10 @@ export class Pipeline {
     this.pipeline.outputNode = vec4(out.rgb.mul(this.vignette), 1);
     this.pipeline.needsUpdate = true;
   }
+  // neon glows at night; by day only the brightest highlights bloom
+  setNight(n) {
+    this.bloomNode.strength.value = 0.15 + 0.45 * n;
+    this.bloomNode.threshold.value = 1.4 - 0.58 * n;
+  }
   render() { this.pipeline.render(); }
 }

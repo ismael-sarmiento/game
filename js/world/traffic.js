@@ -17,7 +17,7 @@ export class Traffic {
     this.body = new THREE.InstancedMesh(geo.body, new THREE.MeshPhysicalNodeMaterial({ metalness: 0.7, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08 }), MAX);
     this.cabin = new THREE.InstancedMesh(geo.cabin, new THREE.MeshPhysicalNodeMaterial({ color: 0x05070f, metalness: 0.9, roughness: 0.06 }), MAX);
     this.wheels = new THREE.InstancedMesh(geo.wheel, new THREE.MeshStandardNodeMaterial({ color: 0x0b0b10, roughness: 0.85 }), MAX * 4);
-    this.heads = new THREE.InstancedMesh(new THREE.BoxGeometry(1.5, 0.07, 0.05), neonMaterial(new THREE.Color('#e6f4ff'), 5), MAX);
+    this.heads = new THREE.InstancedMesh(new THREE.BoxGeometry(1.5, 0.07, 0.05), neonMaterial(new THREE.Color('#e6f4ff'), 5, {}, 0.35), MAX);
     this.tails = new THREE.InstancedMesh(new THREE.BoxGeometry(1.7, 0.08, 0.05), neonMaterial(new THREE.Color('#ff1530'), 2.4), MAX);
     this.body.castShadow = true;
     [this.body, this.cabin, this.wheels, this.heads, this.tails].forEach((m) => { m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(m); });

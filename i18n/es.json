@@ -29,8 +29,21 @@
   "music": "Música",
   "sfx": "Efectos",
   "sensitivity": "Sensibilidad de cámara",
-  "rain": "Lluvia",
-  "fps": "Mostrar FPS"
+  "fps": "Mostrar FPS",
+  "time": "Hora del día",
+  "timeAuto": "Ciclo automático",
+  "dawn": "Amanecer",
+  "day": "Día",
+  "dusk": "Atardecer",
+  "night": "Noche",
+  "cycle": "Duración de un día",
+  "minutes": "{n} min",
+  "weather": "Clima",
+  "weatherAuto": "Variable",
+  "clear": "Despejado",
+  "cloudy": "Nublado",
+  "rainy": "Lluvia",
+  "storm": "Tormenta"
  },
  "menu": {
   "pause": "Pausa",

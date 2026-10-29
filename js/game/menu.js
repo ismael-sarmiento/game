@@ -17,7 +17,11 @@ export class Menu {
     bind('set-music', 'music', () => game.audio.setVolumes(s.music, s.sfx));
     bind('set-sfx', 'sfx', () => game.audio.setVolumes(s.music, s.sfx));
     bind('set-sens', 'sens', (v) => { game.input.sensitivity = v; });
-    bind('set-rain', 'rain', (v) => { game.sky.rain.setOn(v); game.audio.setRain(v); }, 'checked');
+    bind('set-time', 'time', (v) => { game.clock.set(v, s.cycle); $('set-cycle').disabled = v !== 'auto'; });
+    bind('set-cycle', 'cycle', (v) => { game.clock.set(s.time, v); $('cycle-value').textContent = game.t('settings.minutes', { n: v }); });
+    bind('set-weather', 'weather', (v) => game.weather.set(v));
+    $('set-cycle').disabled = s.time !== 'auto';
+    $('cycle-value').textContent = game.t('settings.minutes', { n: s.cycle });
     bind('set-fps', 'fps', (v) => { $('fps').hidden = !v; }, 'checked');
     $('fps').hidden = !s.fps && !new URLSearchParams(location.search).has('debug');
     $('set-lang').value = document.documentElement.lang;

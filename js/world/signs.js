@@ -3,7 +3,7 @@
 import * as THREE from 'three/webgpu';
 import { texture, uv, vec2, time } from 'three/tsl';
 import { rng } from './layout.js';
-import { signMaterial, COLORS } from './materials.js';
+import { signMaterial, COLORS, NIGHT, WET, atNight } from './materials.js';
 
 const WORDS = {
   ia: ['IA', 'LLM', 'NEURAL', 'GPU', 'PROMPT', 'TOKENS', 'VISION', 'AGENT'],
@@ -103,7 +103,7 @@ export function buildSigns({ scene }, anchors, tower, t) {
       const mat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
       const tx = texture(streakTex);
       mat.colorNode = tx.rgb.mul(c3.clone().multiplyScalar(0.55));
-      mat.opacityNode = tx.a.mul(0.75);
+      mat.opacityNode = tx.a.mul(0.75).mul(WET).mul(NIGHT.mul(0.7).add(0.3));   // only wet streets mirror the signs
       const streak = new THREE.Mesh(new THREE.PlaneGeometry(Math.max(w * 0.7, 2), len).rotateX(-Math.PI / 2), mat);
       const d = a.gap + 1.0 + len / 2;
       streak.position.set(a.px + a.nx * d, 0.04, a.pz + a.nz * d);
@@ -122,7 +122,7 @@ export function buildSigns({ scene }, anchors, tower, t) {
     tex.colorSpace = THREE.SRGBColorSpace; tex.wrapS = THREE.RepeatWrapping;
     const mat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide });
     const tx = texture(tex, uv().mul(vec2(0.5, 1)).add(vec2(time.mul(0.035 + k * 0.004), 0)));
-    mat.colorNode = tx.rgb.mul(2.2); mat.opacityNode = tx.a;
+    mat.colorNode = tx.rgb.mul(2.2).mul(atNight(0.6)); mat.opacityNode = tx.a;
     const w = Math.min(a.span * 0.9, 34), h = w / 8 * 2;
     const board = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
     board.position.set(a.px + a.nx * 0.6, Math.min(26 + k * 2, a.h - h), a.pz + a.nz * 0.6);

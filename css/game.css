@@ -174,7 +174,7 @@ input[type="range"] { accent-color: var(--gold-400); width: 100%; }
   .toasts { width: calc(100vw - 32px); top: auto; bottom: 46%; }
   .dialog { padding: .8rem .9rem .9rem; }
   .dialog-text { font-size: .95rem; }
-  .pause-btn { left: auto; right: 14px; top: calc(max(14px, env(safe-area-inset-top)) + 214px); bottom: auto; }
+  .pause-btn { left: auto; right: 14px; top: calc(max(14px, env(safe-area-inset-top)) + 262px); bottom: auto; }
   .prompt { bottom: 34%; }
 }
 @media (prefers-reduced-motion: reduce) {

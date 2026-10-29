@@ -2,7 +2,7 @@
 const KEY = 'isgame.v1';
 
 const DEFAULTS = {
-  settings: { lang: '', quality: 'auto', music: 0.55, sfx: 0.8, sens: 1, rain: true, fps: false },
+  settings: { lang: '', quality: 'auto', music: 0.55, sfx: 0.8, sens: 1, time: 'auto', cycle: 24, weather: 'auto', fps: false },
   missions: {},        // id -> 'done'
   facts: [],           // collected fact ids
   intro: false,        // first talk with the guide done

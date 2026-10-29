@@ -1,10 +1,14 @@
 // Procedural materials (TSL): no image textures, everything is computed per pixel from world position.
+// NIGHT switches on windows, neon and lamps; WET turns dry asphalt into a mirror of puddles.
 import * as THREE from 'three/webgpu';
 import {
   vec3, float, positionWorld, normalWorld, abs, fract, floor, hash, step, smoothstep, mix, select, time,
   instancedBufferAttribute, mx_noise_float, mod, min, max, uniform, texture,
 } from 'three/tsl';
 import { CITY } from './layout.js';
+import { NIGHT, WET } from './timeofday.js';
+
+const atNight = (dayLevel) => mix(float(dayLevel), float(1), NIGHT);
 
 const band = (x, a, b, soft) => smoothstep(a - soft, a + soft, x).mul(float(1).sub(smoothstep(b - soft, b + soft, x)));
 
@@ -36,8 +40,11 @@ export function buildingMaterial(seedAttr, accentAttr) {
   const shops = accent.mul(glass.add(awning)).mul(wall);
 
   const m = new THREE.MeshStandardNodeMaterial();
-  m.colorNode = mix(vec3(0.045, 0.05, 0.085), vec3(0.02, 0.025, 0.04), win).add(accent.mul(0.012));
-  m.emissiveNode = windows.mul(1.05).add(shops);
+  // by day: concrete, sandstone or dark metal facades; window glass stays dark and mirror-like
+  const tone = hash(seed.mul(7.0)), shade = hash(seed.mul(13.0)).mul(0.6).add(0.55);
+  const facade = mix(mix(vec3(0.3, 0.31, 0.33), vec3(0.42, 0.37, 0.3), smoothstep(0.35, 0.65, tone)), vec3(0.09, 0.1, 0.13), step(0.8, tone)).mul(shade);
+  m.colorNode = mix(facade, vec3(0.03, 0.04, 0.06), win).add(accent.mul(0.012));
+  m.emissiveNode = windows.mul(mix(float(0.03), float(1.05), NIGHT)).add(shops.mul(atNight(0.35)));
   m.roughnessNode = mix(float(0.78), float(0.12), win.mul(wall));
   m.metalnessNode = mix(float(0.25), float(0.85), win.mul(wall));
   return m;
@@ -65,13 +72,14 @@ export function groundMaterial() {
 
   const n = mx_noise_float(wp.xz.mul(0.07)).mul(0.5).add(0.5);
   const fine = mx_noise_float(wp.xz.mul(0.9)).mul(0.5).add(0.5);
-  const puddle = smoothstep(0.52, 0.62, n);
-  const asphalt = vec3(0.028, 0.03, 0.04).mul(fine.mul(0.35).add(0.8));
+  const puddle = smoothstep(mix(float(0.75), float(0.5), WET), mix(float(0.85), float(0.6), WET), n).mul(WET);
+  const asphalt = vec3(0.075, 0.077, 0.085).mul(fine.mul(0.35).add(0.8)).mul(float(1).sub(WET.mul(0.45)));
 
   const m = new THREE.MeshStandardNodeMaterial();
   m.colorNode = mix(mix(asphalt, vec3(0.62, 0.64, 0.7), white.mul(0.85)), vec3(0.85, 0.62, 0.25), yellow.mul(0.9)).mul(float(1).sub(puddle.mul(0.45)));
-  m.emissiveNode = vec3(0.9, 0.62, 0.22).mul(yellow).mul(0.08).add(vec3(0.5, 0.55, 0.6).mul(white).mul(0.03));
-  m.roughnessNode = mix(mix(float(0.42), float(0.16), fine.mul(0.4)), float(0.03), puddle);
+  m.emissiveNode = vec3(0.9, 0.62, 0.22).mul(yellow).mul(0.08).add(vec3(0.5, 0.55, 0.6).mul(white).mul(0.03)).mul(NIGHT);
+  const dry = mix(float(0.86), float(0.7), fine), wet = mix(float(0.36), float(0.14), fine.mul(0.4));
+  m.roughnessNode = mix(mix(dry, wet, WET), float(0.03), puddle);
   m.metalnessNode = float(0.0);
   return m;
 }
@@ -83,21 +91,23 @@ export function pavementMaterial(plaza = false) {
   const seam = max(step(gx, 0.03), step(gz, 0.03));
   const m = new THREE.MeshStandardNodeMaterial();
   const n = mx_noise_float(wp.xz.mul(0.4)).mul(0.5).add(0.5);
-  m.colorNode = mix(vec3(0.075, 0.08, 0.1).mul(n.mul(0.3).add(0.85)), vec3(0.03, 0.035, 0.05), seam);
-  m.roughnessNode = mix(float(0.55), float(0.2), smoothstep(0.55, 0.7, n));
+  const slab = vec3(0.24, 0.245, 0.255).mul(n.mul(0.3).add(0.8)).mul(float(1).sub(WET.mul(0.4)));
+  m.colorNode = mix(slab, vec3(0.08, 0.085, 0.1), seam);
+  m.roughnessNode = mix(float(0.8), mix(float(0.35), float(0.12), smoothstep(0.55, 0.7, n)), WET);
   m.metalnessNode = float(0.05);
   if (plaza) {
     const pulse = time.mul(0.6).add(wp.x.add(wp.z).mul(0.02)).sin().mul(0.5).add(0.5);
-    m.emissiveNode = vec3(0.25, 0.85, 1.0).mul(seam).mul(pulse.mul(0.1).add(0.04));
+    m.emissiveNode = vec3(0.25, 0.85, 1.0).mul(seam).mul(pulse.mul(0.1).add(0.04)).mul(NIGHT);
   }
   return m;
 }
 
-// Unlit glowing colour above 1.0 so the bloom picks it up. Per-instance colour through aColor when given.
-export function neonMaterial(colorOrAttr, intensity = 3, extra = {}) {
+// Unlit glowing colour above 1.0 so the bloom picks it up. Per-instance colour through an attribute when given.
+// dayLevel: how bright it stays in daylight (1 = always on, 0 = lamps that only light at night).
+export function neonMaterial(colorOrAttr, intensity = 3, extra = {}, dayLevel = 1) {
   const m = new THREE.MeshBasicNodeMaterial(extra);
   const base = colorOrAttr.isBufferAttribute ? instancedBufferAttribute(colorOrAttr) : vec3(colorOrAttr.r, colorOrAttr.g, colorOrAttr.b);
-  m.colorNode = base.mul(intensity);
+  m.colorNode = dayLevel < 1 ? base.mul(intensity).mul(atNight(dayLevel)) : base.mul(intensity);
   m.fog = true;
   return m;
 }
@@ -108,10 +118,12 @@ export function signMaterial(tex, intensity = 2.4, flicker = 0) {
   const t = texture(tex);
   const phase = uniform(Math.random() * 100);
   const f = flicker ? float(1).sub(step(1 - flicker, hash(floor(time.mul(14).add(phase)))).mul(0.85)) : float(1);
-  m.colorNode = t.rgb.mul(intensity).mul(f);
+  m.colorNode = t.rgb.mul(intensity).mul(f).mul(atNight(0.45));
   m.opacityNode = t.a;
   return m;
 }
+
+export { NIGHT, WET, atNight };
 
 export const COLORS = {
   ia: new THREE.Color('#3fe0ff'), data: new THREE.Color('#e2b25c'), net: new THREE.Color('#a98bff'),

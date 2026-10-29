@@ -2,7 +2,8 @@
 // playable area and the static physics colliders. Everything is instanced: a handful of draw calls for the whole city.
 import * as THREE from 'three/webgpu';
 import { CITY, roadAt, blockAt, isCampus, districtAt, rng } from './layout.js';
-import { buildingMaterial, groundMaterial, pavementMaterial, neonMaterial } from './materials.js';
+import { buildingMaterial, groundMaterial, pavementMaterial, neonMaterial, NIGHT } from './materials.js';
+import { texture } from 'three/tsl';
 
 const unitBox = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
 
@@ -125,7 +126,7 @@ export function buildCity({ scene, world, RAPIER }) {
 
   const stripColors = new THREE.InstancedBufferAttribute(new Float32Array(strips.length * 3), 3);
   strips.forEach((st, i) => stripColors.setXYZ(i, st.c.r, st.c.g, st.c.b));
-  scene.add(instanced(unitBox, neonMaterial(stripColors, 3.2), strips, (st, p, q, s) => { p.set(st.x, st.y, st.z); s.set(st.sx, 0.35, st.sz); }));
+  scene.add(instanced(unitBox, neonMaterial(stripColors, 3.2, {}, 0.2), strips, (st, p, q, s) => { p.set(st.x, st.y, st.z); s.set(st.sx, 0.35, st.sz); }));
 
   const antennaMesh = instanced(new THREE.CylinderGeometry(0.12, 0.25, 1, 6).translate(0, 0.5, 0),
     new THREE.MeshStandardNodeMaterial({ color: 0x1a1f33, roughness: 0.5, metalness: 0.8 }), antennas,
@@ -136,7 +137,8 @@ export function buildCity({ scene, world, RAPIER }) {
 
   // the tower's beacon: a slow golden light column visible from everywhere
   const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 2.2, 900, 16, 1, true).translate(0, 450, 0),
-    new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(0.9, 0.65, 0.25), transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+    new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(0.9, 0.65, 0.25), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
+  beacon.material.opacityNode = NIGHT.mul(0.07);
   beacon.position.set(tx, towerTop + 30, tz);
   scene.add(beacon);
 
@@ -155,9 +157,11 @@ export function buildCity({ scene, world, RAPIER }) {
   const poleMat = new THREE.MeshStandardNodeMaterial({ color: 0x151a2c, roughness: 0.4, metalness: 0.9 });
   scene.add(instanced(new THREE.CylinderGeometry(0.1, 0.16, 7.5, 6).translate(0, 3.75, 0), poleMat, lamps,
     (l, p, q, s) => { p.set(l.x, CITY.CURB, l.z); s.set(1, 1, 1); }));
-  scene.add(instanced(new THREE.BoxGeometry(0.5, 0.18, 2.6), neonMaterial(new THREE.Color('#ffd9a0'), 3), lamps,
+  scene.add(instanced(new THREE.BoxGeometry(0.5, 0.18, 2.6), neonMaterial(new THREE.Color('#ffd9a0'), 3, {}, 0.04), lamps,
     (l, p, q, s) => { p.set(l.x + l.dx * 1.1, CITY.CURB + 7.5, l.z + l.dz * 1.1); q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), l.dx ? Math.PI / 2 : 0); s.set(1, 1, 1); }));
-  const poolMat = new THREE.MeshBasicNodeMaterial({ map: radialTexture('rgba(255,200,130,0.3)', 'rgba(255,200,130,0)'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const poolMat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+  const poolTex = texture(radialTexture('rgba(255,200,130,0.3)', 'rgba(255,200,130,0)'));
+  poolMat.colorNode = poolTex.rgb; poolMat.opacityNode = poolTex.a.mul(NIGHT);   // lamps light the street only at night
   const pools = instanced(new THREE.PlaneGeometry(13, 13).rotateX(-Math.PI / 2), poolMat, lamps,
     (l, p, q, s) => { p.set(l.x + l.dx * 3.2, 0.03, l.z + l.dz * 3.2); s.set(1, 1, 1); });
   pools.renderOrder = 1;

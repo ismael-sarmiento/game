@@ -64,6 +64,7 @@
     <div class="hud-counters">
       <span class="chip" id="facts-counter" title="Curiosidades"></span>
       <span class="chip" id="missions-counter" title="Misiones"></span>
+      <span class="chip" id="clock"></span>
     </div>
     <div class="hud-speed" id="speedo" hidden>
       <canvas id="speed-canvas" width="180" height="180"></canvas>
@@ -130,7 +131,25 @@
         <label><span data-i18n="settings.music">Música</span><input id="set-music" type="range" min="0" max="1" step="0.05"></label>
         <label><span data-i18n="settings.sfx">Efectos</span><input id="set-sfx" type="range" min="0" max="1" step="0.05"></label>
         <label><span data-i18n="settings.sensitivity">Sensibilidad de cámara</span><input id="set-sens" type="range" min="0.3" max="2" step="0.1"></label>
-        <label class="check"><input id="set-rain" type="checkbox"><span data-i18n="settings.rain">Lluvia</span></label>
+        <label><span data-i18n="settings.time">Hora del día</span>
+          <select id="set-time">
+            <option value="auto" data-i18n="settings.timeAuto">Ciclo automático</option>
+            <option value="dawn" data-i18n="settings.dawn">Amanecer</option>
+            <option value="day" data-i18n="settings.day">Día</option>
+            <option value="dusk" data-i18n="settings.dusk">Atardecer</option>
+            <option value="night" data-i18n="settings.night">Noche</option>
+          </select>
+        </label>
+        <label><span><span data-i18n="settings.cycle">Duración de un día</span> · <output id="cycle-value"></output></span><input id="set-cycle" type="range" min="6" max="60" step="2"></label>
+        <label><span data-i18n="settings.weather">Clima</span>
+          <select id="set-weather">
+            <option value="auto" data-i18n="settings.weatherAuto">Variable</option>
+            <option value="clear" data-i18n="settings.clear">Despejado</option>
+            <option value="cloudy" data-i18n="settings.cloudy">Nublado</option>
+            <option value="rain" data-i18n="settings.rainy">Lluvia</option>
+            <option value="storm" data-i18n="settings.storm">Tormenta</option>
+          </select>
+        </label>
         <label class="check"><input id="set-fps" type="checkbox"><span data-i18n="settings.fps">Mostrar FPS</span></label>
       </div>
       <div class="tab-panel" data-panel="controls" hidden>
