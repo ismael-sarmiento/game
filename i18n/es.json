@@ -1,0 +1,444 @@
+{
+ "meta": {
+  "title": "IsGame · Neo Academia · Juego de mundo abierto de IsAcademy"
+ },
+ "boot": {
+  "eyebrow": "Un juego de IsAcademy",
+  "city": "Neo Academia",
+  "lead": "Una ciudad de datos e IA que no duerme. Conduce, explora y aprende a pensar con tus mentores.",
+  "loading": "Cargando la ciudad…",
+  "loadingLibs": "Preparando motor y física…",
+  "loadingGpu": "Encendiendo la tarjeta gráfica…",
+  "loadingCity": "Levantando 450 edificios…",
+  "loadingSigns": "Encendiendo el neón…",
+  "loadingLife": "Despertando a la ciudad…",
+  "loadingShaders": "Compilando la luz…",
+  "ready": "Neo Academia está lista.",
+  "play": "Jugar",
+  "hint": "Mejor con auriculares. WASD para moverte, E para interactuar, Esc para pausa.",
+  "back": "← Volver a IsAcademy",
+  "error": "No hemos podido arrancar el juego en este navegador. Prueba con Chrome, Edge o Safari actualizados"
+ },
+ "settings": {
+  "language": "Idioma",
+  "quality": "Calidad",
+  "auto": "Automática",
+  "high": "Alta",
+  "medium": "Media",
+  "low": "Baja",
+  "music": "Música",
+  "sfx": "Efectos",
+  "sensitivity": "Sensibilidad de cámara",
+  "rain": "Lluvia",
+  "fps": "Mostrar FPS"
+ },
+ "menu": {
+  "pause": "Pausa",
+  "paused": "Pausa",
+  "settings": "Ajustes",
+  "controls": "Controles",
+  "progress": "Progreso",
+  "reset": "Borrar progreso",
+  "resume": "Continuar",
+  "academy": "Ir a IsAcademy",
+  "resetConfirm": "¿Borrar misiones y curiosidades de este navegador? Los ajustes se conservan.",
+  "graduated": "Graduación",
+  "facts": "Curiosidades"
+ },
+ "hud": {
+  "objective": "Objetivo",
+  "facts": "curiosidades",
+  "missions": "misiones",
+  "talk": "Hablar con {name}",
+  "enter": "Subir al coche",
+  "exit": "Bajar del coche",
+  "tooFast": "Frena para bajar del coche",
+  "qualityAuto": "Calidad ajustada a {level} para que vaya fluido",
+  "muted": "Sonido silenciado (M)",
+  "unmuted": "Sonido activado",
+  "factFound": "Curiosidad {n}/{total}",
+  "factEyebrow": "Curiosidad desbloqueada",
+  "allFacts": "¡Has encontrado las 20 curiosidades de Neo Academia!"
+ },
+ "dialog": {
+  "placeholder": "Pregúntale algo…",
+  "send": "Enviar",
+  "next": "Seguir ›",
+  "bye": "Hasta luego",
+  "back": "‹ Volver",
+  "thinking": "…",
+  "busy": "Hay mucha gente preguntando ahora mismo. Inténtalo en un minuto.",
+  "offline": "Ahora mismo no puedo pensar en voz alta. Prueba con otra pregunta del menú.",
+  "continue": "Seguir jugando",
+  "ask": "Hacerle una pregunta libre",
+  "accept": "Acepto la misión",
+  "later": "Ahora no",
+  "continueMission": "Sigo con ello",
+  "abandon": "Abandonar la misión"
+ },
+ "world": {
+  "billboard": [
+   "LA IA TE DA RESPUESTAS · AQUÍ TE ENSEÑAMOS A PENSAR · ISACADEMY",
+   "CLASES PERSONALIZADAS DE PYTHON, SQL E IA · ONLINE · ISACADEMY",
+   "NEO ACADEMIA · LA CIUDAD QUE APRENDE"
+  ]
+ },
+ "districts": {
+  "ia": "Distrito IA",
+  "data": "Distrito Data",
+  "net": "Distrito Net",
+  "sec": "Distrito Sec",
+  "campus": "Campus IsAcademy"
+ },
+ "compass": [
+  "norte",
+  "noreste",
+  "este",
+  "sureste",
+  "sur",
+  "suroeste",
+  "oeste",
+  "noroeste"
+ ],
+ "controls": [
+  [
+   "WASD · flechas",
+   "Moverte o conducir"
+  ],
+  [
+   "Arrastrar ratón · rueda",
+   "Girar la cámara · zoom"
+  ],
+  [
+   "E",
+   "Hablar, subir o bajar del coche"
+  ],
+  [
+   "Espacio",
+   "Saltar · freno de mano (derrape)"
+  ],
+  [
+   "Shift",
+   "Correr"
+  ],
+  [
+   "H",
+   "Claxon"
+  ],
+  [
+   "R",
+   "Recolocar el coche"
+  ],
+  [
+   "C",
+   "Distancia de cámara"
+  ],
+  [
+   "M",
+   "Silenciar"
+  ],
+  [
+   "Esc · P",
+   "Pausa"
+  ],
+  [
+   "Mando",
+   "Stick izquierdo, RT acelera, LT frena, Y interactúa, A freno de mano"
+  ],
+  [
+   "Táctil",
+   "Joystick a la izquierda, arrastra a la derecha para mirar, botones E y ⤒"
+  ]
+ ],
+ "story": {
+  "welcome": "Te damos la bienvenida a Neo Academia. Busca a Iris en el campus.",
+  "welcomeBack": "Neo Academia te echaba de menos.",
+  "talkIris": "Habla con Iris en el Campus IsAcademy (pulsa E cerca de ella).",
+  "introDone": "Los mentores ya te esperan: sigue las columnas de luz.",
+  "visit": "Visita a {name} en el {district}: tiene una misión para ti.",
+  "graduate": "Has completado las tres misiones. Vuelve con Iris para graduarte.",
+  "explore": "Explora la ciudad y encuentra las curiosidades ({n}/20).",
+  "free": "Neo Academia es tuya. Conduce, explora y vuelve cuando quieras.",
+  "seeIrisFirst": "Primero pasa por el campus: Iris te pondrá al día.",
+  "busy": "Termina antes la misión de {name}; luego hablamos."
+ },
+ "mentors": {
+  "iris": {
+   "role": "Guía del campus",
+   "intro": [
+    "¡Hola! Soy Iris, la guía de Neo Academia: una ciudad donde cada barrio enseña algo.",
+    "En el Distrito Data te espera Byte, en Sec está Kernel y en el Distrito IA, Nova. Cada uno tiene una misión para ti.",
+    "Tu coche está aparcado ahí, en la avenida. Sigue las columnas de luz y el minimapa. Y si ves cubos dorados flotando, recógelos: guardan curiosidades."
+   ],
+   "introAccept": "¡Vamos allá!",
+   "greet": "¿Qué tal vas? Llevas {n} de 3 misiones. Cuando las termines todas, vuelve: tengo algo para ti.",
+   "graduation": [
+    "Byte, Kernel y Nova me lo han contado todo: has aprendido a mover datos, a cazar errores y a entrenar con datos limpios.",
+    "Eso es exactamente lo que buscamos: no usar la tecnología a ciegas, sino entenderla. ¿Empezamos la ceremonia?"
+   ],
+   "graduateAccept": "¡A graduarme!",
+   "topics": [
+    {
+     "q": "¿Qué es Neo Academia?",
+     "a": "Es la ciudad de IsAcademy: un lugar para aprender jugando. Cada distrito representa un área: datos, redes, seguridad e inteligencia artificial."
+    },
+    {
+     "q": "¿Qué se aprende en IsAcademy?",
+     "a": "Damos clases particulares online de Python, SQL, IA, Big Data y Data Engineering para todas las edades. Empezamos con un análisis inicial gratuito para ver dónde estás."
+    },
+    {
+     "q": "¿Por dónde empiezo a programar?",
+     "a": "Por algo pequeño que te importe: automatizar una tarea, analizar tus datos o crear un juego sencillo. Python es una gran primera lengua: se lee casi como el inglés."
+    }
+   ]
+  },
+  "byte": {
+   "role": "Mensajera de datos · Distrito Data",
+   "activeReminder": "¡Los paquetes no se entregan solos! Sigue las puertas doradas antes de que se agote el tiempo.",
+   "after": "Gracias a ti, la red de Neo Academia va como un tiro. ¿Quieres saber algo más sobre datos?",
+   "topics": [
+    {
+     "q": "¿Qué es un dato?",
+     "a": "Un dato es un hecho registrado: una temperatura, un clic, una venta. Solo, dice poco; junto a otros y bien ordenado, cuenta historias."
+    },
+    {
+     "q": "¿Para qué sirve SQL?",
+     "a": "SQL es el idioma para preguntar a las bases de datos: «dame las ventas por país, ordenadas de mayor a menor». Lo usan desde analistas hasta ingenieros de IA."
+    }
+   ]
+  },
+  "kernel": {
+   "role": "Cazador de bugs · Distrito Sec",
+   "activeReminder": "Aún quedan bugs sueltos. Busca los destellos rojos en el mapa.",
+   "after": "Ni un bug a la vista. Buen trabajo, colega. ¿Te cuento algo de seguridad?",
+   "topics": [
+    {
+     "q": "¿Qué es un bug?",
+     "a": "Un error en un programa: el código hace lo que le dijiste, no lo que querías. Depurar es encontrar esa diferencia con paciencia y método."
+    },
+    {
+     "q": "¿Cómo protejo mis cuentas?",
+     "a": "Contraseñas largas y distintas en cada sitio, un gestor de contraseñas y la verificación en dos pasos (2FA) siempre que puedas."
+    }
+   ]
+  },
+  "nova": {
+   "role": "Entrenadora de modelos · Distrito IA",
+   "activeReminder": "Recoge datos limpios (cian) y esquiva los ruidosos (rojos). El modelo depende de ti.",
+   "after": "El modelo ya distingue señales del ruido gracias a ti. ¿Hablamos de IA?",
+   "topics": [
+    {
+     "q": "¿Cómo aprende una IA?",
+     "a": "Viendo muchos ejemplos y ajustando millones de números para equivocarse cada vez menos. No «entiende» como tú: encuentra patrones."
+    },
+    {
+     "q": "¿La IA siempre tiene razón?",
+     "a": "No. Puede equivocarse con total seguridad. Por eso hay que saber comprobar sus respuestas: la IA te da respuestas, pensar es cosa tuya."
+    }
+   ]
+  },
+  "echo": {
+   "role": "Radar de la red · Distrito Net",
+   "greet": "Bip. Soy Echo: escucho todo lo que pasa por la red de Neo Academia.",
+   "hint": "Detecto un cubo de datos a unos {d} metros, hacia el {dir}. Mira el minimapa cuando estés cerca.",
+   "allFound": "No detecto más cubos: los has encontrado todos. Impresionante.",
+   "topics": [
+    {
+     "q": "¿Qué es una IP?",
+     "a": "Es la dirección de un dispositivo en una red. Igual que una carta necesita una dirección, cada paquete de datos necesita saber a qué IP va."
+    },
+    {
+     "q": "¿Qué es la nube?",
+     "a": "Ordenadores de otras empresas a los que te conectas por Internet para guardar datos o ejecutar programas. La nube son servidores muy reales."
+    }
+   ]
+  }
+ },
+ "missions": {
+  "completed": "Misión completada",
+  "badge": "{n}/3 misiones",
+  "learnMore": "Ver IsAcademy",
+  "academyLine": "Esto y mucho más se aprende en IsAcademy, con clases a tu medida.",
+  "failedEyebrow": "Misión fallida",
+  "retry": "Reintentar",
+  "later": "Más tarde",
+  "route": {
+   "title": "Ruta de datos",
+   "offer": [
+    "¡Hola! Soy Byte. Hoy hay que enviar un mensaje importante a través de la ciudad.",
+    "En Internet los mensajes viajan troceados en paquetes, saltando de router en router. Tú serás ese paquete: cruza las 5 puertas doradas en orden en menos de 2 minutos y medio."
+   ],
+   "started": "¡Paquete en camino! Cruza las puertas doradas.",
+   "carHere": "Byte te ha acercado el coche.",
+   "objective": "Lleva el paquete a la puerta {n}/{total}.",
+   "steps": [
+    "Router 1: el mensaje se divide en paquetes numerados.",
+    "Router 2: cada paquete lleva la dirección IP de destino.",
+    "Router 3: los routers eligen el siguiente salto, no la ruta completa.",
+    "Router 4: si un camino se atasca, los paquetes pueden ir por otro.",
+    "Destino: los paquetes se reordenan y el mensaje vuelve a estar completo."
+   ],
+   "result": "Paquete entregado en {time} segundos.",
+   "lesson": "Así funciona Internet: los datos viajan en paquetes que encuentran su propio camino y se reensamblan al llegar.",
+   "failed": "El paquete ha caducado por el camino. En las redes reales se volvería a enviar… ¡y tú también puedes!"
+  },
+  "debug": {
+   "title": "Depura la ciudad",
+   "offer": [
+    "Kernel al habla. Se han colado tres bugs en los sistemas de Neo Academia: búscalos por los destellos rojos.",
+    "En cada uno verás un trozo de código Python con un fallo. Elige el arreglo correcto. Sin prisa: depurar es pensar."
+   ],
+   "started": "Caza los 3 bugs: sigue los destellos rojos.",
+   "objective": "Bugs arreglados: {n}/{total}. Ve al siguiente destello rojo.",
+   "quizEyebrow": "Bug {n} de 3 · ¿Qué arreglo funciona?",
+   "fixed": "Bug arreglado ({n}/3). ¡Al siguiente!",
+   "result": "Los tres bugs están aplastados.",
+   "lesson": "Depurar es comparar lo que hace el código con lo que esperabas, línea a línea. Leer los errores con calma es media solución.",
+   "failed": "Los bugs siguen ahí. Vuelve cuando quieras.",
+   "quiz": [
+    {
+     "question": "La suma debería dar 16, pero imprime 8.",
+     "code": "numeros = [3, 5, 8]\ntotal = 0\nfor n in numeros:\n    total = n\nprint(total)  # esperado: 16",
+     "options": [
+      "Cambiar «total = n» por «total += n»",
+      "Cambiar «print(total)» por «print(n)»",
+      "Empezar con «total = 16»"
+     ],
+     "answer": 0,
+     "explain": "¡Exacto! «total = n» sustituía el valor en cada vuelta; «total += n» lo va acumulando.",
+     "hint": "Fíjate en qué le pasa a «total» en cada vuelta del bucle."
+    },
+    {
+     "question": "La media de 2, 4 y 6 debería ser 4, pero sale 3.",
+     "code": "def media(lista):\n    return sum(lista) / len(lista) - 1\n\nprint(media([2, 4, 6]))  # esperado: 4",
+     "options": [
+      "Usar «return len(lista) / sum(lista)»",
+      "Quitar el «- 1»: «return sum(lista) / len(lista)»",
+      "Dividir siempre entre 2"
+     ],
+     "answer": 1,
+     "explain": "¡Bien visto! Sobraba el «- 1». La media es la suma entre el número de elementos.",
+     "hint": "Calcula a mano: suma 12, hay 3 elementos… ¿qué está restando?"
+    },
+    {
+     "question": "El programa falla con «TypeError» al comparar la edad.",
+     "code": "edad = input(\"Edad: \")\nif edad >= 18:\n    print(\"Mayor de edad\")",
+     "options": [
+      "Comparar con texto: «if edad >= \"18\":»",
+      "Quitar el «if»",
+      "Convertir a número: «edad = int(input(\"Edad: \"))»"
+     ],
+     "answer": 2,
+     "explain": "¡Eso es! input() siempre devuelve texto; int() lo convierte en número para poder comparar.",
+     "hint": "¿Qué tipo de dato devuelve input()? Comparar texto con números no funciona."
+    }
+   ]
+  },
+  "train": {
+   "title": "Entrena al modelo",
+   "offer": [
+    "Soy Nova. Estoy entrenando un modelo de IA y necesito datos de calidad.",
+    "Recoge 8 datos limpios (cian) por las calles del Distrito IA en 2 minutos. Ojo con los ruidosos (rojos): si los coges, el modelo aprenderá peor."
+   ],
+   "started": "Recoge 8 datos limpios (cian) y evita los rojos.",
+   "objective": "Datos limpios: {n}/{goal} · ruidosos: {noisy}.",
+   "noisy": "¡Dato ruidoso! El modelo se confunde un poco.",
+   "resultClean": "Precisión del modelo: {accuracy} %. Ni un dato ruidoso: entrenamiento de manual.",
+   "resultNoisy": "Precisión del modelo: {accuracy} %. Se colaron {noisy} datos ruidosos y el modelo lo nota.",
+   "lesson": "Una IA solo es tan buena como sus datos: si entra basura, sale basura. Por eso limpiar y elegir bien los datos es la mitad del trabajo.",
+   "failed": "Se acabó el tiempo y el modelo no tiene datos suficientes. ¿Otra ronda?",
+   "resultNoisyOne": "Precisión del modelo: {accuracy} %. Se coló 1 dato ruidoso y el modelo lo nota."
+  }
+ },
+ "graduation": {
+  "eyebrow": "Neo Academia",
+  "title": "¡Te has graduado!",
+  "badge": "Graduación completada",
+  "text": "Has movido datos por la red, has cazado bugs y has entrenado un modelo con datos limpios. Así se empieza a pensar como quien programa.",
+  "next": "¿Quieres seguir aprendiendo de verdad? En IsAcademy te acompañamos con clases personalizadas y un análisis inicial gratuito.",
+  "cta": "Conocer IsAcademy",
+  "keep": "Seguir explorando"
+ },
+ "facts": [
+  {
+   "title": "El primer programa (1843)",
+   "text": "Ada Lovelace publicó en 1843 unas notas sobre la Máquina Analítica de Charles Babbage con un algoritmo para calcular números de Bernoulli. Se considera uno de los primeros programas de la historia."
+  },
+  {
+   "title": "El juego de la imitación",
+   "text": "En 1950, Alan Turing publicó «Computing Machinery and Intelligence» y propuso el «juego de la imitación», hoy conocido como test de Turing."
+  },
+  {
+   "title": "Nace un nombre",
+   "text": "La expresión «inteligencia artificial» aparece en la propuesta de 1955 de John McCarthy, Marvin Minsky, Nathaniel Rochester y Claude Shannon para el taller de Dartmouth de 1956."
+  },
+  {
+   "title": "El primer «bug» encontrado",
+   "text": "En 1947, el equipo del ordenador Harvard Mark II, en el que trabajaba Grace Hopper, pegó en su cuaderno una polilla hallada en un relé: «primer caso real de bug encontrado»."
+  },
+  {
+   "title": "Python no viene de la serpiente",
+   "text": "Guido van Rossum llamó Python a su lenguaje por el grupo de humor Monty Python. La primera versión pública salió en 1991."
+  },
+  {
+   "title": "Las programadoras del ENIAC",
+   "text": "El ENIAC, uno de los primeros ordenadores electrónicos (1945), fue programado por seis mujeres, entre ellas Jean Bartik y Betty Holberton."
+  },
+  {
+   "title": "«LO»: el primer mensaje",
+   "text": "El 29 de octubre de 1969, la red ARPANET envió su primer mensaje entre la UCLA y el Stanford Research Institute (SRI). Querían escribir «LOGIN», pero el sistema se colgó tras «LO»."
+  },
+  {
+   "title": "La web nació en el CERN",
+   "text": "Tim Berners-Lee propuso en marzo de 1989, en el CERN, el sistema que se convertiría en la World Wide Web."
+  },
+  {
+   "title": "«Solo un hobby»",
+   "text": "En agosto de 1991, Linus Torvalds anunció en un foro que estaba haciendo un sistema operativo «solo como hobby». Era el núcleo Linux."
+  },
+  {
+   "title": "Git, en semanas",
+   "text": "Linus Torvalds creó Git en 2005 para gestionar el desarrollo de Linux. Hoy es el sistema de control de versiones más usado del mundo."
+  },
+  {
+   "title": "La ley de Moore",
+   "text": "En 1965, Gordon Moore observó que el número de componentes por chip se duplicaba cada año; en 1975 ajustó su previsión a cada dos años."
+  },
+  {
+   "title": "Pensar con verdadero o falso",
+   "text": "En 1854, George Boole publicó «Las leyes del pensamiento», base del álgebra de Boole con la que funcionan los circuitos digitales."
+  },
+  {
+   "title": "El perceptrón (1958)",
+   "text": "Frank Rosenblatt presentó en 1958 el perceptrón, uno de los primeros modelos de neurona artificial capaz de aprender de ejemplos."
+  },
+  {
+   "title": "Deep Blue gana a Kasparov",
+   "text": "En 1997, el ordenador Deep Blue de IBM venció al campeón del mundo Garry Kasparov en un match de seis partidas de ajedrez."
+  },
+  {
+   "title": "«Attention Is All You Need»",
+   "text": "Este artículo de 2017 presentó la arquitectura Transformer, la base de los grandes modelos de lenguaje actuales."
+  },
+  {
+   "title": "El año de AlexNet",
+   "text": "En 2012, la red neuronal AlexNet ganó la competición ImageNet con una gran ventaja usando GPU, e impulsó la explosión del deep learning."
+  },
+  {
+   "title": "Tablas y SQL",
+   "text": "Edgar F. Codd propuso el modelo relacional en 1970 en IBM. De ese trabajo nació SEQUEL, el antecesor de SQL."
+  },
+  {
+   "title": "El gusano Morris",
+   "text": "En noviembre de 1988, el gusano Morris se propagó por Internet y dejó fuera de servicio miles de equipos. A raíz de él se creó el CERT/CC, uno de los primeros equipos de respuesta a incidentes."
+  },
+  {
+   "title": "«Hello, world!»",
+   "text": "El famoso primer programa se popularizó con el libro «The C Programming Language» (1978) de Kernighan y Ritchie, aunque ya aparecía en un tutorial de Kernighan de 1972."
+  },
+  {
+   "title": "Bits y caracteres",
+   "text": "Un byte tiene 8 bits. El código ASCII, de 1963, usaba 7 bits: 128 combinaciones para letras, números y símbolos."
+  }
+ ]
+}

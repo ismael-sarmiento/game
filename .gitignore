@@ -1,0 +1,5 @@
+.DS_Store
+
+# Private working notes and local tooling: never published
+.private/
+.claude/
