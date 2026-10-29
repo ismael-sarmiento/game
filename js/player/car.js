@@ -50,7 +50,7 @@ export function buildCarModel({ paint = '#d9dcea', accent = '#e2b25c', glow = '#
     const st = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.05, 3.3), stripe);
     st.position.set(x, 0.55, 0.1); model.add(st);
   });
-  const head = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.06, 0.04), neonMaterial(new THREE.Color('#dff6ff'), 6));
+  const head = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.06, 0.04), neonMaterial(new THREE.Color('#dff6ff'), 3.2));
   head.position.set(0, 0.52, 2.26); model.add(head);
   const brake = uniform(1);
   const tailMat = new THREE.MeshBasicNodeMaterial(); tailMat.colorNode = vec3(1.0, 0.08, 0.15).mul(brake);

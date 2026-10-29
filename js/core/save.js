@@ -2,7 +2,10 @@
 const KEY = 'isgame.v1';
 
 const DEFAULTS = {
-  settings: { lang: '', quality: 'auto', music: 0.55, sfx: 0.8, sens: 1, time: 'auto', cycle: 24, weather: 'auto', fps: false },
+  settings: {
+    lang: '', quality: 'auto', music: 0.55, sfx: 0.8, sens: 1, time: 'auto', cycle: 24, weather: 'auto', fps: false,
+    gfx: { scale: 1, reflections: 'auto', occlusion: 'auto', aa: 'auto', motionBlur: false, grain: true },
+  },
   missions: {},        // id -> 'done'
   facts: [],           // collected fact ids
   intro: false,        // first talk with the guide done
@@ -18,7 +21,9 @@ export const save = {
   load() {
     const stored = read();
     if (stored && typeof stored === 'object') {
-      this.data = { ...structuredClone(DEFAULTS), ...stored, settings: { ...DEFAULTS.settings, ...(stored.settings || {}) } };
+      const settings = { ...DEFAULTS.settings, ...(stored.settings || {}) };
+      settings.gfx = { ...DEFAULTS.settings.gfx, ...((stored.settings || {}).gfx || {}) };
+      this.data = { ...structuredClone(DEFAULTS), ...stored, settings };
       if (!Array.isArray(this.data.facts)) this.data.facts = [];
     }
     return this.data;

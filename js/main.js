@@ -4,7 +4,7 @@ import * as THREE from 'three/webgpu';
 import RAPIER from 'rapier';
 import { CONFIG } from './config.js';
 import { createRenderer, Pipeline } from './core/renderer.js';
-import { PRESETS, initialLevel, AutoQuality, isTouch } from './core/quality.js';
+import { PRESETS, initialLevel, AutoQuality, isTouch, effects } from './core/quality.js';
 import { Input } from './core/input.js';
 import { Audio } from './core/audio.js';
 import { save } from './core/save.js';
@@ -85,7 +85,11 @@ async function boot() {
   chase.snap(avatar.facing);
 
   const pipeline = new Pipeline(renderer, scene, camera);
-  pipeline.setBloom(preset.bloom);
+  const applyGraphics = () => {
+    renderer.setPixelRatio(Math.min(devicePixelRatio, preset.pixelRatio) * settings.gfx.scale);
+    pipeline.configure(effects(preset, settings.gfx));
+  };
+  applyGraphics();
 
   // dynamic light pool: the nearest neon signs really light the street and the car
   const pool = [];
@@ -102,6 +106,8 @@ async function boot() {
   game.dialogue = new Dialogue(game);
   game.collectibles = new Collectibles(game);
   game.missions = new Missions(game);
+  game.applyGraphics = () => applyGraphics();
+  game.pipeline = pipeline;
   game.menu = new Menu(game, {
     onQuality(next) { applyQuality(next, false); },
     onLang: async (lang) => { await loadLang(lang); signs.refresh(); game.hud.refreshTexts(); game.missions.refreshObjective(); game.menu.refresh(); },
@@ -111,8 +117,7 @@ async function boot() {
     if (!PRESETS[next]) return;
     level = game.level = next;
     Object.assign(preset, PRESETS[next]);
-    renderer.setPixelRatio(Math.min(devicePixelRatio, preset.pixelRatio));
-    pipeline.setBloom(preset.bloom);
+    applyGraphics();
     sky.setShadows(preset.shadows);
     sky.rain.setCount(preset.rain);
     traffic.setCount(preset.traffic);

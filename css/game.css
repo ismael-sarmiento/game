@@ -72,10 +72,11 @@ input[type="range"] { accent-color: var(--gold-400); width: 100%; }
 
 .menu-card { text-align: left; justify-items: stretch; }
 .menu-card h2 { margin: 0; text-align: center; font-family: var(--font-script); font-weight: 400; font-size: 2.6rem; color: var(--gold-400); }
-.menu-tabs { display: flex; gap: .4rem; justify-content: center; }
+.menu-tabs { display: flex; gap: .4rem; justify-content: center; flex-wrap: wrap; }
 .tab { padding: .45rem .9rem; border-radius: 99px; border: 1px solid var(--glass-line); background: transparent; cursor: pointer; }
 .tab[aria-selected="true"] { background: rgba(226, 178, 92, .18); border-color: var(--gold-400); color: var(--gold-300); }
 .tab-panel { display: grid; gap: .8rem; }
+.tab-panel .hint { margin: 0; font-size: .8rem; color: var(--mist-500); }
 .tab-panel .check { display: flex; align-items: center; gap: .6rem; font-size: .9rem; color: var(--text); }
 .check input { width: 18px; height: 18px; accent-color: var(--gold-400); }
 .controls-list { display: grid; grid-template-columns: auto 1fr; gap: .45rem 1rem; margin: 0; font-size: .9rem; }

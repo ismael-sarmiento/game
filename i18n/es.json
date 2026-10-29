@@ -56,7 +56,8 @@
   "academy": "Ir a IsAcademy",
   "resetConfirm": "¿Borrar misiones y curiosidades de este navegador? Los ajustes se conservan.",
   "graduated": "Graduación",
-  "facts": "Curiosidades"
+  "facts": "Curiosidades",
+  "graphics": "Gráficos"
  },
  "hud": {
   "objective": "Objetivo",
@@ -453,5 +454,19 @@
    "title": "Bits y caracteres",
    "text": "Un byte tiene 8 bits. El código ASCII, de 1963, usaba 7 bits: 128 combinaciones para letras, números y símbolos."
   }
- ]
+ ],
+ "gfx": {
+  "scale": "Resolución",
+  "reflections": "Reflejos en tiempo real",
+  "occlusion": "Sombras de contacto (oclusión)",
+  "aa": "Suavizado de bordes",
+  "byQuality": "Según calidad",
+  "on": "Activados",
+  "off": "Desactivados",
+  "traa": "Temporal (más nítido)",
+  "fxaa": "FXAA (más ligero)",
+  "motionBlur": "Desenfoque de movimiento",
+  "grain": "Grano de película",
+  "hint": "Si notas tirones, baja la calidad o la resolución."
+ }
 }

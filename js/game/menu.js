@@ -24,6 +24,21 @@ export class Menu {
     $('cycle-value').textContent = game.t('settings.minutes', { n: s.cycle });
     bind('set-fps', 'fps', (v) => { $('fps').hidden = !v; }, 'checked');
     $('fps').hidden = !s.fps && !new URLSearchParams(location.search).has('debug');
+
+    // graphics: every change rebuilds the post-processing chain
+    const gfx = s.gfx;
+    const showScale = () => { $('scale-value').textContent = `${Math.round(gfx.scale * 100)} %`; };
+    ['scale', 'reflections', 'occlusion', 'aa', 'motionBlur', 'grain'].forEach((key) => {
+      const el = $(`gfx-${key}`);
+      const prop = el.type === 'checkbox' ? 'checked' : 'value';
+      el[prop] = gfx[key];
+      el.addEventListener('change', () => {
+        gfx[key] = prop === 'checked' ? el.checked : (el.type === 'range' ? Number(el.value) : el.value);
+        game.save.write(); game.applyGraphics(); showScale();
+      });
+    });
+    $('gfx-scale').addEventListener('input', showScale);
+    showScale();
     $('set-lang').value = document.documentElement.lang;
 
     // title screen selectors share the same settings

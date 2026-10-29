@@ -56,7 +56,8 @@
   "academy": "Go to IsAcademy",
   "resetConfirm": "Delete missions and facts saved in this browser? Settings are kept.",
   "graduated": "Graduation",
-  "facts": "Facts"
+  "facts": "Facts",
+  "graphics": "Graphics"
  },
  "hud": {
   "objective": "Objective",
@@ -453,5 +454,19 @@
    "title": "Bits and characters",
    "text": "A byte has 8 bits. ASCII, from 1963, used 7 bits: 128 combinations for letters, digits and symbols."
   }
- ]
+ ],
+ "gfx": {
+  "scale": "Resolution",
+  "reflections": "Real-time reflections",
+  "occlusion": "Contact shadows (occlusion)",
+  "aa": "Anti-aliasing",
+  "byQuality": "By quality",
+  "on": "On",
+  "off": "Off",
+  "traa": "Temporal (sharper)",
+  "fxaa": "FXAA (lighter)",
+  "motionBlur": "Motion blur",
+  "grain": "Film grain",
+  "hint": "If it stutters, lower the quality or the resolution."
+ }
 }

@@ -113,6 +113,7 @@
       <h2 id="pause-title" data-i18n="menu.paused">Pausa</h2>
       <div class="menu-tabs" role="tablist">
         <button type="button" role="tab" class="tab" aria-selected="true" data-tab="settings" data-i18n="menu.settings">Ajustes</button>
+        <button type="button" role="tab" class="tab" aria-selected="false" data-tab="graphics" data-i18n="menu.graphics">Gráficos</button>
         <button type="button" role="tab" class="tab" aria-selected="false" data-tab="controls" data-i18n="menu.controls">Controles</button>
         <button type="button" role="tab" class="tab" aria-selected="false" data-tab="progress" data-i18n="menu.progress">Progreso</button>
       </div>
@@ -151,6 +152,21 @@
           </select>
         </label>
         <label class="check"><input id="set-fps" type="checkbox"><span data-i18n="settings.fps">Mostrar FPS</span></label>
+      </div>
+      <div class="tab-panel" data-panel="graphics" hidden>
+        <label><span><span data-i18n="gfx.scale">Resolución</span> · <output id="scale-value"></output></span><input id="gfx-scale" type="range" min="0.5" max="1" step="0.05"></label>
+        <label><span data-i18n="gfx.reflections">Reflejos en tiempo real</span>
+          <select id="gfx-reflections"><option value="auto" data-i18n="gfx.byQuality">Según calidad</option><option value="on" data-i18n="gfx.on">Activados</option><option value="off" data-i18n="gfx.off">Desactivados</option></select>
+        </label>
+        <label><span data-i18n="gfx.occlusion">Sombras de contacto (oclusión)</span>
+          <select id="gfx-occlusion"><option value="auto" data-i18n="gfx.byQuality">Según calidad</option><option value="on" data-i18n="gfx.on">Activados</option><option value="off" data-i18n="gfx.off">Desactivados</option></select>
+        </label>
+        <label><span data-i18n="gfx.aa">Suavizado de bordes</span>
+          <select id="gfx-aa"><option value="auto" data-i18n="gfx.byQuality">Según calidad</option><option value="traa" data-i18n="gfx.traa">Temporal (más nítido)</option><option value="fxaa" data-i18n="gfx.fxaa">FXAA (más ligero)</option><option value="off" data-i18n="gfx.off">Desactivados</option></select>
+        </label>
+        <label class="check"><input id="gfx-motionBlur" type="checkbox"><span data-i18n="gfx.motionBlur">Desenfoque de movimiento</span></label>
+        <label class="check"><input id="gfx-grain" type="checkbox"><span data-i18n="gfx.grain">Grano de película</span></label>
+        <p class="hint" data-i18n="gfx.hint">Si notas tirones, baja la calidad o la resolución.</p>
       </div>
       <div class="tab-panel" data-panel="controls" hidden>
         <dl class="controls-list" id="controls-list"></dl>
