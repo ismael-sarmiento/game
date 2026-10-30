@@ -63,6 +63,8 @@ async function boot() {
   const preset = { ...PRESETS[level] };
   progress(18, 'boot.loadingGpu');
   const { renderer, backend } = await createRenderer($('stage'), preset);
+  // the WebGL2 fallback cannot hold 60 fps on High in the busiest views: on Auto it starts on Medium
+  if (q.auto && backend === 'WebGL2' && level === 'high') { level = 'medium'; Object.assign(preset, PRESETS.medium); }
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.1, 3800);
@@ -121,9 +123,10 @@ async function boot() {
   chase.snap(avatar.facing);
 
   const pipeline = new Pipeline(renderer, scene, camera);
+  const relief = {};   // effects the automatic quality switched off before lowering the level
   const applyGraphics = () => {
     renderer.setPixelRatio(Math.min(devicePixelRatio, preset.pixelRatio) * settings.gfx.scale);
-    pipeline.configure(effects(preset, settings.gfx));
+    pipeline.configure(effects(preset, settings.gfx, { backend, relief }));
     setDrawScale(preset.detail);
   };
   applyGraphics();
@@ -164,12 +167,18 @@ async function boot() {
     pool.forEach((l) => { l.visible = preset.lights; });
     if (auto) game.hud.toast(t('hud.qualityAuto', { level: t(`settings.${next}`) }));
   }
-  const autoQ = new AutoQuality((next) => applyQuality(next, true));
+  // slow frames: first give up the heaviest effects left on Auto, then step the level down
+  const autoQ = new AutoQuality(() => {
+    const on = effects(preset, settings.gfx, { backend, relief });
+    const drop = ['reflections', 'occlusion'].find((k) => on[k] && settings.gfx[k] === 'auto');
+    if (drop) { relief[drop] = true; applyGraphics(); game.hud.toast(t('hud.effectsAuto')); }
+    else if (level !== 'low') applyQuality(level === 'high' ? 'medium' : 'low', true);
+  });
   autoQ.enabled = q.auto && settings.quality === 'auto';
   game.setAutoQuality = (on) => { autoQ.enabled = on; };
 
   // warm-up: compile every pipeline before the player sees the city
-  progress(78, 'boot.loadingShaders'); await nextFrame();
+  progress(78, backend === 'WebGL2' ? 'boot.loadingShadersSlow' : 'boot.loadingShaders'); await nextFrame();
   camera.position.set(30, 6, 60); camera.lookAt(0, 4, 0);
   try { await renderer.compileAsync(scene, camera); } catch { /* compiled lazily instead */ }
   // render a few frames at noon, dusk and night behind the title card so no shader compiles mid-game
@@ -387,7 +396,7 @@ async function boot() {
       game.fps = fps;
       if (game.started && !game.paused) game.hud.setFps(fps, renderer.info);
     }
-    if (game.started && !game.paused) autoQ.sample(dt, level);
+    if (game.started && !game.paused) autoQ.sample(dt);
   });
 
   addEventListener('resize', () => {

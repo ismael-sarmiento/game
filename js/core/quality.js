@@ -16,28 +16,31 @@ export function initialLevel(setting) {
   return { level, auto: true };
 }
 
-// Watches frame times and asks to step down once (per level) after a sustained slow stretch.
+// Watches frame times and asks for relief after a sustained slow stretch (under about 50 fps on average for 120
+// frames); the caller decides what to give up first.
 export class AutoQuality {
-  constructor(onChange) { this.onChange = onChange; this.samples = []; this.cooldown = 4; this.enabled = true; }
-  sample(dt, level) {
+  constructor(onSlow) { this.onSlow = onSlow; this.samples = []; this.cooldown = 4; this.enabled = true; }
+  sample(dt) {
     if (!this.enabled) return;
     this.cooldown -= dt;
     this.samples.push(dt);
     if (this.samples.length > 120) this.samples.shift();
     if (this.cooldown > 0 || this.samples.length < 120) return;
     const avg = this.samples.reduce((a, b) => a + b, 0) / this.samples.length;
-    if (avg > 1 / 38 && level !== 'low') {
-      this.samples.length = 0; this.cooldown = 6;
-      this.onChange(level === 'high' ? 'medium' : 'low');
-    }
+    if (avg > 1 / 50) { this.samples.length = 0; this.cooldown = 6; this.onSlow(); }
   }
 }
 
-// Effects for the post-processing chain: the preset decides, unless the player forced an option in Settings.
-export function effects(preset, gfx) {
-  const pick = (key) => (gfx[key] === 'on' ? true : gfx[key] === 'off' ? false : preset[key]);
+// Effects for the post-processing chain: the preset decides, unless the player forced an option in Settings. On Auto,
+// the WebGL2 fallback keeps to the light effects (each of reflections, ambient occlusion and TRAA drops busy views to
+// about 45 fps there), and `relief` holds the effects the automatic quality has switched off.
+export function effects(preset, gfx, { backend = 'WebGPU', relief = {} } = {}) {
+  const lite = backend === 'WebGL2';
+  const auto = (key) => preset[key] && !relief[key] && !lite;
+  const pick = (key) => (gfx[key] === 'on' ? true : gfx[key] === 'off' ? false : auto(key));
   return {
     reflections: pick('reflections'), occlusion: pick('occlusion'), bloom: preset.bloom || gfx.bloom === 'on',
-    aa: gfx.aa === 'auto' ? preset.aa : gfx.aa, motionBlur: Boolean(gfx.motionBlur), grain: Boolean(gfx.grain),
+    aa: gfx.aa !== 'auto' ? gfx.aa : lite && preset.aa === 'traa' ? 'fxaa' : preset.aa,
+    motionBlur: Boolean(gfx.motionBlur), grain: Boolean(gfx.grain),
   };
 }
