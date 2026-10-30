@@ -2,7 +2,7 @@
 // the wind, rain rings on puddles, spray from wet tyres, gulls over the bay, a plane crossing the sky now and then, a
 // helicopter circling the tower, and the sound of all of it (traffic, crowd, waves, gusts) placed around the listener.
 import * as THREE from 'three/webgpu';
-import { positionLocal, vec3, sin, time, instanceIndex, hash, float, abs, instancedBufferAttribute } from 'three/tsl';
+import { positionLocal, vec3, sin, time, instanceIndex, hash, float, abs, instancedBufferAttribute, uv, normalView, positionView } from 'three/tsl';
 import { CITY, roadAt, blockAt, rng } from './layout.js';
 import { SHORE } from './landscape.js';
 import { single } from './chunks.js';
@@ -109,15 +109,18 @@ export class Ambient {
       const rotorMat = new THREE.MeshBasicNodeMaterial({ color: 0x111111, transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide });
       const rotor = new THREE.Mesh(new THREE.CircleGeometry(5.5, 24).rotateX(-Math.PI / 2), rotorMat); rotor.position.y = 1.5;
       const beacon = lamp(0xff2a2a); beacon.position.set(0, -1.2, 0);
-      // search light: a soft cone towards the street, only noticeable at night
-      const coneMat = new THREE.MeshBasicNodeMaterial({ transparent: true, opacity: 0.05, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+      // search light: a narrow beam towards the street, brightest at the lamp and fading with distance, with soft
+      // edges (faint where the beam is seen side-on), so from afar it reads as light in the air, not a pale solid bell
+      const coneMat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+      const facing = abs(normalView.dot(positionView.normalize()));
       coneMat.colorNode = vec3(0.9, 0.92, 1);
-      const cone = new THREE.Mesh(new THREE.ConeGeometry(9, 60, 20, 1, true).translate(0, -30, 0), coneMat);
+      coneMat.opacityNode = uv().y.pow(2.2).mul(facing.pow(1.5)).mul(0.16);
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(4.5, 55, 20, 1, true).translate(0, -27.5, 0), coneMat);
       cone.rotation.x = 0.35;
       g.add(cabin, boom, fin, rotor, beacon, cone);
       g.userData = { strobe: beacon, rotor, cone };
     }
-    // visible at start so the first compile (main.js) prepares its materials; hidden on the first update
+    // visible at start so the warm-up in main.js compiles its materials; main.js hides it right after
     scene.add(g);
     return g;
   }

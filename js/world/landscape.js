@@ -1,11 +1,12 @@
 // Beyond the streets: a bay to the north with a promenade wall, distant mountains all around, flocks of birds that
 // wheel over the city by day and pigeons on the campus that take off when someone walks through them.
 import * as THREE from 'three/webgpu';
-import { positionLocal, positionWorld, vec3, float, sin, time, instanceIndex, hash, mx_noise_float, mix, smoothstep, abs, bumpMap } from 'three/tsl';
+import { positionLocal, positionWorld, vec3, float, sin, time, instanceIndex, hash, mx_noise_float, mix, smoothstep, abs, bumpMap, uniform, pmremTexture, cameraPosition } from 'three/tsl';
 import { CITY, blockAt, rng } from './layout.js';
 import { NIGHT } from './timeofday.js';
 
 export const SHORE = -CITY.HALF - 30;            // the bay starts north of the last road
+const HAZE = uniform(new THREE.Color(0x9fb6d4));   // the fog colour, copied every frame for the mountains' haze
 
 export function buildLandscape({ scene, world, RAPIER }) {
   // bay: deep water with moving ripples; reflections come from the sky map and SSR
@@ -58,9 +59,19 @@ export function buildLandscape({ scene, world, RAPIER }) {
     pos.setXYZ(i, x * inward, y * h - 20, z * inward);
   }
   ridge.computeVertexNormals();
-  const rock = new THREE.MeshStandardNodeMaterial({ roughness: 0.95, side: THREE.DoubleSide });
+  // distant silhouettes, unlit, in the colour of the sky right behind them and a little darker, so they always read
+  // as mountains against the sky (scene fog and lighting made them pale domes at dusk). Snow on the peaks by day.
+  // Until the sky's reflection map exists (sky.js), the fog colour stands in.
+  const rock = new THREE.MeshBasicNodeMaterial({ side: THREE.DoubleSide, fog: false });
   const n = mx_noise_float(positionWorld.mul(0.004)).mul(0.5).add(0.5);
-  rock.colorNode = mix(mix(vec3(0.16, 0.2, 0.13), vec3(0.3, 0.3, 0.28), smoothstep(120, 320, positionWorld.y)), vec3(0.85, 0.87, 0.9), smoothstep(380, 430, positionWorld.y.add(n.mul(60))));
+  const snow = smoothstep(380, 430, positionWorld.y.add(n.mul(60))).mul(float(1).sub(NIGHT)).mul(0.2);
+  const shade = mix(float(0.8), float(0.6), NIGHT).mul(n.mul(0.12).add(0.94));
+  rock.colorNode = HAZE.mul(shade).add(snow);
+  const skyBehind = () => {
+    const dir = positionWorld.sub(cameraPosition).normalize();
+    rock.colorNode = pmremTexture(scene.environment, vec3(dir.x, dir.y.max(0.02), dir.z), float(0.3)).rgb.mul(shade).add(snow);
+    rock.needsUpdate = true;
+  };
   const mountains = new THREE.Mesh(ridge, rock);
   scene.add(mountains);
 
@@ -89,6 +100,8 @@ export function buildLandscape({ scene, world, RAPIER }) {
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), s = new THREE.Vector3(1, 1, 1);
   return {
     update(dt, t, player, night) {
+      if (scene.fog) HAZE.value.copy(scene.fog.color);
+      if (scene.environment && !rock.userData.sky) { rock.userData.sky = true; skyBehind(); }
       // boats drift slowly and bob
       boats.forEach((b) => {
         const u = b.userData;

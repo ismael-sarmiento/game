@@ -3,11 +3,11 @@
 // Cars move as kinematic bodies; when the player is about to hit one it becomes a real dynamic body, so a crash
 // shares momentum, pushes and spins it. Once it settles out of sight it rejoins the traffic elsewhere.
 import * as THREE from 'three/webgpu';
-import { CITY, roadAt, rng } from './layout.js';
+import { CITY, roadAt, nearestRoad, rng } from './layout.js';
 import { vertexColor, instancedBufferAttribute, vec3, step, float } from 'three/tsl';
 import { atNight } from './materials.js';
 import { buildVehicle, pickType, TYPE_NAMES } from './vehicles.js';
-import { GROUPS } from './people.js';
+import { GROUPS, inView } from './people.js';
 
 const PAINTS = ['#c9cde3', '#0e1430', '#2e3c74', '#7a5212', '#5a0f1f', '#1f4a44', '#3a3f55', '#e7e9f5', '#101010', '#4b2a70'];
 const MASS = { sedan: 1350, suv: 1850, van: 2100, taxi: 1350, bus: 11000 };
@@ -63,11 +63,19 @@ export class Traffic {
     this.setCount(count);
   }
 
-  // a fresh route; `avoid` keeps respawns away from the player
-  spawn(car, avoid = null) {
+  // a fresh route; `avoid` keeps respawns away from the player; `near` (with the camera) brings the car to a crossing
+  // 80–220 m from the player that is out of view, so the streets around the player stay busy
+  spawn(car, avoid = null, near = null, camera = null) {
     const r = this.rand;
     let i, j;
     for (let tries = 0; tries < 30; tries++) {
+      if (near) {
+        const ci = nearestRoad(near.x), cj = nearestRoad(near.z);
+        i = Math.max(0, Math.min(CITY.N, ci + Math.floor(r() * 7) - 3)); j = Math.max(0, Math.min(CITY.N, cj + Math.floor(r() * 7) - 3));
+        const d = Math.hypot(roadAt(i) - near.x, roadAt(j) - near.z);
+        if (d > 80 && d < 220 && !(camera && inView(camera, roadAt(i), roadAt(j)))) break;
+        continue;
+      }
       i = Math.floor(r() * (CITY.N + 1)); j = Math.floor(r() * (CITY.N + 1));
       if (!avoid || Math.hypot(roadAt(i) - avoid.x, roadAt(j) - avoid.z) > 180) break;
     }
@@ -154,6 +162,16 @@ export class Traffic {
         }
         car.braking = 1; car.blink = 0;
         continue;
+      }
+
+      // far away and out of sight: bring it back to the streets around the player (checked about once a second)
+      car.recycle = (car.recycle ?? this.rand()) - dt;
+      if (car.recycle <= 0) {
+        car.recycle = 1;
+        if (car.pos.distanceTo(player) > 260 && !inView(game.ctx.camera, car.pos.x, car.pos.z)) {
+          this.spawn(car, null, player, game.ctx.camera);
+          car.body.setTranslation({ x: car.pos.x, y: 0, z: car.pos.z }, true);
+        }
       }
 
       const s = this.segment(car);

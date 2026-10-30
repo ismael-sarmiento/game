@@ -101,6 +101,15 @@ export class PersonRig {
   }
 }
 
+// roughly inside the camera's view cone (buildings in the way are ignored, so this errs on the side of "seen")
+const toPoint = new THREE.Vector3(), camFwd = new THREE.Vector3();
+export function inView(camera, x, z) {
+  toPoint.set(x - camera.position.x, 1 - camera.position.y, z - camera.position.z);
+  if (toPoint.lengthSq() > 160 * 160) return false;
+  camera.getWorldDirection(camFwd);
+  return toPoint.normalize().dot(camFwd) > Math.cos(THREE.MathUtils.degToRad(camera.fov * 0.5 * Math.max(1, camera.aspect) + 8));
+}
+
 const EDGE = CITY.BLOCK / 2 - 2.6;     // people walk 2.6 m inside the block edge (trees sit at 1.7 m)
 const PERIM = EDGE * 8;
 
@@ -135,19 +144,26 @@ export class Crowd {
     this.count = n;
   }
 
-  // a person somewhere on the sidewalks of the blocks around the player
+  // a person on a sidewalk of the blocks around the player, preferably 15–60 m away and out of the camera's view, so
+  // the street near the player stays busy and nobody pops up in sight
   respawn(p, centre) {
-    const r = this.rand;
-    let i, j;
-    for (let tries = 0; tries < 12; tries++) {
-      const ci = Math.round((centre.x + CITY.HALF - CITY.ROAD - CITY.BLOCK / 2) / CITY.PITCH);
-      const cj = Math.round((centre.z + CITY.HALF - CITY.ROAD - CITY.BLOCK / 2) / CITY.PITCH);
-      i = THREE.MathUtils.clamp(ci + Math.floor(r() * 3) - 1, 0, CITY.N - 1);
-      j = THREE.MathUtils.clamp(cj + Math.floor(r() * 3) - 1, 0, CITY.N - 1);
-      if (!isCampus(i, j) || r() < 0.4) break;
+    const r = this.rand, cam = this.game?.ctx.camera;
+    const ci = Math.round((centre.x + CITY.HALF - CITY.ROAD - CITY.BLOCK / 2) / CITY.PITCH);
+    const cj = Math.round((centre.z + CITY.HALF - CITY.ROAD - CITY.BLOCK / 2) / CITY.PITCH);
+    let best = null;
+    for (let tries = 0; tries < 16; tries++) {
+      const i = THREE.MathUtils.clamp(ci + Math.floor(r() * 3) - 1, 0, CITY.N - 1);
+      const j = THREE.MathUtils.clamp(cj + Math.floor(r() * 3) - 1, 0, CITY.N - 1);
+      if (isCampus(i, j) && r() > 0.4) continue;
+      p.bx = blockAt(i); p.bz = blockAt(j); p.s = r() * PERIM;
+      const L = this.loop(p), d = Math.hypot(L.x - centre.x, L.z - centre.z);
+      const score = (d < 15 ? 3 : d > 60 ? 1 + (d - 60) / 20 : 0) + (cam && inView(cam, L.x, L.z) ? 1.5 : 0);
+      if (!best || score < best.score) best = { score, bx: p.bx, bz: p.bz, s: p.s };
+      if (score === 0) break;
     }
     p.mode = 'walk'; p.partner = null; p.cross = null;
-    p.bx = blockAt(i); p.bz = blockAt(j); p.s = r() * PERIM; p.dir = r() < 0.5 ? 1 : -1;
+    if (best) { p.bx = best.bx; p.bz = best.bz; p.s = best.s; }
+    p.dir = r() < 0.5 ? 1 : -1;
     p.speed = 1.15 + r() * 0.5; p.flee = 0; p.waved = false;
     p.mode = r() < 0.72 ? 'walk' : 'idle';
     p.timer = 6 + r() * 20;
@@ -249,7 +265,7 @@ export class Crowd {
       const off = k >= this.visibleCount;
       if (p.rig.root.visible === off) { p.rig.root.visible = !off; if (off) { this.unpair(p); p.body.setNextKinematicTranslation({ x: 0, y: -30, z: 0 }); } }
       if (off) continue;
-      if (!p.placed || p.pos.distanceToSquared(player) > 125 * 125) { this.unpair(p); this.respawn(p, player); }
+      if (!p.placed || p.pos.distanceToSquared(player) > 100 * 100) { this.unpair(p); this.respawn(p, player); }
       const d = Math.hypot(player.x - p.pos.x, player.z - p.pos.z);
       if (carFast && d < 9 && p.flee <= 0) this.startFlee(p, player);
 

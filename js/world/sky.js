@@ -27,7 +27,8 @@ function makeSky(withStars) {
     const star = step(0.9975, hash(cell.x.add(cell.y.mul(57)).add(cell.z.mul(113)))).mul(smoothstep(0.06, 0.3, dir.y));
     const twinkle = sin(time.mul(3).add(hash(cell.x.add(cell.z)).mul(40))).mul(0.35).add(0.65);
     const md = dot(dir, normalize(sky.moonDir));
-    const moon = smoothstep(0.9993, 0.99955, md).mul(2.4).add(pow(max(md, 0), 160).mul(0.25));
+    // a disc of about 1.2° (a little larger than the real 0.5°, so it reads on screen) inside a soft halo
+    const moon = smoothstep(0.99994, 0.99996, md).mul(3.0).add(pow(max(md, 0), 900).mul(0.18));
     const nightGlow = vec3(0.012, 0.018, 0.05).add(vec3(0.12, 0.06, 0.18).mul(pow(max(float(1).sub(dir.y.mul(5)), 0), 3)));
     extra = vec3(1, 1, 1).mul(star).mul(twinkle).mul(1.4).add(vec3(0.85, 0.9, 1).mul(moon)).add(nightGlow).mul(NIGHT);
   }

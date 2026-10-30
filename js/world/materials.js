@@ -54,7 +54,7 @@ export function buildingMaterial(type, seedAttr, accentAttr, textures) {
   const glassFront = band(wp.y, 0.45, 2.8, 0.08).mul(shopDoors).mul(wall);
   const shopTint = mix(vec3(1.0, 0.82, 0.6), vec3(0.7, 0.78, 0.88), step(0.55, hash(shopId.add(5.0))));
   // the room behind the glass: brighter under the ceiling lights, shelves and counters as darker shapes
-  const ceiling = smoothstep(0.6, 2.7, wp.y).mul(0.7).add(0.3);
+  const ceiling = smoothstep(0.5, 2.75, wp.y).pow(1.5).mul(0.8).add(0.2);   // light falls off from the ceiling down
   const shelfCol = step(0.45, fract(hor.mul(0.9).add(hash(shopId.add(9.0)))));
   const shelves = float(1).sub(shelfCol.mul(band(wp.y, 0.5, 1.9, 0.04)).mul(0.65));
   const shopGlow = glassFront.mul(shopLit).mul(mullion).mul(ceiling).mul(shelves).mul(hash(shopId.add(3.0)).mul(0.35).add(0.35));
@@ -87,7 +87,8 @@ export function buildingMaterial(type, seedAttr, accentAttr, textures) {
     m.roughnessNode = mix(float(0.04), float(0.35), frameMetal);
     m.metalnessNode = mix(float(0.92), float(0.7), frameMetal);
   }
-  m.emissiveNode = windows.mul(mix(float(0.025), float(1.0), NIGHT)).add(shops.mul(atNight(0.12)));
+  // shop interiors: faintly visible through the glass by day; at night a lit room, not a white plate
+  m.emissiveNode = windows.mul(mix(float(0.025), float(1.0), NIGHT)).add(shops.mul(mix(float(0.18), float(0.6), NIGHT)));
   return m;
 }
 

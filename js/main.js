@@ -191,6 +191,7 @@ async function boot() {
     pipeline.render(); await nextFrame();
   }
   clock.mode = savedMode; clock.hour = savedHour; clock.update(0);
+  ambient.plane.visible = ambient.heli.visible = false;   // shown only for the warm-up; they fly in later
   pipeline.render();
   progress(100, 'boot.ready');
 
