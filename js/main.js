@@ -12,6 +12,7 @@ import { loadLang, t, pickLang } from './core/i18n.js';
 import { buildCity } from './world/city.js';
 import { loadTextures } from './world/textures.js';
 import { loadKit } from './world/kit.js';
+import { buildLobby } from './world/interiors.js';
 import { buildProps, TrafficLights } from './world/props.js';
 import { buildLandscape } from './world/landscape.js';
 import { buildSky } from './world/sky.js';
@@ -73,6 +74,8 @@ async function boot() {
   const props = buildProps(ctx, city.lamps);
   const lights = new TrafficLights(ctx);
   const landscape = buildLandscape(ctx);
+  const marble = await new THREE.TextureLoader().loadAsync('assets/kit/textures/T_MarbleFloor_BaseColor.jpg').then((tx) => { tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.colorSpace = THREE.SRGBColorSpace; return tx; }).catch(() => null);
+  const lobby = buildLobby(ctx, city.tower, { marble }, t);
   const clock = new TimeOfDay(17.4);   // golden hour; night falls about a minute later (24-minute day)
   clock.set(settings.time, settings.cycle);
   const weather = new Weather(settings.weather === 'auto' ? 'clear' : settings.weather);
@@ -290,7 +293,10 @@ async function boot() {
     renderer.toneMappingExposure = sky.exposure();
     pipeline.setNight(clock.night);
     car.spot.intensity = 40 + 220 * clock.night;
-    audio.setRain(game.started ? weather.p.rain : 0);
+    // indoors: no rain falling on the camera and the rain only muffled through the glass
+    const indoors = lobby.contains(camera.position, 0.5);
+    sky.rain.setOn(!indoors);
+    audio.setRain(game.started ? weather.p.rain * (indoors ? 0.3 : 1) : 0);
     props.wind.value = 0.6 + weather.p.rain * 0.6 + weather.p.storm * 1.4;
     landscape.update(dt, game.time, game.started ? game.player : camera.position, clock.night);
     lightsTimer -= dt;

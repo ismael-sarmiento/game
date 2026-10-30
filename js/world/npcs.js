@@ -106,6 +106,7 @@ export const MENTORS = [
   { id: 'byte', variant: 'woman_casual', x: blockAt(8) - EDGE, z: blockAt(3), face: -Math.PI / 2, suit: '#3a2a10', trim: '#e2b25c', visor: '#e2b25c', color: '#e2b25c', district: 'data', mission: 'route' },
   { id: 'kernel', variant: 'man_worker', x: blockAt(9) - EDGE, z: blockAt(8), face: -Math.PI / 2, suit: '#0f3326', trim: '#5dffa8', visor: '#5dffa8', color: '#5dffa8', district: 'sec', mission: 'debug' },
   { id: 'nova', variant: 'woman_suit', x: blockAt(3) + EDGE, z: blockAt(3), face: Math.PI / 2, suit: '#0d2c3a', trim: '#3fe0ff', visor: '#3fe0ff', color: '#3fe0ff', district: 'ia', mission: 'train' },
+  { id: 'lia', variant: 'woman_suit', reach: 4.8, noMarker: true, x: blockAt(5) + 4.2, z: blockAt(5), face: Math.PI / 2, suit: '#14182c', trim: '#f2d18b', visor: '#f2d18b', color: '#f2d18b', district: 'campus' },
   { id: 'echo', variant: 'man_suit', x: blockAt(3) + EDGE, z: blockAt(8), face: Math.PI / 2, suit: '#24164a', trim: '#a98bff', visor: '#a98bff', color: '#a98bff', district: 'net' },
 ];
 
@@ -135,7 +136,7 @@ export class Mentors {
         new THREE.MeshBasicNodeMaterial({ color: color.clone().multiplyScalar(0.9), transparent: true, opacity: 0.18, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false }));
       beam.position.set(def.x, CITY.CURB, def.z); scene.add(beam);
       const label = new THREE.Sprite(new THREE.SpriteNodeMaterial({ transparent: true, depthWrite: false }));
-      label.material.map = labelTexture(def.id[0].toUpperCase() + def.id.slice(1), def.color);
+      label.material.map = labelTexture(def.id === 'lia' ? 'Lía' : def.id[0].toUpperCase() + def.id.slice(1), def.color);
       label.material.color.setScalar(0.7);   // readable without blooming into a blob
       label.scale.set(1.8, 0.45, 1); label.position.set(def.x, CITY.CURB + 2.75, def.z); scene.add(label);
       return { ...def, look, marker, ring, beam, label, yaw: def.face, waved: false, talking: 0, state: 'idle' };
@@ -149,7 +150,7 @@ export class Mentors {
 
   nearest(p, radius = 3.4) {
     let best = null, bd = radius;
-    for (const m of this.list) { const d = Math.hypot(m.x - p.x, m.z - p.z); if (d < bd) { bd = d; best = m; } }
+    for (const m of this.list) { const d = Math.hypot(m.x - p.x, m.z - p.z) - (m.reach ? m.reach - radius : 0); if (d < bd) { bd = d; best = m; } }
     return best;
   }
 
@@ -169,7 +170,7 @@ export class Mentors {
       m.marker.position.set(m.x, CITY.CURB + 3.4 + Math.sin(t * 2 + m.z) * 0.12, m.z);
       m.marker.rotation.y += dt * 1.6;
       const show = m.state === 'offer' || m.state === 'active';
-      m.marker.visible = m.state !== 'done' || m.id === 'iris' || m.id === 'echo';
+      m.marker.visible = !m.noMarker && (m.state !== 'done' || m.id === 'iris' || m.id === 'echo');
       m.beam.visible = show && d > 12;
       m.beam.material.opacity = 0.12 + Math.sin(t * 2) * 0.04;
       m.ring.scale.setScalar(1 + Math.sin(t * 3) * 0.06);

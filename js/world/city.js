@@ -113,7 +113,7 @@ export function buildCity({ scene, world, RAPIER }, textures, kit = null) {
 
   // IsAcademy tower in the campus block (5, 5): three tiers and a golden crown
   const tx = blockAt(5), tz = blockAt(5);
-  addBuilding(tx, tz, 34, 34, 70, CITY.CURB, true, 'glass');
+  addBuilding(tx, tz, 34, 34, 62, CITY.CURB + 8, false, 'glass');   // the glass lobby below (interiors.js) is walkable
   addBuilding(tx, tz, 26, 26, 60, CITY.CURB + 70, false, 'glass');
   addBuilding(tx, tz, 18, 18, 46, CITY.CURB + 130, false, 'glass');
   const towerTop = CITY.CURB + 176;

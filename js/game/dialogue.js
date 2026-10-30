@@ -22,7 +22,7 @@ export class Dialogue {
     const g = this.game;
     this.mentor = mentor; this.open = true;
     g.input.enabled = false;
-    const name = mentor.id[0].toUpperCase() + mentor.id.slice(1);
+    const name = g.t(`mentors.${mentor.id}.name`);
     $('dialog-name').textContent = name;
     $('dialog-role').textContent = g.t(`mentors.${mentor.id}.role`);
     $('dialog-avatar').style.color = mentor.color;

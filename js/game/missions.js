@@ -12,7 +12,7 @@ const BUGS = [
   { x: blockAt(7) - EDGE, z: blockAt(7) }, { x: blockAt(10) - EDGE, z: blockAt(9) }, { x: blockAt(8), z: blockAt(11) - EDGE },
 ];
 const ROUTE_TIME = 150, TRAIN_TIME = 120, TRAIN_GOAL = 8;
-const cap = (id) => id[0].toUpperCase() + id.slice(1);
+
 
 // A pulsing gate: ring on the ground, translucent wall and a tall beam.
 function gate(scene, color, radius = 7) {
@@ -100,7 +100,7 @@ export class Missions {
       const open = M.list.filter((m) => m.state === 'offer');
       const p = g.player;
       const next = open.sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))[0];
-      g.hud.setObjective(t('story.visit', { name: cap(next.id), district: t(`districts.${next.district}`) }), next, next.color);
+      g.hud.setObjective(t('story.visit', { name: t(`mentors.${next.id}.name`), district: t(`districts.${next.district}`) }), next, next.color);
     } else {
       const c = g.collectibles.nearestOpen(g.player);
       if (c) g.hud.setObjective(t('story.explore', { n: this.data.facts.length }), { x: c.x, z: c.z, y: 1 }, '#3fe0ff');
@@ -147,6 +147,10 @@ export class Missions {
       const progress = ['route', 'debug', 'train'].filter((id) => this.done(id)).length;
       return D.show(m, [L('greet', { n: progress })], this.topicsFor(m));
     }
+    if (m.id === 'lia') {
+      const web = { label: L('web'), primary: true, onPick: () => { window.open(CONFIG.ACADEMY_URL, '_blank', 'noopener'); D.close(); } };
+      return D.show(m, [L('greet')], [web, ...this.topicsFor(m)]);
+    }
     if (m.id === 'echo') {
       const c = g.collectibles.nearestOpen(g.player);
       const hint = c ? L('hint', { d: Math.round(Math.hypot(c.x - g.player.x, c.z - g.player.z)), dir: this.direction(c) }) : L('allFound');
@@ -160,7 +164,7 @@ export class Missions {
         { label: t('dialog.abandon'), onPick: () => { D.close(); this.stop(); this.refreshObjective(); } },
       ]);
     }
-    if (this.active) return D.show(m, [t('story.busy', { name: cap(this.mentorOf(this.active.id)) })]);
+    if (this.active) return D.show(m, [t('story.busy', { name: t(`mentors.${this.mentorOf(this.active.id)}.name`) })]);
     if (this.done(id)) return D.show(m, [L('after')], this.topicsFor(m));
     D.show(m, t(`missions.${id}.offer`), [
       { label: t('dialog.accept'), primary: true, onPick: () => { D.close(); this.begin(id); } },

@@ -133,7 +133,7 @@ export class Hud {
     if (g.dialogue.open || g.menu.cardOpen) this.prompt('');
     else {
       const m = g.mentors.nearest(p);
-      if (m && g.mode === 'foot') this.prompt('talk', g.t('hud.talk', { name: m.id[0].toUpperCase() + m.id.slice(1) }));
+      if (m && g.mode === 'foot') this.prompt('talk', g.t('hud.talk', { name: g.t(`mentors.${m.id}.name`) }));
       else if (g.mode === 'foot' && p.distanceTo(g.car.position) < 4.2) this.prompt('car', g.t('hud.enter'));
       else if (g.mode === 'car' && Math.abs(g.car.speed) < 2) this.prompt('exit', g.t('hud.exit'));
       else this.prompt('');

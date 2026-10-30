@@ -207,7 +207,8 @@
      "q": "Where do I start coding?",
      "a": "With something small you care about: automating a task, analysing your own data or making a simple game. Python is a great first language: it reads almost like English."
     }
-   ]
+   ],
+   "name": "Iris"
   },
   "byte": {
    "role": "Data courier · Data District",
@@ -222,7 +223,8 @@
      "q": "What is SQL for?",
      "a": "SQL is the language for asking databases questions: \"give me sales by country, from highest to lowest\". Analysts and AI engineers alike use it."
     }
-   ]
+   ],
+   "name": "Byte"
   },
   "kernel": {
    "role": "Bug hunter · Sec District",
@@ -237,7 +239,8 @@
      "q": "How do I protect my accounts?",
      "a": "Long, different passwords for every site, a password manager and two-step verification (2FA) whenever you can."
     }
-   ]
+   ],
+   "name": "Kernel"
   },
   "nova": {
    "role": "Model trainer · AI District",
@@ -252,7 +255,8 @@
      "q": "Is AI always right?",
      "a": "No. It can be wrong with total confidence. That's why you need to know how to check its answers: AI gives you answers, thinking is up to you."
     }
-   ]
+   ],
+   "name": "Nova"
   },
   "echo": {
    "role": "Network radar · Net District",
@@ -268,7 +272,28 @@
      "q": "What is the cloud?",
      "a": "Other companies' computers that you reach over the Internet to store data or run programs. The cloud is made of very real servers."
     }
-   ]
+   ],
+   "name": "Echo"
+  },
+  "lia": {
+   "role": "Reception · IsAcademy",
+   "greet": "Welcome to the IsAcademy tower! I'm Lía. Our classrooms are upstairs. Can I tell you anything?",
+   "web": "Open the IsAcademy website",
+   "topics": [
+    {
+     "q": "What can I learn here?",
+     "a": "Python, SQL, artificial intelligence, Big Data and Data Engineering, in private online classes tailored to each person."
+    },
+    {
+     "q": "Who are the classes for?",
+     "a": "All ages: from secondary-school beginners to professionals moving into data or AI."
+    },
+    {
+     "q": "How do I start?",
+     "a": "With a free initial assessment: we look at your level and goals and propose a plan. You'll find it on the IsAcademy website."
+    }
+   ],
+   "name": "Lía"
   }
  },
  "missions": {
@@ -496,5 +521,17 @@
   "woman_formal": "Woman, smart",
   "woman_suit": "Woman, suit",
   "woman_worker": "Woman, work clothes"
+ },
+ "lobby": {
+  "motto": "AI gives you answers. Here we teach you how to think.",
+  "courses": [
+   "Python",
+   "SQL",
+   "AI",
+   "Big Data",
+   "Data Eng.",
+   "Your plan"
+  ],
+  "screenLine": "Online classes tailored to you"
  }
 }

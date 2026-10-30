@@ -207,7 +207,8 @@
      "q": "¿Por dónde empiezo a programar?",
      "a": "Por algo pequeño que te importe: automatizar una tarea, analizar tus datos o crear un juego sencillo. Python es una gran primera lengua: se lee casi como el inglés."
     }
-   ]
+   ],
+   "name": "Iris"
   },
   "byte": {
    "role": "Mensajera de datos · Distrito Data",
@@ -222,7 +223,8 @@
      "q": "¿Para qué sirve SQL?",
      "a": "SQL es el idioma para preguntar a las bases de datos: «dame las ventas por país, ordenadas de mayor a menor». Lo usan desde analistas hasta ingenieros de IA."
     }
-   ]
+   ],
+   "name": "Byte"
   },
   "kernel": {
    "role": "Cazador de bugs · Distrito Sec",
@@ -237,7 +239,8 @@
      "q": "¿Cómo protejo mis cuentas?",
      "a": "Contraseñas largas y distintas en cada sitio, un gestor de contraseñas y la verificación en dos pasos (2FA) siempre que puedas."
     }
-   ]
+   ],
+   "name": "Kernel"
   },
   "nova": {
    "role": "Entrenadora de modelos · Distrito IA",
@@ -252,7 +255,8 @@
      "q": "¿La IA siempre tiene razón?",
      "a": "No. Puede equivocarse con total seguridad. Por eso hay que saber comprobar sus respuestas: la IA te da respuestas, pensar es cosa tuya."
     }
-   ]
+   ],
+   "name": "Nova"
   },
   "echo": {
    "role": "Radar de la red · Distrito Net",
@@ -268,7 +272,28 @@
      "q": "¿Qué es la nube?",
      "a": "Ordenadores de otras empresas a los que te conectas por Internet para guardar datos o ejecutar programas. La nube son servidores muy reales."
     }
-   ]
+   ],
+   "name": "Echo"
+  },
+  "lia": {
+   "role": "Recepción · IsAcademy",
+   "greet": "¡Te damos la bienvenida a la torre IsAcademy! Soy Lía. Aquí arriba están nuestras aulas. ¿Te cuento algo?",
+   "web": "Abrir la web de IsAcademy",
+   "topics": [
+    {
+     "q": "¿Qué se aprende aquí?",
+     "a": "Python, SQL, inteligencia artificial, Big Data y Data Engineering, con clases particulares online y adaptadas a cada persona."
+    },
+    {
+     "q": "¿Para quién son las clases?",
+     "a": "Para todas las edades: desde quien empieza en el instituto hasta profesionales que quieren dar el salto a los datos o la IA."
+    },
+    {
+     "q": "¿Cómo se empieza?",
+     "a": "Con un análisis inicial gratuito: vemos tu nivel y tus objetivos y te proponemos un plan. Lo tienes en la web de IsAcademy."
+    }
+   ],
+   "name": "Lía"
   }
  },
  "missions": {
@@ -496,5 +521,17 @@
   "woman_formal": "Chica, ropa elegante",
   "woman_suit": "Chica, traje",
   "woman_worker": "Chica, ropa de trabajo"
+ },
+ "lobby": {
+  "motto": "La IA te da respuestas. Aquí te enseñamos a pensar.",
+  "courses": [
+   "Python",
+   "SQL",
+   "IA",
+   "Big Data",
+   "Data Eng.",
+   "Tu plan"
+  ],
+  "screenLine": "Clases online a tu medida"
  }
 }
