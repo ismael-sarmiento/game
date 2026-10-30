@@ -112,21 +112,27 @@ export function buildProps({ scene, world, RAPIER }, lamps) {
   const sway = sin(time.mul(1.4).add(seed.mul(30))).mul(0.12).mul(wind).mul(positionLocal.y.sub(2.4).max(0));
   leafMat.positionNode = positionLocal.add(vec3(sway, 0, sway.mul(0.6)));
   const leafNoise = mx_noise_float(positionWorld.mul(1.6)).mul(0.5).add(0.5);
-  leafMat.colorNode = mix(vec3(0.035, 0.075, 0.03), vec3(0.11, 0.17, 0.05), leafNoise.mul(seed.mul(0.6).add(0.4))).mul(float(1).sub(WET.mul(0.25)));
-  const canopy = new THREE.IcosahedronGeometry(1.9, 2);
-  const pos = canopy.attributes.position;
-  for (let k = 0; k < pos.count; k++) {   // irregular silhouette instead of a perfect ball
-    const v = new THREE.Vector3().fromBufferAttribute(pos, k);
-    const n = 1 + 0.22 * Math.sin(v.x * 3.1 + v.y * 2.3) * Math.cos(v.z * 2.7);
-    v.multiplyScalar(n); v.y *= 0.85; pos.setXYZ(k, v.x, v.y + 4.2, v.z);
-  }
-  // smooth, rounded shading: normals point away from the canopy centre instead of following each facet
-  const nrm = new Float32Array(pos.count * 3);
-  for (let k = 0; k < pos.count; k++) {
-    const v = new THREE.Vector3(pos.getX(k), pos.getY(k) - 4.2, pos.getZ(k)).normalize();
-    nrm.set([v.x, v.y, v.z], k * 3);
-  }
-  canopy.setAttribute('normal', new THREE.BufferAttribute(nrm, 3));
+  leafMat.colorNode = mix(vec3(0.06, 0.12, 0.035), vec3(0.2, 0.3, 0.07), leafNoise.mul(seed.mul(0.6).add(0.4))).mul(float(1).sub(WET.mul(0.25)));
+  // light passing through the leaves keeps the shaded side from going black
+  leafMat.emissiveNode = vec3(0.025, 0.045, 0.012).mul(float(1).sub(NIGHT));
+  // canopy: five leafy clumps around the crown, each shaded as a soft ball (normals from its own centre)
+  const clumps = [[0, 4.6, 0, 1.5], [1.0, 4.1, 0.4, 1.15], [-0.9, 4.2, -0.5, 1.2], [0.3, 3.8, -1.0, 1.05], [-0.4, 5.3, 0.6, 1.0]];
+  const posArr = [], nrmArr = [];
+  clumps.forEach(([cx, cy, cz, rr], ci) => {
+    const g = new THREE.IcosahedronGeometry(rr, 1);
+    const p = g.attributes.position;
+    for (let k = 0; k < p.count; k++) {
+      const v = new THREE.Vector3().fromBufferAttribute(p, k);
+      const n = v.clone().normalize();
+      const bump = 1 + 0.16 * Math.sin(v.x * 5.1 + ci) * Math.cos(v.z * 4.3 + v.y * 3.7);
+      v.multiplyScalar(bump);
+      posArr.push(v.x + cx, v.y * 0.9 + cy, v.z + cz);
+      nrmArr.push(n.x, n.y, n.z);
+    }
+  });
+  const canopy = new THREE.BufferGeometry();
+  canopy.setAttribute('position', new THREE.Float32BufferAttribute(posArr, 3));
+  canopy.setAttribute('normal', new THREE.Float32BufferAttribute(nrmArr, 3));
   const up = new THREE.Vector3(0, 1, 0);
   place(scene, new THREE.CylinderGeometry(0.13, 0.2, 3.6, 7).translate(0, 1.8, 0), trunkMat, trees, (t, p, q, s) => { p.set(t.x, CITY.CURB, t.z); s.setScalar(t.s); });
   place(scene, canopy, leafMat, trees, (t, p, q, s) => { p.set(t.x, CITY.CURB, t.z); q.setFromAxisAngle(up, t.rot); s.setScalar(t.s); });

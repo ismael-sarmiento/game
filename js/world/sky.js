@@ -69,7 +69,8 @@ export function buildSky({ scene, renderer, preset }, clock, weather) {
   const refreshEnv = () => {
     envSky.sunPosition.value.copy(sky.sunPosition.value);
     ['turbidity', 'cloudCoverage', 'cloudDensity'].forEach((k) => { envSky[k].value = sky[k].value; });
-    envSky.gain.value = sky.gain.value;
+    // the physical sky is very bright in HDR: as ambient light it would wash out every shadow
+    envSky.gain.value = sky.gain.value * 0.12;
     envLights.visible = clock.night > 0.25;
     envLights.children.forEach((m, k) => m.material.color.copy(c(tints[k % tints.length])).multiplyScalar(2.2 * clock.night));
     ground.material.color.copy(lerpColor(new THREE.Color(), c('#5a5d66'), c('#0d0f16'), clock.night));
@@ -85,7 +86,7 @@ export function buildSky({ scene, renderer, preset }, clock, weather) {
   const colors = {
     sunHigh: c('#fff3e2'), sunLow: c('#ff9a52'), moon: c('#8fa6ff'),
     skyDay: c('#9cc2ff'), skyNight: c('#33428f'), groundDay: c('#6b6152'), groundNight: c('#0b0e1f'),
-    fogDay: c('#a9bdd6'), fogDusk: c('#c98a72'), fogNight: c('#0c1330'), fogStorm: c('#3c4352'),
+    fogDay: c('#9fb6d4'), fogDusk: c('#c98a72'), fogNight: c('#0c1330'), fogStorm: c('#3c4352'),
   };
 
   return {
@@ -114,7 +115,7 @@ export function buildSky({ scene, renderer, preset }, clock, weather) {
       sun.target.position.copy(target);
       if (useSun) {
         lerpColor(sun.color, colors.sunLow, colors.sunHigh, clock.sun.y / 0.35);
-        sun.intensity = 2.4 * THREE.MathUtils.smoothstep(clock.sun.y, -0.04, 0.12) * w.sun;
+        sun.intensity = 3.4 * THREE.MathUtils.smoothstep(clock.sun.y, -0.04, 0.12) * w.sun;
       } else {
         sun.color.copy(colors.moon);
         sun.intensity = 0.55 * n * (0.4 + 0.6 * w.sun);
@@ -123,14 +124,14 @@ export function buildSky({ scene, renderer, preset }, clock, weather) {
 
       lerpColor(hemi.color, colors.skyDay, colors.skyNight, n);
       lerpColor(hemi.groundColor, colors.groundDay, colors.groundNight, n);
-      hemi.intensity = THREE.MathUtils.lerp(0.75, 0.85, n) * THREE.MathUtils.lerp(1, 0.8, w.cover) + weather.flash * 1.5;
+      hemi.intensity = THREE.MathUtils.lerp(0.32, 0.85, n) * THREE.MathUtils.lerp(1, 1.5, w.cover * (1 - n)) + weather.flash * 1.5;
 
       lerpColor(tmp, colors.fogDay, colors.fogNight, n);
       tmp.lerp(colors.fogDusk, d * 0.55);
       lerpColor(tmp2, tmp, colors.fogStorm, (w.cover - 0.3) * (1 - n) * 0.9);
       scene.fog.color.copy(tmp2);
-      scene.fog.density = THREE.MathUtils.lerp(0.0007, 0.0019, n) * w.fog;
-      scene.environmentIntensity = THREE.MathUtils.lerp(0.7, 0.6, n);
+      scene.fog.density = THREE.MathUtils.lerp(0.00045, 0.0019, n) * w.fog;
+      scene.environmentIntensity = THREE.MathUtils.lerp(0.55, 0.6, n);
 
       envTimer -= dt;
       const state = `${Math.round(clock.hour * 4)}|${weather.state}|${Math.round(w.cover * 10)}`;
@@ -139,7 +140,7 @@ export function buildSky({ scene, renderer, preset }, clock, weather) {
       rain.setIntensity(w.rain);
       rain.update(camera, dt);
     },
-    exposure() { return THREE.MathUtils.lerp(0.48, 1.05, clock.night); },
+    exposure() { return THREE.MathUtils.lerp(0.72, 1.05, clock.night); },
   };
 }
 

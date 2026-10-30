@@ -116,6 +116,7 @@ export function buildCity({ scene, world, RAPIER }, textures) {
     const a = rand() * Math.PI * 2, r = 620 + rand() * 520;
     const x = Math.cos(a) * r, z = Math.sin(a) * r;
     const w = 30 + rand() * 50, h = 40 + rand() * rand() * 260;
+    if (z < -CITY.HALF - 60) continue;   // the bay lies north of the city
     skyline.push({ x, y: 0, z, w, d: 30 + rand() * 50, h, type: h > 90 ? 'glass' : 'office', accent: new THREE.Color(['#3fe0ff', '#e2b25c', '#a98bff', '#5dffa8'][k % 4]), seed: rand() });
   }
 

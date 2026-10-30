@@ -12,6 +12,7 @@ import { loadLang, t, pickLang } from './core/i18n.js';
 import { buildCity } from './world/city.js';
 import { loadTextures } from './world/textures.js';
 import { buildProps, TrafficLights } from './world/props.js';
+import { buildLandscape } from './world/landscape.js';
 import { buildSky } from './world/sky.js';
 import { TimeOfDay } from './world/timeofday.js';
 import { Weather } from './world/weather.js';
@@ -67,6 +68,7 @@ async function boot() {
   const city = buildCity(ctx, textures);
   const props = buildProps(ctx, city.lamps);
   const lights = new TrafficLights(ctx);
+  const landscape = buildLandscape(ctx);
   const clock = new TimeOfDay(17.4);   // golden hour; night falls about a minute later (24-minute day)
   clock.set(settings.time, settings.cycle);
   const weather = new Weather(settings.weather === 'auto' ? 'clear' : settings.weather);
@@ -283,6 +285,7 @@ async function boot() {
     car.spot.intensity = 40 + 220 * clock.night;
     audio.setRain(game.started ? weather.p.rain : 0);
     props.wind.value = 0.6 + weather.p.rain * 0.6 + weather.p.storm * 1.4;
+    landscape.update(dt, game.time, game.started ? game.player : camera.position, clock.night);
     lightsTimer -= dt;
     if (lightsTimer <= 0) { lightsTimer = 0.25; lights.update(game.time); }
     audio.setNight(clock.night);

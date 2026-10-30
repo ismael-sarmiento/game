@@ -132,21 +132,15 @@ export function pavementMaterial(textures, plaza = false) {
   const bx = mod(wp.x.add(CITY.HALF - CITY.ROAD + p * 20), p), bz = mod(wp.z.add(CITY.HALF - CITY.ROAD + p * 20), p);
   const edge = min(min(bx, float(CITY.BLOCK).sub(bx)), min(bz, float(CITY.BLOCK).sub(bz)));
   const curb = max(step(edge, 0.32), step(abs(nw.y), 0.5));        // top rim and the vertical faces
-  const gx = fract(wp.x.div(1.5)), gz = fract(wp.z.div(1.5));
-  const seam = plaza ? float(0) : max(step(gx, 0.012), step(gz, 0.012)).mul(float(1).sub(curb));
-  const albedo = texture(t.color, uvP).rgb.mul(plaza ? 0.75 : 0.62);
-  const slab = mix(albedo, vec3(0.08, 0.085, 0.09), seam).mul(float(1).sub(WET.mul(0.35)));
+  // large-scale variation so the texture never reads as a repeated grid
+  const dirt = mx_noise_float(wp.xz.mul(0.05)).mul(0.5).add(0.5);
+  const albedo = texture(t.color, uvP).rgb.mul(plaza ? 0.75 : 0.62).mul(dirt.mul(0.25).add(0.85));
+  const slab = albedo.mul(float(1).sub(WET.mul(0.35)));
   m.colorNode = mix(slab, vec3(0.5, 0.5, 0.52).mul(float(1).sub(WET.mul(0.3))), curb);
   const rough = texture(t.rough, uvP).r.mul(0.3).add(0.62);
   m.roughnessNode = mix(rough, mix(float(0.3), float(0.14), smoothstep(0.55, 0.7, mx_noise_float(wp.xz.mul(0.4)).mul(0.5).add(0.5))), WET);
   m.metalnessNode = float(0.02);
   m.normalNode = bumpMap(texture(t.color, uvP), float(0.8));
-  if (plaza) {
-    const sx = fract(wp.x.div(4.5)), sz = fract(wp.z.div(4.5));
-    const light = max(step(sx, 0.02), step(sz, 0.02));
-    const pulse = time.mul(0.6).add(wp.x.add(wp.z).mul(0.02)).sin().mul(0.5).add(0.5);
-    m.emissiveNode = vec3(0.25, 0.85, 1.0).mul(light).mul(pulse.mul(0.1).add(0.04)).mul(NIGHT);
-  }
   return m;
 }
 

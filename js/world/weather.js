@@ -4,7 +4,7 @@ import * as THREE from 'three/webgpu';
 import { WET } from './timeofday.js';
 
 export const STATES = {
-  clear:  { cover: 0.12, density: 0.3, turbidity: 2.2, rain: 0, fog: 1, sun: 1, wet: 0, storm: 0 },
+  clear:  { cover: 0.36, density: 0.42, turbidity: 2.4, rain: 0, fog: 1, sun: 1, wet: 0, storm: 0 },
   cloudy: { cover: 0.62, density: 0.6, turbidity: 5, rain: 0, fog: 1.35, sun: 0.5, wet: 0, storm: 0 },
   rain:   { cover: 0.85, density: 0.78, turbidity: 8, rain: 1, fog: 1.9, sun: 0.28, wet: 1, storm: 0 },
   storm:  { cover: 0.96, density: 0.92, turbidity: 11, rain: 1.6, fog: 2.5, sun: 0.16, wet: 1, storm: 1 },
