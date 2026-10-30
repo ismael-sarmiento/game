@@ -24,7 +24,8 @@ served at `/isgame/`. Personal project of Ismael Sarmiento; only the global L0 p
 - Static only: no build step, no backend in this repository except `worker/` (deployed separately to Cloudflare by the owner's
   approval), no API keys anywhere. Relative paths (the game lives under `/isgame/`).
 - Libraries are vendored at exact versions in `vendor/` (three.js 0.186.1, Rapier 0.19.3). Upgrade only in a planned phase.
-- All art and sound are generated in code. Any content must be original: no characters, names, maps or assets from existing games.
+- Art and sound are generated in code; external assets only if CC0 (owner decision 2026-10-29), listed in `CREDITS.md`.
+  Any content must be original: no characters, names, maps or assets from existing games.
 - Every user-facing string lives in `i18n/es.json` and `i18n/en.json` with the same keys; Spanish is the default.
 - Facts (`facts` in `i18n/*.json`) must be real and verifiable; never invent one.
 - NPC text from the network is rendered only with `textContent`, never as HTML.

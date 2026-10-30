@@ -17,7 +17,8 @@
   "play": "Jugar",
   "hint": "Mejor con auriculares. WASD para moverte, E para interactuar, Esc para pausa.",
   "back": "← Volver a IsAcademy",
-  "error": "No hemos podido arrancar el juego en este navegador. Prueba con Chrome, Edge o Safari actualizados"
+  "error": "No hemos podido arrancar el juego en este navegador. Prueba con Chrome, Edge o Safari actualizados",
+  "loadingTextures": "Cargando texturas…"
  },
  "settings": {
   "language": "Idioma",

@@ -106,6 +106,10 @@ export class Traffic {
         }
         const turning = car.next && (car.next[0] - car.to[0] !== fx || car.next[1] - car.to[1] !== fz);
         if (turning) want = Math.min(want, 6.5);
+        // traffic light: stop at the line (≈12 m before the centre) unless it is green, or yellow and too close to stop
+        if (game.lights && remaining > 9 && !game.lights.canGo(car.to[0], car.to[1], fx !== 0 ? 'x' : 'z', game.time, remaining)) {
+          want = Math.min(want, Math.max(0, (remaining - 12.8) * 0.9));
+        }
       }
 
       car.speed = THREE.MathUtils.damp(car.speed, want, want < car.speed ? 5 : 1.4, dt);

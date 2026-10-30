@@ -2,7 +2,7 @@
 // playable area and the static physics colliders. Everything is instanced: a handful of draw calls for the whole city.
 import * as THREE from 'three/webgpu';
 import { CITY, roadAt, blockAt, isCampus, districtAt, rng } from './layout.js';
-import { buildingMaterial, groundMaterial, pavementMaterial, neonMaterial, NIGHT } from './materials.js';
+import { buildingMaterial, groundMaterial, pavementMaterial, neonMaterial, NIGHT, BUILDING_TYPES } from './materials.js';
 import { texture } from 'three/tsl';
 
 const unitBox = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
@@ -25,13 +25,13 @@ function radialTexture(inner, outer) {
   return t;
 }
 
-export function buildCity({ scene, world, RAPIER }) {
+export function buildCity({ scene, world, RAPIER }, textures) {
   const rand = rng(2026);
   const fixed = (hx, hy, hz, x, y, z) => world.createCollider(RAPIER.ColliderDesc.cuboid(hx, hy, hz).setTranslation(x, y, z).setFriction(0.6));
-  const buildings = [], slabs = [], plazas = [], strips = [], antennas = [], signAnchors = [];
+  const buildings = [], slabs = [], plazas = [], strips = [], antennas = [], signAnchors = [], roofs = [];
 
   // ground and invisible bounds
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(3200, 3200).rotateX(-Math.PI / 2), groundMaterial());
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(3200, 3200).rotateX(-Math.PI / 2), groundMaterial(textures));
   ground.receiveShadow = true;
   scene.add(ground);
   fixed(1600, 1, 1600, 0, -1, 0);
@@ -39,9 +39,13 @@ export function buildCity({ scene, world, RAPIER }) {
   [[wall, 0, 1, 40, wall], [-wall, 0, 1, 40, wall], [0, wall, wall, 40, 1], [0, -wall, wall, 40, 1]].forEach(([x, z, hx, hy, hz]) => fixed(hx, hy, hz, x, hy, z));
 
   const accentOf = (x, z) => new THREE.Color(districtAt(x, z).color);
-  const addBuilding = (x, z, w, d, h, y = CITY.CURB, collider = true) => {
-    buildings.push({ x, y, z, w, d, h, accent: accentOf(x, z), seed: rand() });
+  // type by height: glass towers downtown, concrete offices, brick and stucco low-rise
+  const typeFor = (h) => { const r = rand(); return h > 70 ? (r < 0.7 ? 'glass' : 'office') : h > 28 ? (r < 0.45 ? 'office' : r < 0.8 ? 'brick' : 'glass') : (r < 0.55 ? 'brick' : 'plaster'); };
+  const addBuilding = (x, z, w, d, h, y = CITY.CURB, collider = true, type = typeFor(h)) => {
+    const b = { x, y, z, w, d, h, type, accent: accentOf(x, z), seed: rand() };
+    buildings.push(b);
     if (collider) fixed(w / 2, h / 2, d / 2, x, y + h / 2, z);
+    return b;
   };
 
   for (let i = 0; i < CITY.N; i++) {
@@ -64,13 +68,18 @@ export function buildCity({ scene, world, RAPIER }) {
         const w = inner * fw - 2.4 - rand() * 3, d = inner * fd - 2.4 - rand() * 3;
         const x = cx + ox * inner, z = cz + oz * inner;
         const h = Math.max(12, hMax * (0.3 + rand() * 0.7) * (fw * fd < 0.5 ? 0.85 : 1));
-        addBuilding(x, z, w, d, h);
+        const base = addBuilding(x, z, w, d, h);
         const top = CITY.CURB + h;
         if (h > 45 && rand() < 0.55) {
           const h2 = h * (0.15 + rand() * 0.25);
-          addBuilding(x, z, w * 0.66, d * 0.66, h2, top, false);
+          addBuilding(x, z, w * 0.66, d * 0.66, h2, top, false, base.type);
+          roofs.push({ x, z, y: top, w, d, type: base.type, ring: true, iw: w * 0.66, id: d * 0.66 });
+          roofs.push({ x, z, y: top + h2, w: w * 0.66, d: d * 0.66, type: base.type });
           if (rand() < 0.6) antennas.push({ x, z, y: top + h2, h: 8 + rand() * 18 });
-        } else if (h > 30 && rand() < 0.3) antennas.push({ x, z, y: top, h: 6 + rand() * 10 });
+        } else {
+          if (h > 30 && rand() < 0.3) antennas.push({ x, z, y: top, h: 6 + rand() * 10 });
+          roofs.push({ x, z, y: top, w, d, type: base.type });
+        }
         if (rand() < 0.5) {
           const c = accentOf(x, z);
           strips.push({ x, z: z - d / 2, y: top, sx: w, sz: 0.35, c }, { x, z: z + d / 2, y: top, sx: w, sz: 0.35, c },
@@ -90,9 +99,9 @@ export function buildCity({ scene, world, RAPIER }) {
 
   // IsAcademy tower in the campus block (5, 5): three tiers and a golden crown
   const tx = blockAt(5), tz = blockAt(5);
-  addBuilding(tx, tz, 34, 34, 70);
-  addBuilding(tx, tz, 26, 26, 60, CITY.CURB + 70, false);
-  addBuilding(tx, tz, 18, 18, 46, CITY.CURB + 130, false);
+  addBuilding(tx, tz, 34, 34, 70, CITY.CURB, true, 'glass');
+  addBuilding(tx, tz, 26, 26, 60, CITY.CURB + 70, false, 'glass');
+  addBuilding(tx, tz, 18, 18, 46, CITY.CURB + 130, false, 'glass');
   const towerTop = CITY.CURB + 176;
   const gold = new THREE.Color('#f2d18b');
   [[34, 70], [26, 130], [18, towerTop]].forEach(([s, y]) => {
@@ -107,20 +116,26 @@ export function buildCity({ scene, world, RAPIER }) {
     const a = rand() * Math.PI * 2, r = 620 + rand() * 520;
     const x = Math.cos(a) * r, z = Math.sin(a) * r;
     const w = 30 + rand() * 50, h = 40 + rand() * rand() * 260;
-    skyline.push({ x, y: 0, z, w, d: 30 + rand() * 50, h, accent: new THREE.Color(['#3fe0ff', '#e2b25c', '#a98bff', '#5dffa8'][k % 4]), seed: rand() });
+    skyline.push({ x, y: 0, z, w, d: 30 + rand() * 50, h, type: h > 90 ? 'glass' : 'office', accent: new THREE.Color(['#3fe0ff', '#e2b25c', '#a98bff', '#5dffa8'][k % 4]), seed: rand() });
   }
 
   // instanced meshes
+  // one instanced mesh per building type (four draw calls for the whole skyline)
   const all = buildings.concat(skyline);
-  const seeds = new THREE.InstancedBufferAttribute(new Float32Array(all.length), 1);
-  const accents = new THREE.InstancedBufferAttribute(new Float32Array(all.length * 3), 3);
-  all.forEach((b, i) => { seeds.setX(i, b.seed); accents.setXYZ(i, b.accent.r, b.accent.g, b.accent.b); });
-  const towers = instanced(unitBox, buildingMaterial(seeds, accents), all, (b, p, q, s) => { p.set(b.x, b.y, b.z); s.set(b.w, b.h, b.d); });
-  towers.castShadow = true; towers.receiveShadow = true;
-  scene.add(towers);
+  for (const type of Object.keys(BUILDING_TYPES)) {
+    const list = all.filter((b) => b.type === type);
+    if (!list.length) continue;
+    const seeds = new THREE.InstancedBufferAttribute(new Float32Array(list.length), 1);
+    const accents = new THREE.InstancedBufferAttribute(new Float32Array(list.length * 3), 3);
+    list.forEach((b, i) => { seeds.setX(i, b.seed); accents.setXYZ(i, b.accent.r, b.accent.g, b.accent.b); });
+    const mesh = instanced(unitBox, buildingMaterial(type, seeds, accents, textures), list, (b, p, q, s) => { p.set(b.x, b.y, b.z); s.set(b.w, b.h, b.d); });
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    scene.add(mesh);
+  }
+  buildRoofs(scene, roofs, rand);
 
-  const slabMesh = instanced(unitBox, pavementMaterial(false), slabs, (b, p, q, s) => { p.set(b.x, 0, b.z); s.set(CITY.BLOCK, CITY.CURB, CITY.BLOCK); });
-  const plazaMesh = instanced(unitBox, pavementMaterial(true), plazas, (b, p, q, s) => { p.set(b.x, 0, b.z); s.set(CITY.BLOCK, CITY.CURB, CITY.BLOCK); });
+  const slabMesh = instanced(unitBox, pavementMaterial(textures, false), slabs, (b, p, q, s) => { p.set(b.x, 0, b.z); s.set(CITY.BLOCK, CITY.CURB, CITY.BLOCK); });
+  const plazaMesh = instanced(unitBox, pavementMaterial(textures, true), plazas, (b, p, q, s) => { p.set(b.x, 0, b.z); s.set(CITY.BLOCK, CITY.CURB, CITY.BLOCK); });
   slabMesh.receiveShadow = plazaMesh.receiveShadow = true;
   scene.add(slabMesh, plazaMesh);
 
@@ -167,5 +182,36 @@ export function buildCity({ scene, world, RAPIER }) {
   pools.renderOrder = 1;
   scene.add(pools);
 
-  return { buildings, signAnchors, lamps, tower: { x: tx, z: tz, top: towerTop } };
+  return { buildings, signAnchors, lamps, tower: { x: tx, z: tz, top: towerTop }, instanced, fixed, rand };
+}
+
+// Rooftops: parapets on every roof, air-conditioning units and water tanks, so the skyline has a real silhouette.
+function buildRoofs(scene, roofs, rand) {
+  const parapets = [], units = [], tanks = [];
+  for (const r of roofs) {
+    const t = 0.35, h = r.type === 'glass' ? 1.4 : 1.0;
+    parapets.push({ x: r.x, z: r.z - r.d / 2 + t / 2, y: r.y, sx: r.w, sz: t, h }, { x: r.x, z: r.z + r.d / 2 - t / 2, y: r.y, sx: r.w, sz: t, h },
+      { x: r.x - r.w / 2 + t / 2, z: r.z, y: r.y, sx: t, sz: r.d, h }, { x: r.x + r.w / 2 - t / 2, z: r.z, y: r.y, sx: t, sz: r.d, h });
+    if (r.ring) continue;
+    const n = r.w * r.d > 300 ? 2 + Math.floor(rand() * 4) : 1 + Math.floor(rand() * 2);
+    for (let k = 0; k < n; k++) {
+      units.push({ x: r.x + (rand() - 0.5) * (r.w - 5), z: r.z + (rand() - 0.5) * (r.d - 5), y: r.y, rot: rand() < 0.5 ? 0 : Math.PI / 2, s: 0.8 + rand() * 0.8 });
+    }
+    if (r.type === 'brick' && rand() < 0.55) tanks.push({ x: r.x + (rand() - 0.5) * (r.w - 6), z: r.z + (rand() - 0.5) * (r.d - 6), y: r.y });
+  }
+  const unit = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
+  const concrete = new THREE.MeshStandardNodeMaterial({ color: 0x8d8f94, roughness: 0.85 });
+  const metal = new THREE.MeshStandardNodeMaterial({ color: 0xa4a9b0, roughness: 0.45, metalness: 0.6 });
+  const wood = new THREE.MeshStandardNodeMaterial({ color: 0x5a4632, roughness: 0.9 });
+  const put = (geo, mat, list, fn) => {
+    const m = new THREE.InstancedMesh(geo, mat, list.length);
+    const mx = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    list.forEach((it, i) => { fn(it, p, q, s, up); mx.compose(p, q, s); m.setMatrixAt(i, mx); });
+    m.castShadow = true; m.receiveShadow = true; m.computeBoundingSphere(); scene.add(m);
+  };
+  put(unit, concrete, parapets, (it, p, q, s) => { p.set(it.x, it.y, it.z); s.set(it.sx, it.h, it.sz); });
+  put(unit, metal, units, (it, p, q, s, up) => { p.set(it.x, it.y, it.z); q.setFromAxisAngle(up, it.rot); s.set(2.2 * it.s, 1.3 * it.s, 1.4 * it.s); });
+  put(new THREE.CylinderGeometry(1.3, 1.3, 2.6, 14).translate(0, 3.0, 0), wood, tanks, (it, p, q, s) => { p.set(it.x, it.y, it.z); s.set(1, 1, 1); });
+  put(new THREE.CylinderGeometry(1.45, 1.45, 0.25, 14).translate(0, 4.4, 0), metal, tanks, (it, p, q, s) => { p.set(it.x, it.y, it.z); s.set(1, 1, 1); });
+  put(new THREE.BoxGeometry(2.2, 1.7, 2.2).translate(0, 0.85, 0), metal, tanks, (it, p, q, s) => { p.set(it.x, it.y, it.z); s.set(1, 1, 1); });
 }

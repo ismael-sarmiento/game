@@ -10,6 +10,8 @@ import { Audio } from './core/audio.js';
 import { save } from './core/save.js';
 import { loadLang, t, pickLang } from './core/i18n.js';
 import { buildCity } from './world/city.js';
+import { loadTextures } from './world/textures.js';
+import { buildProps, TrafficLights } from './world/props.js';
 import { buildSky } from './world/sky.js';
 import { TimeOfDay } from './world/timeofday.js';
 import { Weather } from './world/weather.js';
@@ -59,8 +61,12 @@ async function boot() {
   world.timestep = 1 / 60;
   const ctx = { scene, world, RAPIER, renderer, camera, preset };
 
+  progress(24, 'boot.loadingTextures');
+  const textures = await loadTextures(renderer, (f) => progress(24 + Math.round(f * 6)));
   progress(30, 'boot.loadingCity'); await nextFrame();
-  const city = buildCity(ctx);
+  const city = buildCity(ctx, textures);
+  const props = buildProps(ctx, city.lamps);
+  const lights = new TrafficLights(ctx);
   const clock = new TimeOfDay(17.4);   // golden hour; night falls about a minute later (24-minute day)
   clock.set(settings.time, settings.cycle);
   const weather = new Weather(settings.weather === 'auto' ? 'clear' : settings.weather);
@@ -96,7 +102,7 @@ async function boot() {
   for (let i = 0; i < 6; i++) { const l = new THREE.PointLight(0xffffff, 0, 26, 1.8); scene.add(l); pool.push(l); }
 
   const game = {
-    ctx, city, sky, signs, audio, clock, weather, input, traffic, walkers, mentors, car, avatar, chase, save, t, backend,
+    ctx, city, sky, signs, audio, clock, weather, lights, props, input, traffic, walkers, mentors, car, avatar, chase, save, t, backend,
     mode: 'foot', paused: true, started: false, time: 0, level,
     focus: new THREE.Vector3(),
     get player() { return this.mode === 'car' ? this.car.position : this.avatar.position; },
@@ -133,6 +139,15 @@ async function boot() {
   progress(78, 'boot.loadingShaders'); await nextFrame();
   camera.position.set(30, 6, 60); camera.lookAt(0, 4, 0);
   try { await renderer.compileAsync(scene, camera); } catch { /* compiled lazily instead */ }
+  // render a few frames at noon, dusk and night behind the title card so no shader compiles mid-game
+  const savedHour = clock.hour, savedMode = clock.mode;
+  for (const h of [13, 17.6, 22]) {
+    clock.mode = 'fixed'; clock.hour = h; clock.update(0);
+    sky.update(0.016, new THREE.Vector3(), camera);
+    renderer.toneMappingExposure = sky.exposure(); pipeline.setNight(clock.night);
+    pipeline.render(); await nextFrame();
+  }
+  clock.mode = savedMode; clock.hour = savedHour; clock.update(0);
   pipeline.render();
   progress(100, 'boot.ready');
 
@@ -175,7 +190,7 @@ async function boot() {
   let last = performance.now(), acc = 0, frames = 0, fpsTime = 0, fps = 60;
   const step = 1 / 60;
   const tmp = new THREE.Vector3();
-  let lightTimer = 0;
+  let lightTimer = 0, lightsTimer = 0;
 
   renderer.info.autoReset = false;   // one reset per frame so the counters cover every pass
   renderer.setAnimationLoop(() => {
@@ -267,6 +282,9 @@ async function boot() {
     pipeline.setNight(clock.night);
     car.spot.intensity = 40 + 220 * clock.night;
     audio.setRain(game.started ? weather.p.rain : 0);
+    props.wind.value = 0.6 + weather.p.rain * 0.6 + weather.p.storm * 1.4;
+    lightsTimer -= dt;
+    if (lightsTimer <= 0) { lightsTimer = 0.25; lights.update(game.time); }
     audio.setNight(clock.night);
     pipeline.render();
 
