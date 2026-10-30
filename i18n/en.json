@@ -616,6 +616,8 @@
   "woman_worker": "Woman, work clothes"
  },
  "lobby": {
+  "subjects": ["Python", "Object-oriented programming", "SQL", "Data analytics", "Big Data · Spark", "Data Engineering", "Artificial Intelligence", "Thesis support (BSc/MSc)", "Career guidance"],
+  "tagline": "Humans in an artificial world",
   "motto": "AI gives you answers. Here we teach you how to think.",
   "courses": [
    "Python",

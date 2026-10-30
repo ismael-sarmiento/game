@@ -616,6 +616,8 @@
   "woman_worker": "Chica, ropa de trabajo"
  },
  "lobby": {
+  "subjects": ["Python", "Programación orientada a objetos", "SQL", "Analítica de datos", "Big Data · Spark", "Data Engineering", "Inteligencia Artificial", "TFG · TFM", "Orientación profesional"],
+  "tagline": "Humanos en un mundo artificial",
   "motto": "La IA te da respuestas. Aquí te enseñamos a pensar.",
   "courses": [
    "Python",
