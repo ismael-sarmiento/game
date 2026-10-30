@@ -4,6 +4,7 @@ import * as THREE from 'three/webgpu';
 import { CITY, roadAt, blockAt, isCampus, districtAt, rng } from './layout.js';
 import { buildingMaterial, groundMaterial, pavementMaterial, neonMaterial, NIGHT, BUILDING_TYPES } from './materials.js';
 import { texture } from 'three/tsl';
+import { placeModel } from './kit.js';
 
 const unitBox = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
 
@@ -25,10 +26,11 @@ function radialTexture(inner, outer) {
   return t;
 }
 
-export function buildCity({ scene, world, RAPIER }, textures) {
+export function buildCity({ scene, world, RAPIER }, textures, kit = null) {
   const rand = rng(2026);
   const fixed = (hx, hy, hz, x, y, z) => world.createCollider(RAPIER.ColliderDesc.cuboid(hx, hy, hz).setTranslation(x, y, z).setFriction(0.6));
   const buildings = [], slabs = [], plazas = [], strips = [], antennas = [], signAnchors = [], roofs = [];
+  const kitPlacements = {};   // detailed MegaKit buildings that replace some low-rise lots
 
   // ground and invisible bounds
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(3200, 3200).rotateX(-Math.PI / 2), groundMaterial(textures));
@@ -68,6 +70,24 @@ export function buildCity({ scene, world, RAPIER }, textures) {
         const w = inner * fw - 2.4 - rand() * 3, d = inner * fd - 2.4 - rand() * 3;
         const x = cx + ox * inner, z = cz + oz * inner;
         const h = Math.max(12, hMax * (0.3 + rand() * 0.7) * (fw * fd < 0.5 ? 0.85 : 1));
+        const sides = [
+          { gap: (cx + CITY.BLOCK / 2) - (x + w / 2), nx: 1, nz: 0, px: x + w / 2, pz: z, span: d },
+          { gap: (x - w / 2) - (cx - CITY.BLOCK / 2), nx: -1, nz: 0, px: x - w / 2, pz: z, span: d },
+          { gap: (cz + CITY.BLOCK / 2) - (z + d / 2), nx: 0, nz: 1, px: x, pz: z + d / 2, span: w },
+          { gap: (z - d / 2) - (cz - CITY.BLOCK / 2), nx: 0, nz: -1, px: x, pz: z - d / 2, span: w },
+        ].sort((a, b) => a.gap - b.gap);
+        // some low-rise lots get a detailed kit building facing the nearest road
+        const kitUsed = Object.values(kitPlacements).reduce((a, l) => a + l.length, 0);
+        if (kit && h < 42 && kitUsed < kit.max && Math.hypot(x, z) < 340 && rand() < 0.55) {
+          const front = sides[0], turned = front.nx !== 0;
+          const fits = Object.values(kit.buildings).filter((m) => (turned ? m.d : m.w) <= w && (turned ? m.w : m.d) <= d);
+          if (fits.length) {
+            const m = fits[Math.floor(rand() * fits.length)];
+            (kitPlacements[m.name] ||= []).push({ x, y: CITY.CURB, z, rot: Math.atan2(front.nx, front.nz) });
+            fixed((turned ? m.d : m.w) / 2, m.h / 2, (turned ? m.w : m.d) / 2, x, CITY.CURB + m.h / 2, z);
+            continue;
+          }
+        }
         const base = addBuilding(x, z, w, d, h);
         const top = CITY.CURB + h;
         if (h > 45 && rand() < 0.55) {
@@ -86,12 +106,6 @@ export function buildCity({ scene, world, RAPIER }, textures) {
             { x: x - w / 2, z, y: top, sx: 0.35, sz: d, c }, { x: x + w / 2, z, y: top, sx: 0.35, sz: d, c });
         }
         // facade that looks onto the nearest road: anchor for neon signs
-        const sides = [
-          { gap: (cx + CITY.BLOCK / 2) - (x + w / 2), nx: 1, nz: 0, px: x + w / 2, pz: z, span: d },
-          { gap: (x - w / 2) - (cx - CITY.BLOCK / 2), nx: -1, nz: 0, px: x - w / 2, pz: z, span: d },
-          { gap: (cz + CITY.BLOCK / 2) - (z + d / 2), nx: 0, nz: 1, px: x, pz: z + d / 2, span: w },
-          { gap: (z - d / 2) - (cz - CITY.BLOCK / 2), nx: 0, nz: -1, px: x, pz: z - d / 2, span: w },
-        ].sort((a, b) => a.gap - b.gap);
         signAnchors.push({ ...sides[0], h, district: districtAt(x, z).key });
       }
     }
@@ -183,7 +197,8 @@ export function buildCity({ scene, world, RAPIER }, textures) {
   pools.renderOrder = 1;
   scene.add(pools);
 
-  return { buildings, signAnchors, lamps, tower: { x: tx, z: tz, top: towerTop }, instanced, fixed, rand };
+  if (kit) for (const [name, list] of Object.entries(kitPlacements)) placeModel(scene, kit.buildings[name], list);
+  return { buildings, signAnchors, lamps, tower: { x: tx, z: tz, top: towerTop }, instanced, fixed, rand, kitCount: Object.values(kitPlacements).reduce((a, l) => a + l.length, 0), kitPlacements };
 }
 
 // Rooftops: parapets on every roof, air-conditioning units and water tanks, so the skyline has a real silhouette.

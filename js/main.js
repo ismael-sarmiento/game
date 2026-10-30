@@ -11,6 +11,7 @@ import { save } from './core/save.js';
 import { loadLang, t, pickLang } from './core/i18n.js';
 import { buildCity } from './world/city.js';
 import { loadTextures } from './world/textures.js';
+import { loadKit } from './world/kit.js';
 import { buildProps, TrafficLights } from './world/props.js';
 import { buildLandscape } from './world/landscape.js';
 import { buildSky } from './world/sky.js';
@@ -65,8 +66,10 @@ async function boot() {
 
   progress(24, 'boot.loadingTextures');
   const textures = await loadTextures(renderer, (f) => progress(24 + Math.round(f * 6)));
-  progress(30, 'boot.loadingCity'); await nextFrame();
-  const city = buildCity(ctx, textures);
+  const kit = await loadKit((f) => progress(30 + Math.round(f * 6)));
+  kit.max = { high: 30, medium: 16, low: 6 }[level];   // detailed buildings are ~30k triangles each
+  progress(36, 'boot.loadingCity'); await nextFrame();
+  const city = buildCity(ctx, textures, kit);
   const props = buildProps(ctx, city.lamps);
   const lights = new TrafficLights(ctx);
   const landscape = buildLandscape(ctx);
