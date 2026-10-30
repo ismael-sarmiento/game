@@ -74,10 +74,10 @@ export function buildAndroid({ suit = '#1a2142', trim = '#e2b25c', visor = '#3fe
 }
 
 export class Avatar {
-  constructor({ scene, world, RAPIER }, at, people, variant = 'man_beach') {
+  constructor({ scene, world, RAPIER }, at, people, variant = 'woman_casual') {
     this.RAPIER = RAPIER; this.world = world;
     this.scene = scene; this.people = people;
-    this.look = new PersonRig(people[variant] || people.man_beach);
+    this.look = new PersonRig(people[variant] || people.woman_casual);
     this.root = this.look.root;
     scene.add(this.root);
     this.body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(at.x, at.y + 1, at.z));

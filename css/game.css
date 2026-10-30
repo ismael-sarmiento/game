@@ -105,6 +105,7 @@ input[type="range"] { accent-color: var(--gold-400); width: 100%; }
 .hud-speed b { font-size: 2.4rem; font-variant-numeric: tabular-nums; text-shadow: 0 0 14px rgba(63, 224, 255, .7); }
 .hud-speed span { font-size: .7rem; letter-spacing: .2em; color: var(--text-2); }
 .prompt { position: absolute; left: 50%; bottom: 22%; transform: translateX(-50%); margin: 0; padding: .55rem 1rem; font-size: .95rem; white-space: nowrap; animation: rise var(--dur-fast) var(--ease-out) both; }
+.prompt.in-car { bottom: max(18px, env(safe-area-inset-bottom)); }   /* below the car, not over it */
 .prompt kbd { display: inline-block; min-width: 1.6em; padding: .05rem .4rem; margin-right: .45rem; border-radius: 6px; background: var(--gold-400); color: var(--on-gold); font-family: var(--font-mono); font-weight: 700; text-align: center; }
 .toasts { position: absolute; left: 50%; top: max(16px, env(safe-area-inset-top)); transform: translateX(-50%); display: grid; gap: .5rem; justify-items: center; width: min(460px, calc(100vw - 440px)); min-width: 240px; }
 .toast { padding: .6rem 1rem; border-radius: var(--radius-sm); background: var(--glass); border: 1px solid var(--glass-line); font-size: .9rem; text-align: center; animation: toast 4.2s var(--ease-out) both; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
@@ -191,6 +192,7 @@ body.photo-mode #hud, body.photo-mode #touch { display: none !important; }
   .dialog-text { font-size: .95rem; }
   .pause-btn { left: auto; right: 14px; top: calc(max(14px, env(safe-area-inset-top)) + 262px); bottom: auto; }
   .prompt { bottom: 34%; }
+  .prompt.in-car { bottom: 25%; }   /* between the car and the joystick */
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }

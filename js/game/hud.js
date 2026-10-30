@@ -138,12 +138,14 @@ export class Hud {
     this.drawWaypoint();
 
     // context prompt
+    this.parked = g.mode === 'car' && Math.abs(g.car.speed) < 2 ? (this.parked || 0) + dt : 0;
+    $('prompt').classList.toggle('in-car', g.mode === 'car');
     if (g.dialogue.open || g.menu.cardOpen) this.prompt('');
     else {
       const m = g.mentors.nearest(p);
       if (m && g.mode === 'foot') this.prompt('talk', g.t('hud.talk', { name: g.t(`mentors.${m.id}.name`) }));
       else if (g.mode === 'foot' && p.distanceTo(g.car.position) < 4.2) this.prompt('car', g.t('hud.enter'));
-      else if (g.mode === 'car' && Math.abs(g.car.speed) < 2) this.prompt('exit', g.t('hud.exit'));
+      else if (g.mode === 'car' && this.parked > 1) this.prompt('exit', g.t('hud.exit'));   // after a second at rest
       else this.prompt('');
     }
   }
@@ -213,6 +215,25 @@ export class Hud {
     }
   }
 
+  // screen boxes of the HUD panels (plus the marker's half size), measured at most once a second
+  hudRects() {
+    const now = performance.now();
+    if (this.rects && now - this.rectsAt < 1000) return this.rects;
+    this.rectsAt = now;
+    this.rects = ['.hud-objective', '.hud-map', '.hud-counters', '#speedo', '#pause-btn'].map((s) => document.querySelector(s))
+      .filter((el) => el && !el.hidden && el.offsetParent !== null)
+      .map((el) => { const b = el.getBoundingClientRect(); return { left: b.left - 30, right: b.right + 30, top: b.top - 30, bottom: b.bottom + 30 }; });
+    // panels that touch (the minimap and the counters below it) become one box, so the marker is not pushed from one into the other
+    for (let i = 0; i < this.rects.length; i++) for (let j = this.rects.length - 1; j > i; j--) {
+      const a = this.rects[i], b = this.rects[j];
+      if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom) {
+        Object.assign(a, { left: Math.min(a.left, b.left), right: Math.max(a.right, b.right), top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
+        this.rects.splice(j, 1); j = this.rects.length;
+      }
+    }
+    return this.rects;
+  }
+
   drawWaypoint() {
     const g = this.game, el = $('waypoint'), o = this.objective.target;
     if (!o || g.dialogue.open) { el.hidden = true; return; }
@@ -222,7 +243,15 @@ export class Hud {
     let x = (v.x * 0.5 + 0.5) * innerWidth, y = (-v.y * 0.5 + 0.5) * innerHeight;
     if (behind) { x = innerWidth - x; y = innerHeight - 40; }
     const m = 48, inside = !behind && x > m && x < innerWidth - m && y > m && y < innerHeight - m;
-    const cx = THREE.MathUtils.clamp(x, m, innerWidth - m), cy = THREE.MathUtils.clamp(y, m + 60, innerHeight - m);
+    let cx = THREE.MathUtils.clamp(x, m, innerWidth - m), cy = THREE.MathUtils.clamp(y, m + 60, innerHeight - m);
+    // never on top of the objective, the minimap, the counters, the speedometer or the pause button: slide out by the shortest way
+    for (const r of this.hudRects()) {
+      if (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom) continue;
+      const out = [[r.left - cx, 0], [r.right - cx, 0], [0, r.top - cy], [0, r.bottom - cy]]
+        .filter(([dx, dy]) => cx + dx > m && cx + dx < innerWidth - m && cy + dy > m && cy + dy < innerHeight - m)
+        .sort((a, b) => Math.abs(a[0] + a[1]) - Math.abs(b[0] + b[1]))[0];
+      if (out) { cx += out[0]; cy += out[1]; }
+    }
     let angle = 180;
     if (!inside) angle = Math.atan2(cy - innerHeight / 2, cx - innerWidth / 2) * 180 / Math.PI + 90;
     el.hidden = false;

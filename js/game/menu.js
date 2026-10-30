@@ -57,6 +57,8 @@ export class Menu {
     // title screen selectors share the same settings
     $('boot-lang').value = document.documentElement.lang;
     $('boot-lang').addEventListener('change', (e) => { s.lang = e.target.value; $('set-lang').value = s.lang; game.save.write(); onLang(s.lang); });
+    $('boot-character').value = s.character;
+    $('boot-character').addEventListener('change', (e) => { s.character = e.target.value; $('set-character').value = s.character; game.save.write(); game.avatar.setVariant(s.character); });
     $('boot-quality').value = s.quality;
     $('boot-quality').addEventListener('change', (e) => { s.quality = e.target.value; $('set-quality').value = s.quality; game.save.write(); game.setAutoQuality(s.quality === 'auto'); if (s.quality !== 'auto') onQuality(s.quality); });
 
@@ -111,7 +113,8 @@ export class Menu {
     $('pause').hidden = false;
     g.paused = true; g.input.enabled = false;
     g.audio.suspend(true);
-    $('resume').focus();
+    $('pause').scrollTop = 0;
+    $('resume').focus({ preventScroll: true });   // the button is at the bottom: keep the title and tabs in view
   }
   close() {
     const g = this.game;

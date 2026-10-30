@@ -3,7 +3,7 @@
 // reflections, ambient occlusion, colour grading, bloom, motion blur, temporal or FXAA anti-aliasing, vignette and grain.
 import * as THREE from 'three/webgpu';
 import {
-  pass, mrt, output, normalView, directionToColor, colorToDirection, sample, metalness, roughness, velocity, vec2, vec3, vec4,
+  pass, mrt, output, normalView, packNormalToRGB, unpackRGBToNormal, sample, metalness, roughness, velocity, vec2, vec3, vec4,
   screenUV, float, luminance, mix, smoothstep, uniform, renderOutput,
 } from 'three/tsl';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
@@ -38,12 +38,12 @@ export class Pipeline {
     this.camera = camera;
     this.pipeline = new THREE.RenderPipeline(renderer);
     const scenePass = this.scenePass = pass(scene, camera);
-    scenePass.setMRT(mrt({ output, normal: directionToColor(normalView), metalrough: vec2(metalness, roughness), velocity }));
+    scenePass.setMRT(mrt({ output, normal: packNormalToRGB(normalView), metalrough: vec2(metalness, roughness), velocity }));
     this.color = scenePass.getTextureNode('output');
     this.depth = scenePass.getTextureNode('depth');
     this.velocity = scenePass.getTextureNode('velocity');
     const normalTex = scenePass.getTextureNode('normal');
-    this.normal = sample((uv) => colorToDirection(normalTex.sample(uv)));
+    this.normal = sample((uv) => unpackRGBToNormal(normalTex.sample(uv)));
     this.cameraWorld = uniform(this.camera.matrixWorld);   // view → world for the normals (the post passes use their own camera)
     this.metalRough = scenePass.getTextureNode('metalrough');
 

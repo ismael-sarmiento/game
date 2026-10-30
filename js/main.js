@@ -51,6 +51,7 @@ const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
 async function boot() {
   save.load();
   const settings = save.data.settings;
+  if (isTouch()) document.querySelector('.boot-hint').dataset.i18n = 'boot.hintTouch';   // no keyboard on phones
   await loadLang(pickLang(settings.lang));
   progress(8, 'boot.loadingLibs');
   await Promise.all([
