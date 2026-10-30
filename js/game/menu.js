@@ -13,6 +13,7 @@ export class Menu {
       if (el.type === 'range') el.addEventListener('input', () => { s[key] = Number(el.value); apply(s[key]); });
     };
     bind('set-quality', 'quality', (v) => { game.setAutoQuality(v === 'auto'); if (v !== 'auto') onQuality(v); });
+    bind('set-character', 'character', (v) => game.avatar.setVariant(v));
     bind('set-lang', 'lang', (v) => { $('boot-lang').value = v; onLang(v); });
     bind('set-music', 'music', () => game.audio.setVolumes(s.music, s.sfx));
     bind('set-sfx', 'sfx', () => game.audio.setVolumes(s.music, s.sfx));

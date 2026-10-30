@@ -45,7 +45,8 @@
   "clear": "Clear",
   "cloudy": "Cloudy",
   "rainy": "Rain",
-  "storm": "Storm"
+  "storm": "Storm",
+  "character": "Character"
  },
  "menu": {
   "pause": "Pause",
@@ -470,5 +471,30 @@
   "motionBlur": "Motion blur",
   "grain": "Film grain",
   "hint": "If it stutters, lower the quality or the resolution."
+ },
+ "people": {
+  "greet": [
+   "Hi!",
+   "Hello there!",
+   "Off to IsAcademy?",
+   "Lovely day!",
+   "Good luck with the missions!",
+   "Have you seen Iris?"
+  ],
+  "horn": [
+   "Hey, watch out!",
+   "Coming through!",
+   "Slow down!",
+   "Whoa!"
+  ]
+ },
+ "characters": {
+  "man_beach": "Man, summer clothes",
+  "man_suit": "Man, suit",
+  "man_worker": "Man, work clothes",
+  "woman_casual": "Woman, casual",
+  "woman_formal": "Woman, smart",
+  "woman_suit": "Woman, suit",
+  "woman_worker": "Woman, work clothes"
  }
 }

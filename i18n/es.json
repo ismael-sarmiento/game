@@ -45,7 +45,8 @@
   "clear": "Despejado",
   "cloudy": "Nublado",
   "rainy": "Lluvia",
-  "storm": "Tormenta"
+  "storm": "Tormenta",
+  "character": "Personaje"
  },
  "menu": {
   "pause": "Pausa",
@@ -470,5 +471,30 @@
   "motionBlur": "Desenfoque de movimiento",
   "grain": "Grano de película",
   "hint": "Si notas tirones, baja la calidad o la resolución."
+ },
+ "people": {
+  "greet": [
+   "¡Hola!",
+   "¡Buenas!",
+   "¿Vas a IsAcademy?",
+   "¡Qué día más bonito!",
+   "¡Ánimo con las misiones!",
+   "¿Has visto a Iris?"
+  ],
+  "horn": [
+   "¡Eh, cuidado!",
+   "¡Que voy!",
+   "¡Más despacio!",
+   "¡Uy!"
+  ]
+ },
+ "characters": {
+  "man_beach": "Chico, ropa de verano",
+  "man_suit": "Chico, traje",
+  "man_worker": "Chico, ropa de trabajo",
+  "woman_casual": "Chica, ropa informal",
+  "woman_formal": "Chica, ropa elegante",
+  "woman_suit": "Chica, traje",
+  "woman_worker": "Chica, ropa de trabajo"
  }
 }

@@ -76,6 +76,7 @@ export function buildAndroid({ suit = '#1a2142', trim = '#e2b25c', visor = '#3fe
 export class Avatar {
   constructor({ scene, world, RAPIER }, at, people, variant = 'man_beach') {
     this.RAPIER = RAPIER; this.world = world;
+    this.scene = scene; this.people = people;
     this.look = new PersonRig(people[variant] || people.man_beach);
     this.root = this.look.root;
     scene.add(this.root);
@@ -89,6 +90,17 @@ export class Avatar {
     c.setApplyImpulsesToDynamicBodies(true);
     this.vy = 0; this.grounded = true; this.facing = 0; this.speed = 0; this.stepTimer = 0;
     this.velocity = new THREE.Vector3();
+  }
+
+  // swap the character model (Settings › Character); physics and position stay the same
+  setVariant(variant) {
+    if (!this.people[variant]) return;
+    const visible = this.root.visible;
+    this.scene.remove(this.root);
+    this.look = new PersonRig(this.people[variant]);
+    this.root = this.look.root;
+    this.root.visible = visible;
+    this.scene.add(this.root);
   }
 
   get position() { const t = this.body.translation(); return new THREE.Vector3(t.x, t.y - 0.87, t.z); }
