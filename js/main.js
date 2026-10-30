@@ -30,6 +30,7 @@ import { Dialogue } from './game/dialogue.js';
 import { Collectibles } from './game/collectibles.js';
 import { Missions } from './game/missions.js';
 import { Menu } from './game/menu.js';
+import { Achievements, ACHIEVEMENTS } from './game/achievements.js';
 import { blockAt } from './world/layout.js';
 
 const $ = (id) => document.getElementById(id);
@@ -124,6 +125,8 @@ async function boot() {
   game.dialogue = new Dialogue(game);
   game.collectibles = new Collectibles(game);
   game.missions = new Missions(game);
+  game.achievements = new Achievements(game);
+  window.__ACH = ACHIEVEMENTS;
   game.applyGraphics = () => applyGraphics();
   game.pipeline = pipeline;
   game.menu = new Menu(game, {
@@ -198,6 +201,27 @@ async function boot() {
   }
   game.toggleCar = toggleCar;
 
+  // full map: pauses the city while it is open
+  function toggleMap() {
+    const box = $('bigmap'), open = box.hidden;
+    if (open && (game.paused || game.menu.cardOpen)) return;
+    box.hidden = !open;
+    game.paused = open; input.enabled = !open;
+    if (open) game.hud.drawBigMap(); else renderer.domElement.focus();
+  }
+  $('bigmap-close').addEventListener('click', () => toggleMap());
+  $('bigmap').addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); toggleMap(); } });
+
+  // photo mode: no HUD, free framing; the shot is read from the canvas right after a frame is drawn
+  let capture = false;
+  function togglePhoto() {
+    const on = !document.body.classList.contains('photo-mode');
+    document.body.classList.toggle('photo-mode', on);
+    $('photo').hidden = !on;
+  }
+  $('photo-shot').addEventListener('click', () => { capture = true; });
+  $('photo-exit').addEventListener('click', () => togglePhoto());
+
   // main loop
   let last = performance.now(), acc = 0, frames = 0, fpsTime = 0, fps = 60;
   const step = 1 / 60;
@@ -213,6 +237,9 @@ async function boot() {
 
     if (input.take('pause') && game.started) game.menu.toggle();
     if (input.take('mute')) game.hud.toast(t(audio.toggleMute() ? 'hud.muted' : 'hud.unmuted'));
+    if (input.take('map') && game.started) toggleMap();
+    if (input.take('photo') && game.started && !game.paused) togglePhoto();
+    if (input.take('radio')) game.hud.toast(t(`radio.${audio.nextStation()}`));
 
     if (game.started && !game.paused) {
       game.time += dt;
@@ -295,6 +322,8 @@ async function boot() {
     car.spot.intensity = 40 + 220 * clock.night;
     // indoors: no rain falling on the camera and the rain only muffled through the glass
     const indoors = lobby.contains(camera.position, 0.5);
+    if (game.started && lobby.contains(game.player)) game.achievements.unlock('lobby');
+    if (game.started) game.achievements.update(dt);
     sky.rain.setOn(!indoors);
     audio.setRain(game.started ? weather.p.rain * (indoors ? 0.3 : 1) : 0);
     props.wind.value = 0.6 + weather.p.rain * 0.6 + weather.p.storm * 1.4;
@@ -303,6 +332,16 @@ async function boot() {
     if (lightsTimer <= 0) { lightsTimer = 0.25; lights.update(game.time); }
     audio.setNight(clock.night);
     pipeline.render();
+    if (capture) {
+      capture = false;
+      renderer.domElement.toBlob((blob) => {
+        if (!blob) return;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = `neo-academia-${Date.now()}.png`; a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        game.hud.toast(t('photo.saved'), 'good'); game.achievements.unlock('photo');
+      });
+    }
 
     frames++; fpsTime += dt;
     if (fpsTime >= 0.5) {

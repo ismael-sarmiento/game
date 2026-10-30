@@ -134,6 +134,7 @@ export class Missions {
   talk(m) {
     const g = this.game, t = g.t, D = g.dialogue;
     const L = (key, vars) => t(`mentors.${m.id}.${key}`, vars);
+    g.achievements?.note('talk', m.id);
     if (m.id === 'iris') {
       if (!this.data.intro) {
         return D.show(m, t('mentors.iris.intro'), [{ label: L('introAccept'), primary: true, onPick: () => {

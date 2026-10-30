@@ -77,6 +77,22 @@
     <button id="pause-btn" class="icon-btn pause-btn" type="button" aria-label="Pausa" data-i18n-aria="menu.pause">‖</button>
   </div>
 
+  <!-- full city map -->
+  <section id="bigmap" class="screen screen-dim" hidden role="dialog" aria-modal="true" aria-labelledby="bigmap-title">
+    <div class="bigmap-card glass">
+      <header><h2 id="bigmap-title" data-i18n="map.title">Mapa de Neo Academia</h2><button id="bigmap-close" class="icon-btn" type="button" aria-label="Cerrar" data-i18n-aria="map.close">✕</button></header>
+      <canvas id="bigmap-canvas" width="900" height="900"></canvas>
+      <ul class="legend" id="bigmap-legend"></ul>
+    </div>
+  </section>
+
+  <!-- photo mode -->
+  <div id="photo" class="photo-bar glass" hidden>
+    <span data-i18n="photo.hint">Modo foto · arrastra para encuadrar, rueda para acercar</span>
+    <button id="photo-shot" class="btn btn-primary" type="button" data-i18n="photo.shoot">Guardar foto</button>
+    <button id="photo-exit" class="btn btn-ghost" type="button" data-i18n="photo.exit">Salir</button>
+  </div>
+
   <!-- touch controls -->
   <div id="touch" hidden>
     <div class="joy" id="joy"><span class="joy-knob"></span></div>
@@ -116,6 +132,7 @@
         <button type="button" role="tab" class="tab" aria-selected="false" data-tab="graphics" data-i18n="menu.graphics">Gráficos</button>
         <button type="button" role="tab" class="tab" aria-selected="false" data-tab="controls" data-i18n="menu.controls">Controles</button>
         <button type="button" role="tab" class="tab" aria-selected="false" data-tab="progress" data-i18n="menu.progress">Progreso</button>
+        <button type="button" role="tab" class="tab" aria-selected="false" data-tab="achievements" data-i18n="menu.achievements">Logros</button>
       </div>
       <div class="tab-panel" data-panel="settings">
         <label><span data-i18n="settings.quality">Calidad</span>
@@ -185,6 +202,9 @@
       <div class="tab-panel" data-panel="progress" hidden>
         <ul class="progress-list" id="progress-list"></ul>
         <button id="reset-progress" class="btn btn-ghost" type="button" data-i18n="menu.reset">Borrar progreso</button>
+      </div>
+      <div class="tab-panel" data-panel="achievements" hidden>
+        <ul class="progress-list" id="achievements-list"></ul>
       </div>
       <div class="menu-actions">
         <button id="resume" class="btn btn-primary" type="button" data-i18n="menu.resume">Continuar</button>

@@ -2,7 +2,7 @@
 // consume one-shot actions with input.take('use').
 const KEYMAP = {
   KeyE: 'use', Enter: 'use', KeyH: 'horn', KeyR: 'reset', KeyC: 'camera',
-  Escape: 'pause', KeyP: 'pause', KeyM: 'mute',
+  Escape: 'pause', KeyP: 'pause', KeyM: 'map', KeyN: 'mute', KeyQ: 'radio', KeyO: 'photo',
 };
 const GAMEPAD_BUTTONS = { 3: 'use', 1: 'horn', 8: 'reset', 9: 'pause', 5: 'camera' };
 

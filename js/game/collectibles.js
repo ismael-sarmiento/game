@@ -3,7 +3,7 @@ import * as THREE from 'three/webgpu';
 import { CITY, blockAt, isCampus, rng } from '../world/layout.js';
 import { neonMaterial } from '../world/materials.js';
 
-const COUNT = 20;
+const COUNT = 40;
 
 function positions() {
   const r = rng(404), out = [];
@@ -15,7 +15,7 @@ function positions() {
     const side = Math.floor(r() * 4), u = (r() - 0.5) * 2 * (edge - 4);
     const [dx, dz] = [[u, -edge], [edge, u], [u, edge], [-edge, u]][side];
     const x = blockAt(i) + dx, z = blockAt(j) + dz;
-    if (out.every((p) => Math.hypot(p.x - x, p.z - z) > 85) && Math.hypot(x - 24, z - 26) > 20) out.push({ x, z });
+    if (out.every((p) => Math.hypot(p.x - x, p.z - z) > 60) && Math.hypot(x - 24, z - 26) > 20) out.push({ x, z });
   }
   return out;
 }

@@ -60,7 +60,8 @@
   "resetConfirm": "¿Borrar misiones y curiosidades de este navegador? Los ajustes se conservan.",
   "graduated": "Graduación",
   "facts": "Curiosidades",
-  "graphics": "Gráficos"
+  "graphics": "Gráficos",
+  "achievements": "Logros"
  },
  "hud": {
   "objective": "Objetivo",
@@ -71,11 +72,11 @@
   "exit": "Bajar del coche",
   "tooFast": "Frena para bajar del coche",
   "qualityAuto": "Calidad ajustada a {level} para que vaya fluido",
-  "muted": "Sonido silenciado (M)",
+  "muted": "Sonido silenciado (N)",
   "unmuted": "Sonido activado",
   "factFound": "Curiosidad {n}/{total}",
   "factEyebrow": "Curiosidad desbloqueada",
-  "allFacts": "¡Has encontrado las 20 curiosidades de Neo Academia!"
+  "allFacts": "¡Has encontrado las 40 curiosidades de Neo Academia!"
  },
  "dialog": {
   "placeholder": "Pregúntale algo…",
@@ -152,7 +153,19 @@
   ],
   [
    "M",
+   "Mapa completo"
+  ],
+  [
+   "N",
    "Silenciar"
+  ],
+  [
+   "Q",
+   "Cambiar emisora de radio"
+  ],
+  [
+   "O",
+   "Modo foto"
   ],
   [
    "Esc · P",
@@ -174,7 +187,7 @@
   "introDone": "Los mentores ya te esperan: sigue las columnas de luz.",
   "visit": "Visita a {name} en el {district}: tiene una misión para ti.",
   "graduate": "Has completado las tres misiones. Vuelve con Iris para graduarte.",
-  "explore": "Explora la ciudad y encuentra las curiosidades ({n}/20).",
+  "explore": "Explora la ciudad y encuentra las curiosidades ({n}/40).",
   "free": "Neo Academia es tuya. Conduce, explora y vuelve cuando quieras.",
   "seeIrisFirst": "Primero pasa por el campus: Iris te pondrá al día.",
   "busy": "Termina antes la misión de {name}; luego hablamos."
@@ -481,6 +494,86 @@
   {
    "title": "Bits y caracteres",
    "text": "Un byte tiene 8 bits. El código ASCII, de 1963, usaba 7 bits: 128 combinaciones para letras, números y símbolos."
+  },
+  {
+   "title": "El primer transistor (1947)",
+   "text": "En diciembre de 1947, John Bardeen y Walter Brattain, del equipo de William Shockley en los Laboratorios Bell, construyeron el primer transistor, la pieza básica de todos los chips."
+  },
+  {
+   "title": "El primer microprocesador",
+   "text": "En 1971 Intel lanzó el 4004, el primer microprocesador comercial: toda una CPU en un solo chip."
+  },
+  {
+   "title": "Unicode para todos los idiomas",
+   "text": "La versión 1.0 de Unicode se publicó en 1991 para que los ordenadores pudieran representar los alfabetos de todo el mundo, hoy incluidos los emojis."
+  },
+  {
+   "title": "La primera web",
+   "text": "El primer sitio web, info.cern.ch, se puso en línea en 1991 y explicaba qué era la World Wide Web."
+  },
+  {
+   "title": "El código QR (1994)",
+   "text": "Masahiro Hara, de la empresa japonesa Denso Wave, inventó el código QR en 1994 para seguir piezas de coches en las fábricas."
+  },
+  {
+   "title": "Wikipedia nació en 2001",
+   "text": "Wikipedia se lanzó el 15 de enero de 2001 y hoy es una de las webs más visitadas del mundo, escrita por voluntarios."
+  },
+  {
+   "title": "JavaScript en diez días",
+   "text": "Brendan Eich creó el primer prototipo de JavaScript en unos diez días, en mayo de 1995, cuando trabajaba en Netscape."
+  },
+  {
+   "title": "ELIZA, la abuela de los chatbots",
+   "text": "Entre 1964 y 1966, Joseph Weizenbaum creó en el MIT el programa ELIZA, que simulaba una conversación con reglas muy sencillas."
+  },
+  {
+   "title": "AlphaGo contra Lee Sedol",
+   "text": "En marzo de 2016, el programa AlphaGo de DeepMind ganó 4 a 1 al campeón de go Lee Sedol."
+  },
+  {
+   "title": "La Z3 de Konrad Zuse",
+   "text": "En 1941, Konrad Zuse terminó en Alemania la Z3, considerada el primer ordenador digital programable y totalmente automático que funcionó."
+  },
+  {
+   "title": "Margaret Hamilton y el Apolo",
+   "text": "Margaret Hamilton dirigió en el MIT el equipo que escribió el software de navegación de las misiones Apolo y popularizó la expresión «ingeniería del software»."
+  },
+  {
+   "title": "Hedy Lamarr, actriz e inventora",
+   "text": "En 1942, la actriz Hedy Lamarr y el compositor George Antheil patentaron un sistema de salto de frecuencia, una idea precursora de tecnologías inalámbricas."
+  },
+  {
+   "title": "Python 3",
+   "text": "Python 3.0 se publicó en diciembre de 2008 y rompió la compatibilidad con Python 2 para corregir problemas de diseño del lenguaje."
+  },
+  {
+   "title": "SQL se hace estándar",
+   "text": "SQL se convirtió en estándar ANSI en 1986 y en estándar ISO en 1987; por eso casi todas las bases de datos lo hablan."
+  },
+  {
+   "title": "Ethernet (1973)",
+   "text": "Robert Metcalfe y su equipo inventaron Ethernet en 1973 en Xerox PARC para conectar ordenadores de una misma oficina."
+  },
+  {
+   "title": "La @ del correo",
+   "text": "En 1971, Ray Tomlinson envió el primer correo entre ordenadores conectados en red y eligió la @ para separar el usuario del equipo."
+  },
+  {
+   "title": "¿Qué es un CAPTCHA?",
+   "text": "El término CAPTCHA se acuñó en 2003: es una prueba para distinguir personas de programas automáticos."
+  },
+  {
+   "title": "De dónde viene «bit»",
+   "text": "Claude Shannon usó la palabra «bit» (binary digit) en su artículo de 1948 sobre la teoría de la información, y atribuyó el término a John Tukey."
+  },
+  {
+   "title": "Criptografía de clave pública",
+   "text": "En 1976, Whitfield Diffie y Martin Hellman publicaron la idea de la clave pública; en 1977 llegó RSA, que aún protege muchas conexiones."
+  },
+  {
+   "title": "Tim Berners-Lee y el primer navegador",
+   "text": "Tim Berners-Lee escribió también el primer navegador web, llamado WorldWideWeb, en un ordenador NeXT entre 1990 y 1991."
   }
  ],
  "gfx": {
@@ -533,5 +626,78 @@
    "Tu plan"
   ],
   "screenLine": "Clases online a tu medida"
+ },
+ "map": {
+  "title": "Mapa de Neo Academia",
+  "close": "Cerrar",
+  "you": "Tú",
+  "car": "Tu coche",
+  "mentor": "Mentores",
+  "fact": "Curiosidad pendiente",
+  "objective": "Objetivo"
+ },
+ "photo": {
+  "hint": "Modo foto · arrastra para encuadrar, rueda para acercar",
+  "shoot": "Guardar foto",
+  "exit": "Salir",
+  "saved": "Foto guardada en tus descargas"
+ },
+ "radio": {
+  "neo": "Radio · Neo Synth",
+  "lofi": "Radio · Lo-fi Datos",
+  "off": "Radio apagada"
+ },
+ "achievements": {
+  "unlocked": "Logro",
+  "list": {
+   "firstRide": {
+    "title": "Al volante",
+    "text": "Sube a tu coche por primera vez."
+   },
+   "speed100": {
+    "title": "Paquete urgente",
+    "text": "Alcanza 100 km/h."
+   },
+   "nightDrive": {
+    "title": "Neón nocturno",
+    "text": "Conduce 30 segundos de noche."
+   },
+   "storm": {
+    "title": "Bajo la tormenta",
+    "text": "Vive una tormenta en la ciudad."
+   },
+   "lobby": {
+    "title": "Bienvenida a la torre",
+    "text": "Entra en el vestíbulo de IsAcademy."
+   },
+   "allDistricts": {
+    "title": "Explorador",
+    "text": "Visita los cinco distritos."
+   },
+   "allMentors": {
+    "title": "Bien relacionado",
+    "text": "Habla con los seis mentores."
+   },
+   "greeted": {
+    "title": "Vecino popular",
+    "text": "Que te saluden cinco personas."
+   },
+   "facts10": {
+    "title": "Curioso",
+    "text": "Encuentra 10 curiosidades."
+   },
+   "facts40": {
+    "title": "Enciclopedia andante",
+    "text": "Encuentra las 40 curiosidades."
+   },
+   "photo": {
+    "title": "Fotógrafo",
+    "text": "Guarda una foto de Neo Academia."
+   },
+   "graduate": {
+    "title": "Graduación",
+    "text": "Gradúate en Neo Academia."
+   }
+  }
  }
 }

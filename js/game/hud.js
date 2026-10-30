@@ -47,7 +47,7 @@ export class Hud {
 
   refreshTexts() {
     const { save, t } = this.game;
-    $('facts-counter').textContent = `◆ ${save.data.facts.length}/20 ${t('hud.facts')}`;
+    $('facts-counter').textContent = `◆ ${save.data.facts.length}/40 ${t('hud.facts')}`;
     const done = Object.values(save.data.missions).filter((v) => v === 'done').length;
     $('missions-counter').textContent = `★ ${done}/3 ${t('hud.missions')}`;
     $('objective-text').textContent = this.objective.text;
@@ -101,7 +101,7 @@ export class Hud {
     const g = this.game, p = g.player;
     // district name under the minimap
     const d = districtAt(p.x, p.z).key;
-    if (d !== this.lastDistrict) { this.lastDistrict = d; $('district').textContent = g.t(`districts.${d}`); }
+    if (d !== this.lastDistrict) { this.lastDistrict = d; $('district').textContent = g.t(`districts.${d}`); g.achievements?.note('district', d); }
 
     // clock and weather
     const w = g.weather, icon = w.state === 'clear' && g.clock.night > 0.5 ? '☾' : w.icon;
@@ -174,6 +174,35 @@ export class Hud {
     c.fillStyle = '#ffffff'; c.shadowColor = '#3fe0ff'; c.shadowBlur = 8;
     c.beginPath(); c.moveTo(0, -9); c.lineTo(6.5, 7); c.lineTo(0, 3.5); c.lineTo(-6.5, 7); c.closePath(); c.fill();
     c.restore();
+  }
+
+  // full map (M): the whole city with the player, the car, mentors, facts still to find and the objective
+  drawBigMap() {
+    const g = this.game, c = $('bigmap-canvas').getContext('2d'), W = 900, k = W / MAP_PX;
+    const at = (x, z) => [toPx(x) * k, toPx(z) * k];
+    c.clearRect(0, 0, W, W);
+    c.drawImage(this.map, 0, 0, W, W);
+    const dot = (x, z, color, r, label) => {
+      const [px, py] = at(x, z);
+      c.fillStyle = color; c.beginPath(); c.arc(px, py, r, 0, Math.PI * 2); c.fill();
+      if (label) { c.font = '600 15px "Space Grotesk", sans-serif'; c.fillStyle = '#fff'; c.shadowColor = '#000'; c.shadowBlur = 4; c.fillText(label, px + r + 4, py + 5); c.shadowBlur = 0; }
+    };
+    g.collectibles.items.forEach((it) => { if (!it.taken) dot(it.x, it.z, 'rgba(63,224,255,0.55)', 3.5); });
+    g.mentors.list.forEach((m) => dot(m.x, m.z, m.color, 7, g.t(`mentors.${m.id}.name`)));
+    dot(g.car.position.x, g.car.position.z, '#ffffff', 5, g.t('map.car'));
+    const o = this.objective.target;
+    if (o) { const [px, py] = at(o.x, o.z); c.strokeStyle = this.objective.color; c.lineWidth = 3; c.beginPath(); c.arc(px, py, 13 + Math.sin(g.time * 4) * 3, 0, Math.PI * 2); c.stroke(); }
+    const p = g.player, [px, py] = at(p.x, p.z), h = g.mode === 'car' ? g.car.heading : g.avatar.facing;
+    c.save(); c.translate(px, py); c.rotate(-h + Math.PI);
+    c.fillStyle = '#e2b25c'; c.shadowColor = '#e2b25c'; c.shadowBlur = 10;
+    c.beginPath(); c.moveTo(0, -12); c.lineTo(8, 9); c.lineTo(0, 4); c.lineTo(-8, 9); c.closePath(); c.fill();
+    c.restore();
+    const legend = $('bigmap-legend');
+    if (!legend.childElementCount) {
+      [['#e2b25c', 'map.you'], ['#ffffff', 'map.car'], ['#f2d18b', 'map.mentor'], ['#3fe0ff', 'map.fact'], [this.objective.color, 'map.objective']].forEach(([col, key]) => {
+        const li = document.createElement('li'); const i = document.createElement('i'); i.style.background = col; li.append(i, document.createTextNode(g.t(key))); legend.append(li);
+      });
+    }
   }
 
   drawWaypoint() {

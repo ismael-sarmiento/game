@@ -204,7 +204,7 @@ export class Crowd {
         // greet the player once when they come close
         p.yaw = turn(p.yaw, Math.atan2(player.x - p.pos.x, player.z - p.pos.z), dt * 6);
         waving = true;
-        if (!p.greeted) { p.greeted = true; this.bubbles.say(p, pick(game.t('people.greet'))); p.waveTime = 0; }
+        if (!p.greeted) { p.greeted = true; this.bubbles.say(p, pick(game.t('people.greet'))); p.waveTime = 0; game.achievements?.note('greet'); }
         p.waveTime = (p.waveTime || 0) + dt;
         if (p.waveTime > 2.4 || d < 1.6) p.waved = true;
       } else if (p.mode === 'chat') {

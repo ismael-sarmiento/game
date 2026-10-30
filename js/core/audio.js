@@ -4,10 +4,19 @@ const CHORDS = [   // A minor – F – C – G, voiced low for the pad
   [57, 60, 64, 69], [53, 57, 60, 65], [48, 55, 60, 64], [55, 59, 62, 67],
 ];
 const ARP = [0, 2, 3, 1, 2, 3, 1, 2];
+// Radio stations: Neo Synth (default), Lo-fi Datos (slower, softer) and off (only the city sounds).
+const LOFI = [[50, 57, 62, 65], [55, 59, 62, 66], [52, 55, 59, 64], [57, 60, 64, 67]];
+export const STATIONS = [
+  { id: 'neo', bpm: 92, chords: CHORDS, pad: 'sawtooth', lead: 'triangle', bass: 0.12 },
+  { id: 'lofi', bpm: 72, chords: LOFI, pad: 'triangle', lead: 'sine', bass: 0.09 },
+  { id: 'off' },
+];
 const midi = (n) => 440 * 2 ** ((n - 69) / 12);
 
 export class Audio {
-  constructor() { this.ctx = null; this.music = 0.55; this.sfx = 0.8; this.muted = false; }
+  constructor() { this.ctx = null; this.music = 0.55; this.sfx = 0.8; this.muted = false; this.station = 0; }
+
+  nextStation() { this.station = (this.station + 1) % STATIONS.length; return STATIONS[this.station].id; }
 
   start() {
     if (this.ctx) { this.ctx.resume(); return; }
@@ -107,12 +116,15 @@ export class Audio {
   }
 
   schedule() {
-    const ctx = this.ctx, beat = 60 / 92 / 2;   // eighth notes at 92 bpm
+    const ctx = this.ctx, st = STATIONS[this.station], beat = 60 / (st.bpm || 92) / 2;   // eighth notes
     while (this.nextTime < ctx.currentTime + 0.3) {
-      const s = this.step, chord = CHORDS[Math.floor(s / 32) % CHORDS.length];
-      if (s % 32 === 0) this.pad(chord, this.nextTime, beat * 32);
-      if (s % 2 === 0) this.pluck(midi(chord[0] - 24), this.nextTime, 0.22, 'sine', 0.12);
-      this.pluck(midi(chord[ARP[s % 8]] + 12), this.nextTime, 0.18, 'triangle', s % 8 === 0 ? 0.05 : 0.03, true);
+      const s = this.step;
+      if (st.chords) {
+        const chord = st.chords[Math.floor(s / 32) % st.chords.length];
+        if (s % 32 === 0) this.pad(chord, this.nextTime, beat * 32, st.pad);
+        if (s % 2 === 0) this.pluck(midi(chord[0] - 24), this.nextTime, 0.22, 'sine', st.bass);
+        if (st.id !== 'lofi' || s % 2 === 0) this.pluck(midi(chord[ARP[s % 8]] + 12), this.nextTime, st.id === 'lofi' ? 0.45 : 0.18, st.lead, s % 8 === 0 ? 0.05 : 0.03, true);
+      }
       // ambience between notes: birds by day, crickets at night
       const n = this.night ?? 1;
       if (n < 0.4 && Math.random() < 0.05) this.chirp(this.nextTime);
@@ -120,13 +132,13 @@ export class Audio {
       this.nextTime += beat; this.step++;
     }
   }
-  pad(chord, at, dur) {
+  pad(chord, at, dur, type = 'sawtooth') {
     const ctx = this.ctx, g = ctx.createGain(), f = ctx.createBiquadFilter();
     f.type = 'lowpass'; f.frequency.setValueAtTime(500, at); f.frequency.linearRampToValueAtTime(1400, at + dur / 2); f.frequency.linearRampToValueAtTime(500, at + dur);
     g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(0.05, at + 2); g.gain.setValueAtTime(0.05, at + dur - 2); g.gain.linearRampToValueAtTime(0, at + dur + 0.5);
     f.connect(g).connect(this.musicBus);
     chord.forEach((n) => [-6, 6].forEach((cents) => {
-      const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = midi(n); o.detune.value = cents;
+      const o = ctx.createOscillator(); o.type = type; o.frequency.value = midi(n); o.detune.value = cents;
       o.connect(f); o.start(at); o.stop(at + dur + 0.6);
     }));
   }

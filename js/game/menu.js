@@ -73,8 +73,17 @@ export class Menu {
     const data = this.game.save.data;
     const row = (label, value) => { const li = document.createElement('li'); const a = document.createElement('span'); a.textContent = label; const b = document.createElement('b'); b.textContent = value; li.append(a, b); prog.append(li); };
     ['route', 'debug', 'train'].forEach((id) => row(t(`missions.${id}.title`), data.missions[id] === 'done' ? '✓' : '—'));
-    row(t('menu.facts'), `${data.facts.length}/20`);
+    row(t('menu.facts'), `${data.facts.length}/40`);
     row(t('menu.graduated'), data.graduated ? '✓' : '—');
+    const ach = document.getElementById('achievements-list');
+    ach.replaceChildren();
+    (window.__ACH || []).forEach((id) => {
+      const li = document.createElement('li'); const a = document.createElement('span');
+      const got = (data.achievements || []).includes(id);
+      a.textContent = `${got ? '🏆' : '🔒'} ${t(`achievements.list.${id}.title`)} — ${t(`achievements.list.${id}.text`)}`;
+      const b = document.createElement('b'); b.textContent = got ? '✓' : '';
+      li.append(a, b); ach.append(li);
+    });
   }
 
   tab(name) {
