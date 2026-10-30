@@ -10,7 +10,7 @@
   "loadingLibs": "Preparando motor y física…",
   "loadingGpu": "Encendiendo la tarjeta gráfica…",
   "loadingCity": "Levantando 450 edificios…",
-  "loadingSigns": "Encendiendo el neón…",
+  "loadingSigns": "Encendiendo los rótulos…",
   "loadingLife": "Despertando a la ciudad…",
   "loadingShaders": "Compilando la luz…",
   "ready": "Neo Academia está lista.",
@@ -99,11 +99,7 @@
   "abandon": "Abandonar la misión"
  },
  "world": {
-  "billboard": [
-   "LA IA TE DA RESPUESTAS · AQUÍ TE ENSEÑAMOS A PENSAR · ISACADEMY",
-   "CLASES PERSONALIZADAS DE PYTHON, SQL E IA · ONLINE · ISACADEMY",
-   "NEO ACADEMIA · LA CIUDAD QUE APRENDE"
-  ]
+  "screenChart": "Viajes por distrito · última hora"
  },
  "districts": {
   "ia": "Distrito IA",
@@ -663,7 +659,7 @@
     "text": "Alcanza 100 km/h."
    },
    "nightDrive": {
-    "title": "Neón nocturno",
+    "title": "Luces de la ciudad",
     "text": "Conduce 30 segundos de noche."
    },
    "storm": {

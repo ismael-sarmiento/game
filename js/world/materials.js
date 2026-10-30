@@ -1,9 +1,9 @@
 // City materials (TSL): CC0 textures mapped in world space plus procedural detail computed per pixel.
-// NIGHT switches on windows, neon and lamps; WET turns dry asphalt into a mirror of puddles.
+// NIGHT switches on windows, shop fronts and lamps; WET turns dry asphalt into a mirror of puddles.
 import * as THREE from 'three/webgpu';
 import {
   vec3, float, positionWorld, normalWorld, abs, fract, floor, hash, step, smoothstep, mix, select, time,
-  instancedBufferAttribute, mx_noise_float, mod, min, max, uniform, texture, vec2, bumpMap,
+  instancedBufferAttribute, mx_noise_float, mod, min, max, texture, vec2, bumpMap,
 } from 'three/tsl';
 import { CITY } from './layout.js';
 import { NIGHT, WET } from './timeofday.js';
@@ -21,7 +21,7 @@ export const BUILDING_TYPES = {
 };
 
 // Facades: textured walls, framed windows with sills, mirror-like glass by day and lit rooms at night.
-// Per instance: aSeed (variation) and aAccent (district colour for shop fronts and some windows).
+// Per instance: aSeed (variation) and aAccent (district colour, a faint hint in some office windows).
 export function buildingMaterial(type, seedAttr, accentAttr, textures) {
   const cfg = BUILDING_TYPES[type];
   const seed = instancedBufferAttribute(seedAttr);
@@ -39,17 +39,27 @@ export function buildingMaterial(type, seedAttr, accentAttr, textures) {
   const occupancy = mix(float(0.6), float(0.92), hash(seed.mul(3.1)));   // some towers are almost dark
   const lit = step(occupancy, hash(cell.add(floor(time.mul(0.02).add(r.mul(9.0))).mul(7.3))));
   const warm = vec3(1.0, 0.74, 0.46), cool = vec3(0.62, 0.86, 1.0);
-  const tint = mix(warm, mix(cool, accent, 0.55), step(0.72, r));
+  const tint = mix(warm, mix(cool, accent, 0.12), step(0.72, r));   // offices: warm or cool white, barely a hint of the district
   // blinds: some rooms half lit
-  const windows = tint.mul(lit).mul(win).mul(r.mul(0.9).add(0.6)).mul(step(fy, mix(cfg.winY[1], cfg.winY[0] + 0.15, step(0.85, r))));
+  // rooms: brighter towards the ceiling lights, some with blinds half down; never a flat white plate
+  const roomLight = smoothstep(cfg.winY[0], cfg.winY[1], fy).mul(0.55).add(0.45);
+  const windows = tint.mul(lit).mul(win).mul(roomLight).mul(r.mul(0.35).add(0.3)).mul(step(fy, mix(cfg.winY[1], cfg.winY[0] + 0.15, step(0.85, r))));
 
+  // shop fronts: glazed ground floors lit from inside with warm or neutral light; above them a dark fascia band
+  // where the shop signs hang (signs.js)
   const shopDoors = band(fract(hor.div(6.0)), 0.08, 0.92, 0.02);
-  const shopLit = step(0.38, hash(floor(hor.div(6.0)).add(seed.mul(77.0))));
+  const shopId = floor(hor.div(6.0)).add(seed.mul(77.0));
+  const shopLit = step(0.2, hash(shopId));
   const mullion = band(fract(hor.div(1.5)), 0.06, 0.94, 0.02);
   const glassFront = band(wp.y, 0.45, 2.8, 0.08).mul(shopDoors).mul(wall);
-  const shopGlow = glassFront.mul(shopLit).mul(mullion).mul(hash(floor(hor.div(6.0)).add(3.0)).mul(0.07).add(0.035));
-  const awning = band(wp.y, 3.0, 3.18, 0.02).mul(shopLit).mul(1.1).mul(wall);
-  const shops = accent.mul(shopGlow.add(awning));
+  const shopTint = mix(vec3(1.0, 0.82, 0.6), vec3(0.7, 0.78, 0.88), step(0.55, hash(shopId.add(5.0))));
+  // the room behind the glass: brighter under the ceiling lights, shelves and counters as darker shapes
+  const ceiling = smoothstep(0.6, 2.7, wp.y).mul(0.7).add(0.3);
+  const shelfCol = step(0.45, fract(hor.mul(0.9).add(hash(shopId.add(9.0)))));
+  const shelves = float(1).sub(shelfCol.mul(band(wp.y, 0.5, 1.9, 0.04)).mul(0.65));
+  const shopGlow = glassFront.mul(shopLit).mul(mullion).mul(ceiling).mul(shelves).mul(hash(shopId.add(3.0)).mul(0.35).add(0.35));
+  const fascia = band(wp.y, 3.0, 3.8, 0.02).mul(wall);
+  const shops = shopTint.mul(shopGlow);
 
   const m = new THREE.MeshStandardNodeMaterial();
   const glassColor = mix(vec3(0.025, 0.04, 0.06), vec3(0.05, 0.07, 0.09), hash(seed.mul(5.0)));
@@ -65,7 +75,7 @@ export function buildingMaterial(type, seedAttr, accentAttr, textures) {
     const frame = band(fx, cfg.winX[0] - 0.05, cfg.winX[1] + 0.05, 0.01).mul(band(fy, cfg.winY[0] - 0.07, cfg.winY[1] + 0.04, 0.01)).mul(wall).mul(upper).sub(win).max(0);
     const sill = band(fy, cfg.winY[0] - 0.1, cfg.winY[0] - 0.05, 0.01).mul(band(fx, cfg.winX[0] - 0.08, cfg.winX[1] + 0.08, 0.01)).mul(wall).mul(upper);
     const wallColor = mix(albedo.mul(tone).mul(shade), vec3(cfg.frame, cfg.frame, cfg.frame * 0.97), frame.add(sill).min(1));
-    m.colorNode = mix(wallColor, glassColor, glassPane).add(accent.mul(0.008));
+    m.colorNode = mix(mix(wallColor, vec3(0.08, 0.085, 0.09), fascia.mul(0.85)), glassColor, glassPane);
     m.roughnessNode = mix(texture(t.rough, uvW).r.mul(0.25).add(0.7), float(0.06), glassPane);
     m.metalnessNode = mix(float(0.0), float(0.85), glassPane);
     m.normalNode = bumpMap(texture(t.color, uvW), float(0.9).mul(float(1).sub(glassPane)));
@@ -73,11 +83,11 @@ export function buildingMaterial(type, seedAttr, accentAttr, textures) {
     // curtain wall: glass panels between thin metal mullions and spandrels at each floor
     const frameMetal = float(1).sub(win.max(glassFront));
     const spandrel = vec3(0.12, 0.13, 0.15).mul(hash(seed.mul(9.0)).mul(0.5).add(0.75));
-    m.colorNode = mix(glassColor.mul(hash(seed.mul(23.0)).mul(1.4).add(0.6)), spandrel, frameMetal).add(accent.mul(0.006));
+    m.colorNode = mix(glassColor.mul(hash(seed.mul(23.0)).mul(1.4).add(0.6)), spandrel, frameMetal);
     m.roughnessNode = mix(float(0.04), float(0.35), frameMetal);
     m.metalnessNode = mix(float(0.92), float(0.7), frameMetal);
   }
-  m.emissiveNode = windows.mul(mix(float(0.025), float(1.0), NIGHT)).add(shops.mul(atNight(0.35)));
+  m.emissiveNode = windows.mul(mix(float(0.025), float(1.0), NIGHT)).add(shops.mul(atNight(0.12)));
   return m;
 }
 
@@ -134,7 +144,12 @@ export function pavementMaterial(textures, plaza = false) {
   const curb = max(step(edge, 0.32), step(abs(nw.y), 0.5));        // top rim and the vertical faces
   // large-scale variation so the texture never reads as a repeated grid
   const dirt = mx_noise_float(wp.xz.mul(0.05)).mul(0.5).add(0.5);
-  const albedo = texture(t.color, uvP).rgb.mul(plaza ? 0.75 : 0.62).mul(dirt.mul(0.25).add(0.85));
+  const raw = texture(t.color, uvP).rgb;
+  // plaza stone: the CC0 tile photo has reddish stains; keep its relief and joints but neutralise the colour and
+  // soften the contrast so the paving reads as clean, slightly warm limestone
+  const grey = vec3(raw.dot(vec3(0.299, 0.587, 0.114)));
+  const base = plaza ? mix(grey, vec3(0.6, 0.58, 0.55), 0.35).mul(vec3(1.0, 0.98, 0.94)) : raw;
+  const albedo = base.mul(plaza ? 0.85 : 0.62).mul(dirt.mul(0.25).add(0.85));
   const slab = albedo.mul(float(1).sub(WET.mul(0.35)));
   m.colorNode = mix(slab, vec3(0.5, 0.5, 0.52).mul(float(1).sub(WET.mul(0.3))), curb);
   const rough = texture(t.rough, uvP).r.mul(0.3).add(0.62);
@@ -151,17 +166,6 @@ export function neonMaterial(colorOrAttr, intensity = 3, extra = {}, dayLevel = 
   const base = colorOrAttr.isBufferAttribute ? instancedBufferAttribute(colorOrAttr) : vec3(colorOrAttr.r, colorOrAttr.g, colorOrAttr.b);
   m.colorNode = dayLevel < 1 ? base.mul(intensity).mul(atNight(dayLevel)) : base.mul(intensity);
   m.fog = true;
-  return m;
-}
-
-// Signs drawn on a canvas: texture alpha shapes the glyphs, intensity drives the bloom; some signs flicker.
-export function signMaterial(tex, intensity = 2.4, flicker = 0) {
-  const m = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide });
-  const t = texture(tex);
-  const phase = uniform(Math.random() * 100);
-  const f = flicker ? float(1).sub(step(1 - flicker, hash(floor(time.mul(14).add(phase)))).mul(0.85)) : float(1);
-  m.colorNode = t.rgb.mul(intensity).mul(f).mul(atNight(0.45));
-  m.opacityNode = t.a;
   return m;
 }
 

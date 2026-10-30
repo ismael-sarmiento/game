@@ -10,7 +10,8 @@ Sibling sites on the same origin: portada (`ismael-sarmiento.github.io`), CV Onl
 
 ## Purpose
 
-Entry point for agents working on IsGame, the open-world browser game of IsAcademy ("Neo Academia", a neon tech city),
+Entry point for agents working on IsGame, the open-world browser game of IsAcademy ("Neo Academia", a living tech city;
+sober, realistic signage, no neon — owner decision 2026-10-30),
 served at `/isgame/`. Personal project of Ismael Sarmiento; only the global L0 protocols apply
 (Plan al Milímetro before each phase, close-out recap after each task).
 

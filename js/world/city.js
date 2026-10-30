@@ -1,9 +1,9 @@
-// Neo Academia: ground, blocks, buildings, rooftop neon, street lamps, the IsAcademy tower, the skyline beyond the
+// Neo Academia: ground, blocks, buildings, aviation lights, street lamps, the IsAcademy tower, the skyline beyond the
 // playable area and the static physics colliders. Everything is instanced: a handful of draw calls for the whole city.
 import * as THREE from 'three/webgpu';
 import { CITY, roadAt, blockAt, isCampus, districtAt, rng } from './layout.js';
 import { buildingMaterial, groundMaterial, pavementMaterial, neonMaterial, NIGHT, BUILDING_TYPES } from './materials.js';
-import { texture } from 'three/tsl';
+import { texture, sin, time, hash, float, instanceIndex, vec3, mix } from 'three/tsl';
 import { placeModel } from './kit.js';
 import { chunked, single } from './chunks.js';
 
@@ -25,7 +25,7 @@ function radialTexture(inner, outer) {
 export function buildCity({ scene, world, RAPIER }, textures, kit = null) {
   const rand = rng(2026);
   const fixed = (hx, hy, hz, x, y, z) => world.createCollider(RAPIER.ColliderDesc.cuboid(hx, hy, hz).setTranslation(x, y, z).setFriction(0.6));
-  const buildings = [], slabs = [], plazas = [], strips = [], antennas = [], signAnchors = [], roofs = [];
+  const buildings = [], slabs = [], plazas = [], strips = [], antennas = [], aviation = [], signAnchors = [], roofs = [];
   const kitPlacements = {};   // detailed MegaKit buildings that replace some low-rise lots
 
   // ground and invisible bounds
@@ -95,21 +95,20 @@ export function buildCity({ scene, world, RAPIER }, textures, kit = null) {
           if (h > 30 && rand() < 0.3) antennas.push({ x, z, y: top, h: 6 + rand() * 10 });
           roofs.push({ x, z, y: top, w, d, type: base.type });
         }
-        if (rand() < 0.5) {
-          const c = accentOf(x, z);
-          strips.push({ x, z: z - d / 2, y: top, sx: w, sz: 0.35, c }, { x, z: z + d / 2, y: top, sx: w, sz: 0.35, c },
-            { x: x - w / 2, z, y: top, sx: 0.35, sz: d, c }, { x: x + w / 2, z, y: top, sx: 0.35, sz: d, c });
-        }
+        rand();   // this draw used to place rooftop neon; kept so the rest of the city layout stays the same
+        // red aviation lights on two opposite roof corners of the tall buildings
+        if (h > 60) aviation.push({ x: x - w / 2 + 0.6, y: top + 1.3, z: z - d / 2 + 0.6 }, { x: x + w / 2 - 0.6, y: top + 1.3, z: z + d / 2 - 0.6 });
         // facade that looks onto the nearest road: anchor for neon signs
         signAnchors.push({ ...sides[0], h, district: districtAt(x, z).key });
       }
     }
   }
 
-  // IsAcademy tower in the campus block (5, 5): three tiers and a golden crown
+  // IsAcademy tower in the campus block (5, 5): two stone tiers of classrooms (their windows light up at night) and a
+  // glass top with the name
   const tx = blockAt(5), tz = blockAt(5);
-  addBuilding(tx, tz, 34, 34, 62, CITY.CURB + 8, false, 'glass');   // the glass lobby below (interiors.js) is walkable
-  addBuilding(tx, tz, 26, 26, 60, CITY.CURB + 70, false, 'glass');
+  addBuilding(tx, tz, 34, 34, 62, CITY.CURB + 8, false, 'office');   // the lobby below (interiors.js) is walkable
+  addBuilding(tx, tz, 26, 26, 60, CITY.CURB + 70, false, 'office');
   addBuilding(tx, tz, 18, 18, 46, CITY.CURB + 130, false, 'glass');
   const towerTop = CITY.CURB + 176;
   const gold = new THREE.Color('#f2d18b');
@@ -151,21 +150,20 @@ export function buildCity({ scene, world, RAPIER }, textures, kit = null) {
 
   const stripColors = new THREE.InstancedBufferAttribute(new Float32Array(strips.length * 3), 3);
   strips.forEach((st, i) => stripColors.setXYZ(i, st.c.r, st.c.g, st.c.b));
-  scene.add(instanced(unitBox, neonMaterial(stripColors, 3.2, {}, 0.2), strips, (st, p, q, s) => { p.set(st.x, st.y, st.z); s.set(st.sx, 0.35, st.sz); }));
+  // the tower's cornices: a thin warm line of light at each setback, only noticeable at night
+  scene.add(instanced(unitBox, neonMaterial(stripColors, 0.9, {}, 0.05), strips, (st, p, q, s) => { p.set(st.x, st.y, st.z); s.set(st.sx, 0.2, st.sz); }));
 
   const antennaMesh = instanced(new THREE.CylinderGeometry(0.12, 0.25, 1, 6).translate(0, 0.5, 0),
     new THREE.MeshStandardNodeMaterial({ color: 0x1a1f33, roughness: 0.5, metalness: 0.8 }), antennas,
     (a, p, q, s) => { p.set(a.x, a.y, a.z); s.set(1, a.h, 1); });
   scene.add(antennaMesh);
-  scene.add(instanced(new THREE.SphereGeometry(0.45, 8, 6), neonMaterial(new THREE.Color('#ff3355'), 4), antennas,
-    (a, p, q, s) => { p.set(a.x, a.y + a.h, a.z); s.set(1, 1, 1); }));
+  // aviation lights: on the antenna tips and the tall roofs; steady red at dusk, a slow pulse at night, dark by day
+  antennas.forEach((a) => aviation.push({ x: a.x, y: a.y + a.h, z: a.z }));
+  const redLight = new THREE.MeshBasicNodeMaterial();
+  const pulse = sin(time.mul(1.6).add(hash(float(instanceIndex)).mul(6.0))).mul(0.5).add(0.5).pow(3);
+  redLight.colorNode = vec3(1.0, 0.08, 0.06).mul(mix(float(0.15), pulse.mul(5.0).add(0.6), NIGHT));
+  scene.add(instanced(new THREE.SphereGeometry(0.28, 8, 6), redLight, aviation, (a, p) => { p.set(a.x, a.y, a.z); }));
 
-  // the tower's beacon: a slow golden light column visible from everywhere
-  const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 2.2, 900, 16, 1, true).translate(0, 450, 0),
-    new THREE.MeshBasicNodeMaterial({ color: new THREE.Color(0.9, 0.65, 0.25), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }));
-  beacon.material.opacityNode = NIGHT.mul(0.07);
-  beacon.position.set(tx, towerTop + 30, tz);
-  scene.add(beacon);
 
   // street lamps along every road, both sides, skipping crossings
   const lamps = [];
@@ -185,9 +183,9 @@ export function buildCity({ scene, world, RAPIER }, textures, kit = null) {
   scene.add(instanced(new THREE.BoxGeometry(0.5, 0.18, 2.6), neonMaterial(new THREE.Color('#ffd9a0'), 3, {}, 0.04), lamps,
     (l, p, q, s) => { p.set(l.x + l.dx * 1.1, CITY.CURB + 7.5, l.z + l.dz * 1.1); q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), l.dx ? Math.PI / 2 : 0); s.set(1, 1, 1); }));
   const poolMat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
-  const poolTex = texture(radialTexture('rgba(255,200,130,0.3)', 'rgba(255,200,130,0)'));
+  const poolTex = texture(radialTexture('rgba(255,204,140,0.5)', 'rgba(255,204,140,0)'));
   poolMat.colorNode = poolTex.rgb; poolMat.opacityNode = poolTex.a.mul(NIGHT);   // lamps light the street only at night
-  const pools = instanced(new THREE.PlaneGeometry(13, 13).rotateX(-Math.PI / 2), poolMat, lamps,
+  const pools = instanced(new THREE.PlaneGeometry(15, 15).rotateX(-Math.PI / 2), poolMat, lamps,
     (l, p, q, s) => { p.set(l.x + l.dx * 3.2, 0.03, l.z + l.dz * 3.2); s.set(1, 1, 1); });
   pools.renderOrder = 1;
   scene.add(pools);

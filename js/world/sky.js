@@ -118,13 +118,15 @@ export function buildSky({ scene, renderer, preset }, clock, weather) {
         sun.intensity = 3.4 * THREE.MathUtils.smoothstep(clock.sun.y, -0.04, 0.12) * w.sun;
       } else {
         sun.color.copy(colors.moon);
-        sun.intensity = 0.55 * n * (0.4 + 0.6 * w.sun);
+        sun.intensity = 0.35 * n * (0.4 + 0.6 * w.sun);
       }
       sun.intensity += weather.flash * 2.5;
 
       lerpColor(hemi.color, colors.skyDay, colors.skyNight, n);
       lerpColor(hemi.groundColor, colors.groundDay, colors.groundNight, n);
-      hemi.intensity = THREE.MathUtils.lerp(0.32, 0.85, n) * THREE.MathUtils.lerp(1, 1.5, w.cover * (1 - n)) + weather.flash * 1.5;
+      // sky fill: enough by day that streets in a building's shadow keep their colour; little at night, when facades
+      // should be lit by windows and lamps, not by a grey glow
+      hemi.intensity = THREE.MathUtils.lerp(0.5, 0.36, n) * THREE.MathUtils.lerp(1, 1.4, w.cover * (1 - n)) + weather.flash * 1.5;
 
       lerpColor(tmp, colors.fogDay, colors.fogNight, n);
       tmp.lerp(colors.fogDusk, d * 0.55);

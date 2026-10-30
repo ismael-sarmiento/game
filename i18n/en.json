@@ -10,7 +10,7 @@
   "loadingLibs": "Preparing engine and physics…",
   "loadingGpu": "Waking up the graphics card…",
   "loadingCity": "Raising 450 buildings…",
-  "loadingSigns": "Switching on the neon…",
+  "loadingSigns": "Switching on the signs…",
   "loadingLife": "Bringing the city to life…",
   "loadingShaders": "Compiling the light…",
   "ready": "Neo Academia is ready.",
@@ -99,11 +99,7 @@
   "abandon": "Abandon the mission"
  },
  "world": {
-  "billboard": [
-   "AI GIVES YOU ANSWERS · HERE WE TEACH YOU HOW TO THINK · ISACADEMY",
-   "PERSONALISED PYTHON, SQL AND AI CLASSES · ONLINE · ISACADEMY",
-   "NEO ACADEMIA · THE CITY THAT LEARNS"
-  ]
+  "screenChart": "Trips by district · last hour"
  },
  "districts": {
   "ia": "AI District",
@@ -663,7 +659,7 @@
     "text": "Reach 100 km/h."
    },
    "nightDrive": {
-    "title": "Night neon",
+    "title": "City lights",
     "text": "Drive for 30 seconds at night."
    },
    "storm": {

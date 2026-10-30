@@ -329,7 +329,7 @@ async function boot() {
           const n = near[i];
           if (!n) { l.intensity = 0; return; }
           l.position.set(n.s.x, n.s.y, n.s.z); l.color.copy(n.s.color);
-          l.userData.target = 120 * clock.night;
+          l.userData.target = 30 * clock.night;   // the soft spill of a lit shop sign on the pavement
         });
       }
       pool.forEach((l) => { l.intensity = THREE.MathUtils.damp(l.intensity, l.userData.target || 0, 4, dt); });
@@ -360,6 +360,7 @@ async function boot() {
     audio.setRain(game.started ? weather.p.rain * (indoors ? 0.3 : 1) : 0);
     props.wind.value = 0.6 + weather.p.rain * 0.6 + weather.p.storm * 1.4;
     landscape.update(dt, game.time, game.started ? game.player : camera.position, clock.night);
+    signs.update(dt);
     if (!game.paused) ambient.update(dt, { camera, player: game.started ? game.player : camera.position, car, driving: game.mode === 'car', weather, night: clock.night, traffic, crowd: walkers, indoors, time: game.time });
     lightsTimer -= dt;
     if (lightsTimer <= 0) { lightsTimer = 0.25; lights.update(game.time); }
