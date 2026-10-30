@@ -118,6 +118,10 @@ input[type="range"] { accent-color: var(--gold-400); width: 100%; }
 .wp-arrow { width: 26px; height: 26px; background: var(--gold-400); clip-path: polygon(50% 0, 100% 100%, 50% 74%, 0 100%); filter: drop-shadow(0 0 8px rgba(226, 178, 92, .9)); }
 .waypoint b { font: 600 .78rem var(--font-mono); color: var(--gold-300); text-shadow: 0 0 6px #000; }
 
+/* high-contrast interface */
+body.high-contrast { --glass: rgba(0, 0, 0, .92); --glass-line: rgba(255, 255, 255, .7); --text-2: #ffffff; }
+body.high-contrast .glass, body.high-contrast .chip, body.high-contrast .toast { backdrop-filter: none; -webkit-backdrop-filter: none; }
+
 /* full map and photo mode */
 .bigmap-card { width: min(760px, 100%); padding: 1rem; display: grid; gap: .6rem; }
 .bigmap-card header { display: flex; justify-content: space-between; align-items: center; }

@@ -171,7 +171,7 @@ async function boot() {
   playBtn.focus();
   playBtn.addEventListener('click', () => {
     audio.start();
-    audio.setVolumes(settings.music, settings.sfx);
+    audio.setVolumes(settings.music, settings.sfx, settings.master, settings.ambience);
     $('boot').hidden = true;
     $('hud').hidden = false;
     if (isTouch()) $('touch').hidden = false;
@@ -270,7 +270,7 @@ async function boot() {
 
       car.sync();
       if (game.mode === 'foot') avatar.sync(dt);
-      if (car.impact > 0.05) { audio.play('hit', car.impact); chase.bump(car.impact); if (navigator.vibrate && input.lastDevice === 'touch') navigator.vibrate(30); }
+      if (car.impact > 0.05) { audio.play('hit', car.impact); chase.bump(car.impact); if (input.vibration !== false && navigator.vibrate && input.lastDevice === 'touch') navigator.vibrate(30); }
       audio.updateVehicle(game.mode === 'car', Math.abs(car.speed), input.throttle, car.slip);
 
       const look = input.consumeLook();

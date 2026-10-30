@@ -12,24 +12,25 @@ export class ChaseCamera {
     this.target = new THREE.Vector3(); this.pos = new THREE.Vector3();
     this.ray = new RAPIER.Ray({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 1 });
     this.mode = 'foot';
+    this.options = { fov: 62, invertY: false, autoCam: true, reduceMotion: false };
   }
 
   cycle() { this.zoomIndex = (this.zoomIndex + 1) % 3; }
-  bump(amount) { this.shake = Math.min(1, this.shake + amount); }
+  bump(amount) { if (!this.options.reduceMotion) this.shake = Math.min(1, this.shake + amount); }
   snap(yaw) { this.yaw = yaw; this.idle = 0; }
 
   // focus: point to look at; heading: yaw of the car or avatar; speed: m/s; exclude: rigid body to ignore
   update(dt, look, { mode, focus, heading, speed, exclude }) {
     if (mode !== this.mode) { this.mode = mode; this.zoomExtra = 0; }
     const active = Math.abs(look.x) + Math.abs(look.y) > 0.0001;
-    this.yaw -= look.x; this.pitch = THREE.MathUtils.clamp(this.pitch + look.y, -0.1, 1.2);
+    this.yaw -= look.x; this.pitch = THREE.MathUtils.clamp(this.pitch + look.y * (this.options.invertY ? -1 : 1), -0.1, 1.2);
     this.zoomExtra = THREE.MathUtils.clamp(this.zoomExtra + look.zoom * 0.8, -2, 10);
     this.idle = active ? 0 : this.idle + dt;
 
     if (mode === 'car') {
       // after a moment without input, swing back behind the car (faster when going fast)
       const wantYaw = heading + (speed < -2 ? Math.PI : 0);
-      if (this.idle > 0.9 && Math.abs(speed) > 1.5) {
+      if (this.options.autoCam && this.idle > 0.9 && Math.abs(speed) > 1.5) {
         let d = wantYaw - this.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
         this.yaw += d * Math.min(1, dt * (1.4 + Math.abs(speed) * 0.06));
         this.pitch = THREE.MathUtils.damp(this.pitch, 0.2, 1.5, dt);
@@ -57,7 +58,8 @@ export class ChaseCamera {
       this.shake = Math.max(0, this.shake - dt * 2.2);
     }
     this.camera.lookAt(this.target.x, this.target.y + (mode === 'car' ? 0.6 : 0.2), this.target.z);
-    const fov = (mode === 'car' ? 62 + Math.min(Math.abs(speed) * 0.42, 22) : 60) + (portrait ? 14 : 0);
+    const widen = this.options.reduceMotion ? 0 : Math.min(Math.abs(speed) * 0.42, 22);
+    const fov = (mode === 'car' ? this.options.fov + widen : this.options.fov - 2) + (portrait ? 14 : 0);
     this.camera.fov = THREE.MathUtils.damp(this.camera.fov, fov, 4, dt);
     this.camera.updateProjectionMatrix();
   }

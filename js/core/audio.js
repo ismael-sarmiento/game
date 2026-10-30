@@ -29,6 +29,7 @@ export class Audio {
     this.master.connect(comp).connect(ctx.destination);
     this.musicBus = ctx.createGain(); this.musicBus.connect(this.master);
     this.sfxBus = ctx.createGain(); this.sfxBus.connect(this.master);
+    this.ambBus = ctx.createGain(); this.ambBus.connect(this.master);
     this.setVolumes(this.music, this.sfx);
 
     // a short stereo echo shared by the score
@@ -44,10 +45,12 @@ export class Audio {
     this.timer = setInterval(() => this.schedule(), 60);
   }
 
-  setVolumes(music, sfx) {
-    this.music = music; this.sfx = sfx;
+  setVolumes(music, sfx, master = this.masterLevel ?? 0.9, ambience = this.ambience ?? 0.8) {
+    this.music = music; this.sfx = sfx; this.masterLevel = master; this.ambience = ambience;
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
+    this.master.gain.setTargetAtTime(master, t, 0.1);
+    this.ambBus.gain.setTargetAtTime(this.muted ? 0 : ambience, t, 0.2);
     this.musicBus.gain.setTargetAtTime(this.muted ? 0 : music * 0.5, t, 0.2);
     this.sfxBus.gain.setTargetAtTime(this.muted ? 0 : sfx, t, 0.1);
   }
@@ -85,7 +88,7 @@ export class Audio {
     const rn = this.noiseSource(), hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2200;
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 9000;
     this.rainGain = ctx.createGain(); this.rainGain.gain.value = 0;
-    rn.connect(hp).connect(lp).connect(this.rainGain).connect(this.master);
+    rn.connect(hp).connect(lp).connect(this.rainGain).connect(this.ambBus);
     // city hum: a low drone that sits under everything
     const hum = ctx.createOscillator(); hum.type = 'sine'; hum.frequency.value = 55;
     const hg = ctx.createGain(); hg.gain.value = 0.035; hum.connect(hg).connect(this.musicBus); hum.start();
@@ -156,7 +159,7 @@ export class Audio {
       const o = ctx.createOscillator(), g = ctx.createGain(), t = at + k * 0.09;
       o.frequency.setValueAtTime(base, t); o.frequency.exponentialRampToValueAtTime(base * 1.5, t + 0.06);
       g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.012, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
-      o.connect(g).connect(this.musicBus); o.start(t); o.stop(t + 0.08);
+      o.connect(g).connect(this.ambBus); o.start(t); o.stop(t + 0.08);
     }
   }
   cricket(at) {
@@ -164,7 +167,7 @@ export class Audio {
     for (let k = 0; k < 3; k++) {
       const o = ctx.createOscillator(), g = ctx.createGain(), t = at + k * 0.045;
       o.frequency.value = 4400; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.006, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
-      o.connect(g).connect(this.musicBus); o.start(t); o.stop(t + 0.04);
+      o.connect(g).connect(this.ambBus); o.start(t); o.stop(t + 0.04);
     }
   }
 

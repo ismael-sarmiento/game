@@ -46,7 +46,9 @@
   "cloudy": "Cloudy",
   "rainy": "Rain",
   "storm": "Storm",
-  "character": "Character"
+  "character": "Character",
+  "master": "Master volume",
+  "ambience": "Ambience (rain, birds)"
  },
  "menu": {
   "pause": "Pause",
@@ -61,7 +63,8 @@
   "graduated": "Graduation",
   "facts": "Facts",
   "graphics": "Graphics",
-  "achievements": "Achievements"
+  "achievements": "Achievements",
+  "access": "Accessibility"
  },
  "hud": {
   "objective": "Objective",
@@ -699,5 +702,15 @@
     "text": "Graduate in Neo Academia."
    }
   }
+ },
+ "access": {
+  "fov": "Field of view",
+  "textSize": "Text size",
+  "units": "Speed units",
+  "invertY": "Invert the camera vertical axis",
+  "autoCam": "Automatic camera behind the car",
+  "reduceMotion": "Reduce motion (no shake or speed zoom)",
+  "vibration": "Vibration on phones and gamepads",
+  "contrast": "High-contrast interface"
  }
 }

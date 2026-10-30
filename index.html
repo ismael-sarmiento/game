@@ -130,6 +130,7 @@
       <div class="menu-tabs" role="tablist">
         <button type="button" role="tab" class="tab" aria-selected="true" data-tab="settings" data-i18n="menu.settings">Ajustes</button>
         <button type="button" role="tab" class="tab" aria-selected="false" data-tab="graphics" data-i18n="menu.graphics">Gráficos</button>
+        <button type="button" role="tab" class="tab" aria-selected="false" data-tab="access" data-i18n="menu.access">Accesibilidad</button>
         <button type="button" role="tab" class="tab" aria-selected="false" data-tab="controls" data-i18n="menu.controls">Controles</button>
         <button type="button" role="tab" class="tab" aria-selected="false" data-tab="progress" data-i18n="menu.progress">Progreso</button>
         <button type="button" role="tab" class="tab" aria-selected="false" data-tab="achievements" data-i18n="menu.achievements">Logros</button>
@@ -157,7 +158,9 @@
         <label><span data-i18n="settings.language">Idioma</span>
           <select id="set-lang"><option value="es">Español</option><option value="en">English</option></select>
         </label>
+        <label><span data-i18n="settings.master">Volumen general</span><input id="set-master" type="range" min="0" max="1" step="0.05"></label>
         <label><span data-i18n="settings.music">Música</span><input id="set-music" type="range" min="0" max="1" step="0.05"></label>
+        <label><span data-i18n="settings.ambience">Ambiente (lluvia, pájaros)</span><input id="set-ambience" type="range" min="0" max="1" step="0.05"></label>
         <label><span data-i18n="settings.sfx">Efectos</span><input id="set-sfx" type="range" min="0" max="1" step="0.05"></label>
         <label><span data-i18n="settings.sensitivity">Sensibilidad de cámara</span><input id="set-sens" type="range" min="0.3" max="2" step="0.1"></label>
         <label><span data-i18n="settings.time">Hora del día</span>
@@ -195,6 +198,18 @@
         <label class="check"><input id="gfx-motionBlur" type="checkbox"><span data-i18n="gfx.motionBlur">Desenfoque de movimiento</span></label>
         <label class="check"><input id="gfx-grain" type="checkbox"><span data-i18n="gfx.grain">Grano de película</span></label>
         <p class="hint" data-i18n="gfx.hint">Si notas tirones, baja la calidad o la resolución.</p>
+      </div>
+      <div class="tab-panel" data-panel="access" hidden>
+        <label><span><span data-i18n="access.fov">Campo de visión</span> · <output id="fov-value"></output></span><input id="set-fov" type="range" min="50" max="80" step="1"></label>
+        <label><span><span data-i18n="access.textSize">Tamaño del texto</span> · <output id="text-value"></output></span><input id="set-textSize" type="range" min="0.85" max="1.4" step="0.05"></label>
+        <label><span data-i18n="access.units">Unidades de velocidad</span>
+          <select id="set-units"><option value="kmh">km/h</option><option value="mph">mph</option></select>
+        </label>
+        <label class="check"><input id="set-invertY" type="checkbox"><span data-i18n="access.invertY">Invertir el eje vertical de la cámara</span></label>
+        <label class="check"><input id="set-autoCam" type="checkbox"><span data-i18n="access.autoCam">Cámara automática detrás del coche</span></label>
+        <label class="check"><input id="set-reduceMotion" type="checkbox"><span data-i18n="access.reduceMotion">Reducir movimiento (sin temblores ni zoom de velocidad)</span></label>
+        <label class="check"><input id="set-vibration" type="checkbox"><span data-i18n="access.vibration">Vibración en móvil y mando</span></label>
+        <label class="check"><input id="set-contrast" type="checkbox"><span data-i18n="access.contrast">Interfaz de alto contraste</span></label>
       </div>
       <div class="tab-panel" data-panel="controls" hidden>
         <dl class="controls-list" id="controls-list"></dl>

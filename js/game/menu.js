@@ -15,8 +15,20 @@ export class Menu {
     bind('set-quality', 'quality', (v) => { game.setAutoQuality(v === 'auto'); if (v !== 'auto') onQuality(v); });
     bind('set-character', 'character', (v) => game.avatar.setVariant(v));
     bind('set-lang', 'lang', (v) => { $('boot-lang').value = v; onLang(v); });
-    bind('set-music', 'music', () => game.audio.setVolumes(s.music, s.sfx));
-    bind('set-sfx', 'sfx', () => game.audio.setVolumes(s.music, s.sfx));
+    const vol = () => game.audio.setVolumes(s.music, s.sfx, s.master, s.ambience);
+    bind('set-master', 'master', vol); bind('set-music', 'music', vol); bind('set-sfx', 'sfx', vol); bind('set-ambience', 'ambience', vol);
+    // accessibility and camera
+    const applyAccess = () => {
+      document.documentElement.style.fontSize = `${s.textSize * 100}%`;
+      document.body.classList.toggle('high-contrast', s.contrast);
+      $('fov-value').textContent = `${s.fov}°`; $('text-value').textContent = `${Math.round(s.textSize * 100)} %`;
+      Object.assign(game.chase.options, { fov: s.fov, invertY: s.invertY, autoCam: s.autoCam, reduceMotion: s.reduceMotion });
+      game.input.vibration = s.vibration;
+    };
+    ['fov', 'textSize'].forEach((k) => bind(`set-${k}`, k, applyAccess));
+    ['invertY', 'autoCam', 'reduceMotion', 'vibration', 'contrast'].forEach((k) => bind(`set-${k}`, k, applyAccess, 'checked'));
+    bind('set-units', 'units', applyAccess);
+    applyAccess();
     bind('set-sens', 'sens', (v) => { game.input.sensitivity = v; });
     bind('set-time', 'time', (v) => { game.clock.set(v, s.cycle); $('set-cycle').disabled = v !== 'auto'; });
     bind('set-cycle', 'cycle', (v) => { game.clock.set(s.time, v); $('cycle-value').textContent = game.t('settings.minutes', { n: v }); });

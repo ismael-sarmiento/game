@@ -113,7 +113,9 @@ export class Hud {
     speedo.hidden = g.mode !== 'car';
     if (g.mode === 'car') {
       const kmh = Math.round(Math.abs(g.car.speed) * 3.6);
-      $('speed-value').textContent = kmh;
+      const mph = g.save.data.settings.units === 'mph';
+      $('speed-value').textContent = mph ? Math.round(kmh * 0.621) : kmh;
+      $('speed-value').nextElementSibling.textContent = mph ? 'mph' : 'km/h';
       const c = this.speedCtx, w = 180;
       c.clearRect(0, 0, w, w);
       c.lineWidth = 9; c.lineCap = 'round';

@@ -46,7 +46,9 @@
   "cloudy": "Nublado",
   "rainy": "Lluvia",
   "storm": "Tormenta",
-  "character": "Personaje"
+  "character": "Personaje",
+  "master": "Volumen general",
+  "ambience": "Ambiente (lluvia, pájaros)"
  },
  "menu": {
   "pause": "Pausa",
@@ -61,7 +63,8 @@
   "graduated": "Graduación",
   "facts": "Curiosidades",
   "graphics": "Gráficos",
-  "achievements": "Logros"
+  "achievements": "Logros",
+  "access": "Accesibilidad"
  },
  "hud": {
   "objective": "Objetivo",
@@ -699,5 +702,15 @@
     "text": "Gradúate en Neo Academia."
    }
   }
+ },
+ "access": {
+  "fov": "Campo de visión",
+  "textSize": "Tamaño del texto",
+  "units": "Unidades de velocidad",
+  "invertY": "Invertir el eje vertical de la cámara",
+  "autoCam": "Cámara automática detrás del coche",
+  "reduceMotion": "Reducir movimiento (sin temblores ni zoom de velocidad)",
+  "vibration": "Vibración en móvil y mando",
+  "contrast": "Interfaz de alto contraste"
  }
 }
