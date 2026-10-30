@@ -79,7 +79,8 @@
   "unmuted": "Sound on",
   "factFound": "Fact {n}/{total}",
   "factEyebrow": "Fact unlocked",
-  "allFacts": "You found all 40 facts in Neo Academia!"
+  "allFacts": "You found all 40 facts in Neo Academia!",
+  "noRoom": "No room to get out here"
  },
  "dialog": {
   "placeholder": "Ask something…",

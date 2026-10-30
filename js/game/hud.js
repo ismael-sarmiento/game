@@ -126,6 +126,12 @@ export class Hud {
       c.strokeStyle = grd; c.shadowColor = '#3fe0ff'; c.shadowBlur = 14;
       c.beginPath(); c.arc(90, 90, 74, Math.PI * 0.75, Math.PI * (0.75 + 1.5 * f)); c.stroke();
       c.shadowBlur = 0;
+      // inner arc: engine rpm (red near the redline) and the gear
+      const n = Math.min(1, g.car.rpm / 6800);
+      c.lineWidth = 4; c.strokeStyle = n > 0.88 ? '#ff5c7a' : 'rgba(255,255,255,0.55)';
+      c.beginPath(); c.arc(90, 90, 62, Math.PI * 0.75, Math.PI * (0.75 + 1.5 * n)); c.stroke();
+      c.fillStyle = '#e2b25c'; c.font = '700 18px "Space Grotesk", sans-serif'; c.textAlign = 'center';
+      c.fillText(g.car.speed < -0.5 ? 'R' : String(g.car.gear), 90, 150);
     }
 
     this.drawMinimap();

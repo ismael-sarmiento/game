@@ -79,7 +79,8 @@
   "unmuted": "Sonido activado",
   "factFound": "Curiosidad {n}/{total}",
   "factEyebrow": "Curiosidad desbloqueada",
-  "allFacts": "¡Has encontrado las 40 curiosidades de Neo Academia!"
+  "allFacts": "¡Has encontrado las 40 curiosidades de Neo Academia!",
+  "noRoom": "No hay sitio para bajar aquí"
  },
  "dialog": {
   "placeholder": "Pregúntale algo…",

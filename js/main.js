@@ -24,6 +24,7 @@ import { Mentors } from './world/npcs.js';
 import { loadPeople, Crowd } from './world/people.js';
 import { Car } from './player/car.js';
 import { Avatar } from './player/avatar.js';
+import { FX } from './world/fx.js';
 import { ChaseCamera } from './player/camera.js';
 import { Hud } from './game/hud.js';
 import { Dialogue } from './game/dialogue.js';
@@ -101,6 +102,9 @@ async function boot() {
   const avatar = new Avatar(ctx, new THREE.Vector3(18, 0.2, blockAt(6) - 18), people, settings.character);
   avatar.facing = -Math.PI * 0.75;
   const chase = new ChaseCamera(camera, ctx);
+  const fx = new FX(ctx);
+  car.fx = fx;
+  car.onShift = () => audio.play('shift');
   chase.snap(avatar.facing);
 
   const pipeline = new Pipeline(renderer, scene, camera);
@@ -191,8 +195,15 @@ async function boot() {
       return true;
     }
     if (Math.abs(car.speed) > 6) { game.hud.toast(t('hud.tooFast')); return true; }
-    const side = new THREE.Vector3(-1.9, 0, 0).applyQuaternion(car.root.quaternion);
-    const p = car.position.add(side);
+    // get out on whichever side is free: driver's door, passenger's door, behind, in front
+    const capsule = new RAPIER.Capsule(0.55, 0.32), rot = { x: 0, y: 0, z: 0, w: 1 };
+    let p = null;
+    for (const off of [[-1.9, 0], [1.9, 0], [0, -3.4], [0, 3.4], [-2.6, -2], [2.6, 2]]) {
+      const c = car.position.add(new THREE.Vector3(off[0], 0, off[1]).applyQuaternion(car.root.quaternion));
+      const blocked = world.intersectionWithShape({ x: c.x, y: Math.max(c.y - 0.7, 0.2) + 1.0, z: c.z }, rot, capsule, undefined, undefined, undefined, car.body);
+      if (!blocked) { p = c; break; }
+    }
+    if (!p) { game.hud.toast(t('hud.noRoom')); return true; }
     avatar.place(p.x, Math.max(p.y - 0.7, 0.2), p.z, car.heading);
     avatar.setEnabled(true);
     game.mode = 'foot'; car.occupied = false;
@@ -255,7 +266,7 @@ async function boot() {
       let steps = 0;
       while (acc >= step && steps < 4) {
         if (game.mode === 'car') {
-          car.drive({ throttle: input.throttle, brake: input.brake, steer: input.axis.x, handbrake: input.jump }, step);
+          car.drive({ throttle: input.throttle, brake: input.brake, steer: input.axis.x, handbrake: input.jump }, step, weather.wet);
         } else {
           car.idle(step);
           const { f, r } = chase.basis();
@@ -268,10 +279,17 @@ async function boot() {
       }
       if (steps === 4) acc = 0;
 
-      car.sync();
+      car.sync(dt, weather.wet);
+      fx.update(dt, camera);
       if (game.mode === 'foot') avatar.sync(dt);
-      if (car.impact > 0.05) { audio.play('hit', car.impact); chase.bump(car.impact); if (input.vibration !== false && navigator.vibrate && input.lastDevice === 'touch') navigator.vibrate(30); }
-      audio.updateVehicle(game.mode === 'car', Math.abs(car.speed), input.throttle, car.slip);
+      const hit = car.takeImpact();
+      if (hit > 0.05) {
+        audio.play('hit', hit); chase.bump(hit);
+        // sparks where the body met the obstacle (the side the speed was lost towards)
+        if (hit > 0.2) { const at = car.position.addScaledVector(car.impactDir, 2.0); at.y += 0.4; fx.sparks(at, car.impactDir, hit); audio.play('scrape', hit); }
+        if (input.vibration !== false && navigator.vibrate && input.lastDevice === 'touch') navigator.vibrate(Math.round(20 + hit * 60));
+      }
+      audio.updateVehicle(game.mode === 'car', Math.abs(car.speed), input.throttle, car.slip, game.mode === 'car' ? car.rpm : 0);
 
       const look = input.consumeLook();
       if (game.mode === 'car') {

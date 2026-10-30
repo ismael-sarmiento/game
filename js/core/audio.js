@@ -103,15 +103,15 @@ export class Audio {
   setNight(n) { this.night = n; }
 
   // speed in m/s, throttle 0..1, slip 0..1, driving: whether the engine is running
-  updateVehicle(driving, speed, throttle, slip) {
+  updateVehicle(driving, speed, throttle, slip, rpm = 0) {
     if (!this.ctx) return;
     const t = this.ctx.currentTime, e = this.eng;
-    const gear = Math.min(4, Math.floor(speed / 13));
-    const rpm = 0.18 + ((speed - gear * 13) / 13) * 0.6 + throttle * 0.22;
-    const base = 38 + rpm * 70 + gear * 6;
-    e.a.frequency.setTargetAtTime(base, t, 0.05); e.b.frequency.setTargetAtTime(base / 2, t, 0.05);
-    e.f.frequency.setTargetAtTime(300 + rpm * 1200 + throttle * 600, t, 0.08);
-    e.g.gain.setTargetAtTime(driving ? 0.05 + throttle * 0.06 : 0, t, 0.12);
+    // engine tone follows the real rpm of the gearbox (850 idle … 6800 redline)
+    const n = Math.min(1, Math.max(0, (rpm - 850) / 5950));
+    const base = 34 + n * 150;
+    e.a.frequency.setTargetAtTime(base, t, 0.04); e.b.frequency.setTargetAtTime(base / 2, t, 0.04);
+    e.f.frequency.setTargetAtTime(280 + n * 1500 + throttle * 700, t, 0.06);
+    e.g.gain.setTargetAtTime(driving ? 0.045 + throttle * 0.065 + n * 0.02 : 0, t, 0.1);
     this.skid.gain.setTargetAtTime(driving ? Math.min(slip, 1) * 0.16 : 0, t, 0.05);
     const w = Math.min(speed / 50, 1);
     this.wind.g.gain.setTargetAtTime(w * w * 0.12, t, 0.2);
@@ -200,6 +200,8 @@ export class Audio {
       case 'step': this.burst(0.05, 1800, 0.05); break;
       case 'glitch': this.tone(120, 0.12, { type: 'square', vol: 0.05, slide: 3 }); break;
       case 'fireworks': this.burst(0.8, 2500, 0.25); break;
+      case 'shift': this.burst(0.07, 600, 0.06); break;
+      case 'scrape': this.burst(0.4, 3200, 0.12 * amount); break;
       case 'thunder': {
         const ctx = this.ctx, t = ctx.currentTime, src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
         src.buffer = this.noise; src.loop = true; f.type = 'lowpass'; f.frequency.setValueAtTime(400 * (0.5 + amount), t); f.frequency.exponentialRampToValueAtTime(90, t + 3);

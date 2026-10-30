@@ -37,8 +37,7 @@ export function buildCity({ scene, world, RAPIER }, textures, kit = null) {
   ground.receiveShadow = true;
   scene.add(ground);
   fixed(1600, 1, 1600, 0, -1, 0);
-  const wall = CITY.HALF + 2;
-  [[wall, 0, 1, 40, wall], [-wall, 0, 1, 40, wall], [0, wall, wall, 40, 1], [0, -wall, wall, 40, 1]].forEach(([x, z, hx, hy, hz]) => fixed(hx, hy, hz, x, hy, z));
+  buildBoundary(scene, fixed);
 
   const accentOf = (x, z) => new THREE.Color(districtAt(x, z).color);
   // type by height: glass towers downtown, concrete offices, brick and stucco low-rise
@@ -230,4 +229,32 @@ function buildRoofs(scene, roofs, rand) {
   put(new THREE.CylinderGeometry(1.3, 1.3, 2.6, 14).translate(0, 3.0, 0), wood, tanks, (it, p, q, s) => { p.set(it.x, it.y, it.z); s.set(1, 1, 1); });
   put(new THREE.CylinderGeometry(1.45, 1.45, 0.25, 14).translate(0, 4.4, 0), metal, tanks, (it, p, q, s) => { p.set(it.x, it.y, it.z); s.set(1, 1, 1); });
   put(new THREE.BoxGeometry(2.2, 1.7, 2.2).translate(0, 0.85, 0), metal, tanks, (it, p, q, s) => { p.set(it.x, it.y, it.z); s.set(1, 1, 1); });
+}
+
+// The edge of the city is visible: concrete jersey barriers with a fence behind on the west, east and south sides; to
+// the north the promenade wall and its railing over the bay (landscape.js) stop you, with the collider on the railing.
+function buildBoundary(scene, fixed) {
+  const e = CITY.HALF + 3, north = -CITY.HALF - 30 + 0.6;
+  fixed(1, 3, e + 40, e + 0.6, 3, 0); fixed(1, 3, e + 40, -e - 0.6, 3, 0); fixed(e + 40, 3, 1, 0, 3, e + 0.6);
+  fixed(e + 40, 3, 0.4, 0, 3, north - 0.4);
+  const prof = new THREE.Shape();
+  prof.moveTo(-0.3, 0); prof.lineTo(0.3, 0); prof.lineTo(0.3, 0.08); prof.lineTo(0.1, 0.3); prof.lineTo(0.09, 0.82); prof.lineTo(-0.09, 0.82); prof.lineTo(-0.1, 0.3); prof.lineTo(-0.3, 0.08); prof.closePath();
+  const jersey = new THREE.ExtrudeGeometry(prof, { depth: 3.0, bevelEnabled: false }).translate(0, 0, -1.5);
+  const items = [];
+  for (let s = -e; s <= e; s += 3.05) items.push({ x: e, z: s, rot: 0 }, { x: -e, z: s, rot: 0 }, { x: s, z: e, rot: Math.PI / 2 });
+  const concrete = new THREE.MeshStandardNodeMaterial({ color: 0xb8b4ab, roughness: 0.85 });
+  const m = new THREE.InstancedMesh(jersey, concrete, items.length);
+  const mx = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
+  items.forEach((it, i) => { q.setFromAxisAngle(up, it.rot); mx.compose(new THREE.Vector3(it.x, 0, it.z), q, new THREE.Vector3(1, 1, 1)); m.setMatrixAt(i, mx); });
+  m.castShadow = true; m.receiveShadow = true; m.computeBoundingSphere(); scene.add(m);
+  // chain-link fence: a see-through diamond mesh drawn once
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d'); g.strokeStyle = 'rgba(190,195,205,0.95)'; g.lineWidth = 3;
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(64, 64); g.moveTo(64, 0); g.lineTo(0, 64); g.stroke();
+  const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set((e * 2) / 0.6, 3.2 / 0.6);
+  const fenceMat = new THREE.MeshStandardNodeMaterial({ map: tex, transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, metalness: 0.7, roughness: 0.4 });
+  [[e + 1.2, 0, Math.PI / 2], [-e - 1.2, 0, Math.PI / 2], [0, e + 1.2, 0]].forEach(([x, z, rot]) => {
+    const f = new THREE.Mesh(new THREE.PlaneGeometry(e * 2, 3.2), fenceMat);
+    f.position.set(x, 1.6, z); f.rotation.y = rot; scene.add(f);
+  });
 }

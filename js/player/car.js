@@ -86,6 +86,10 @@ export function buildCarModel({ paint = '#d9dcea', accent = '#e2b25c', glow = '#
   return { model, wheels, brake, spot };
 }
 
+// Drivetrain: six-speed automatic gearbox, a torque curve and aerodynamic drag decide the pull at every speed.
+const GEARS = [3.6, 2.4, 1.75, 1.33, 1.05, 0.85], FINAL = 4.1, REDLINE = 6800, IDLE_RPM = 850;
+const torqueAt = (rpm) => 330 * (rpm < 4800 ? 0.72 + 0.28 * Math.min(1, (rpm - 1000) / 3800) : 1 - 0.35 * Math.max(0, (rpm - 4800) / 2000));
+
 export class Car {
   constructor({ scene, world, RAPIER }, at, heading) {
     this.RAPIER = RAPIER; this.world = world;
@@ -93,17 +97,20 @@ export class Car {
     this.root = new THREE.Group();
     look.model.position.y = GROUND_OFFSET;
     this.root.add(look.model);
+    this.model = look.model;
+    this.bodyMesh = look.model.children[0];
+    this.restPositions = this.bodyMesh.geometry.attributes.position.array.slice();
     Object.assign(this, { wheels: look.wheels, brakeLight: look.brake, spot: look.spot });
     scene.add(this.root);
 
     const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), heading);
     this.body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic()
       .setTranslation(at.x, at.y + 1.2, at.z).setRotation(q).setCanSleep(false)
-      .setLinearDamping(0.08).setAngularDamping(0.9).setCcdEnabled(true));
+      .setLinearDamping(0.02).setAngularDamping(0.6).setCcdEnabled(true));
     // collider = lower body (chassis space −0.48…0.24); a low centre of mass keeps it planted in corners
     const desc = RAPIER.ColliderDesc.cuboid(0.94, 0.36, 2.2).setTranslation(0, -0.12, 0)
       .setMassProperties(1250, { x: 0, y: -0.2, z: 0.05 }, { x: 1950, y: 2300, z: 520 }, { w: 1, x: 0, y: 0, z: 0 })
-      .setFriction(0.35).setRestitution(0.1)
+      .setFriction(0.35).setRestitution(0.15)
       .setActiveEvents(RAPIER.ActiveEvents.CONTACT_FORCE_EVENTS).setContactForceEventThreshold(9000);
     this.collider = world.createCollider(desc, this.body);
 
@@ -112,76 +119,144 @@ export class Car {
     v.setIndexForwardAxis = 2;
     WHEELS.forEach(([x, z], i) => {
       v.addWheel({ x, y: CONNECT_Y, z }, { x: 0, y: -1, z: 0 }, { x: -1, y: 0, z: 0 }, REST, RADIUS);
-      v.setWheelSuspensionStiffness(i, 34);
-      v.setWheelSuspensionCompression(i, 3.6);
-      v.setWheelSuspensionRelaxation(i, 4.2);
-      v.setWheelMaxSuspensionTravel(i, 0.28);
+      v.setWheelSuspensionStiffness(i, 30);
+      v.setWheelSuspensionCompression(i, 3.2);
+      v.setWheelSuspensionRelaxation(i, 3.8);
+      v.setWheelMaxSuspensionTravel(i, 0.3);
       v.setWheelMaxSuspensionForce(i, 60000);
-      v.setWheelFrictionSlip(i, i < 2 ? 3.2 : 2.9);
-      v.setWheelSideFrictionStiffness(i, 1.0);
     });
 
     this.steer = 0; this.speed = 0; this.slip = 0; this.braking = false;
-    this.upsideDown = 0; this.lastVel = new THREE.Vector3(); this.impact = 0;
-    this.forward = new THREE.Vector3(); this.velocity = new THREE.Vector3();
-    this.occupied = false;
+    this.upsideDown = 0; this.lastVel = new THREE.Vector3(); this.impact = 0; this.impactPeak = 0; this.impactDir = new THREE.Vector3();
+    this.forward = new THREE.Vector3(); this.right = new THREE.Vector3(); this.velocity = new THREE.Vector3();
+    this.gear = 1; this.rpm = IDLE_RPM; this.shiftTimer = 0; this.stall = 0;
+    this.accel = new THREE.Vector2(); this.lastForward = 0; this.damage = 0; this.lean = new THREE.Vector2();
+    this.lastContacts = [null, null, null, null];
+    this.occupied = false; this.fx = null;
   }
 
   get position() { const t = this.body.translation(); return new THREE.Vector3(t.x, t.y, t.z); }
   get heading() { this.forward.set(0, 0, 1).applyQuaternion(this.root.quaternion); return Math.atan2(this.forward.x, this.forward.z); }
 
+  // read once per frame: the strongest impact of every physics step since the last call
+  takeImpact() { const k = this.impactPeak; this.impactPeak = 0; return k; }
+
   // input: { throttle, brake, steer, handbrake } (all 0..1 or −1..1); dt fixed physics step
-  drive(input, dt) {
+  drive(input, dt, wet = 0) {
     const v = this.vehicle;
     const lv = this.body.linvel();
     this.velocity.set(lv.x, lv.y, lv.z);
-    const rot = this.body.rotation();
-    this.forward.set(0, 0, 1).applyQuaternion(new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w));
+    const r = this.body.rotation(), rq = new THREE.Quaternion(r.x, r.y, r.z, r.w);
+    this.forward.set(0, 0, 1).applyQuaternion(rq);
+    this.right.set(-1, 0, 0).applyQuaternion(rq);
     const speed = this.speed = this.velocity.dot(this.forward);
+    const lateral = this.velocity.dot(this.right);
     const abs = Math.abs(speed);
 
-    const maxSteer = 0.52 * (1 - Math.min(abs / 42, 0.72));
-    const target = -input.steer * maxSteer;
+    // steering: less lock at speed, quick return to centre
+    const maxSteer = 0.55 * (1 - Math.min(abs / 45, 0.7));
+    let target = -input.steer * maxSteer;
+    // grip limit: a road car holds about 0.95 g (less on a wet road); asking for more makes the front wash out
+    const wetGrip = 1 - wet * 0.18;
+    const wanted = abs * abs * Math.tan(Math.abs(target)) / 2.63;
+    const maxLat = 11 * wetGrip * (input.handbrake ? 0.7 : 1);
+    this.understeer = 0;
+    if (abs > 5 && wanted > maxLat) {
+      const k = maxLat / wanted;
+      this.understeer = 1 - k;
+      target *= k;   // the tyres cannot give more: the car runs wide (understeer) and squeals
+    }
     this.steer += (target - this.steer) * Math.min(1, dt * (Math.abs(target) > Math.abs(this.steer) ? 3.6 : 7));
     v.setWheelSteering(0, this.steer); v.setWheelSteering(1, this.steer);
 
+    // gearbox (automatic): rpm from the driven wheels, shift with a short torque cut
+    const wheelRpm = (abs / (2 * Math.PI * RADIUS)) * 60;
+    this.rpm = Math.max(IDLE_RPM, wheelRpm * GEARS[this.gear - 1] * FINAL);
+    this.shiftTimer = Math.max(0, this.shiftTimer - dt);
+    if (speed >= -0.5 && this.shiftTimer <= 0) {
+      if (this.rpm > 6300 && this.gear < GEARS.length && input.throttle > 0) { this.gear++; this.shiftTimer = 0.22; this.onShift?.(1); }
+      else if (this.rpm < 2300 && this.gear > 1) { this.gear--; this.shiftTimer = 0.15; this.onShift?.(-1); }
+    }
+    this.stall = Math.max(0, this.stall - dt);
+
     let engine = 0, brake = 0;
-    if (input.throttle > 0) {
+    if (input.throttle > 0 && this.stall <= 0) {
       if (speed < -1) brake = input.throttle * BRAKE;
-      else if (speed < MAX_SPEED) engine = input.throttle * ENGINE * (1 - Math.max(0, speed - 30) / 40);
+      else if (this.shiftTimer <= 0 && this.rpm < REDLINE && speed < MAX_SPEED) {
+        // torque at the wheels, shared by the two rear wheels (simple traction control on a wet road)
+        engine = input.throttle * torqueAt(this.rpm) * GEARS[this.gear - 1] * FINAL / RADIUS * 0.88 / 2 * (abs < 8 ? wetGrip : 1);
+      }
     }
     if (input.brake > 0) {
       if (speed > 1) brake = input.brake * BRAKE;
-      else if (speed > -14) engine = -input.brake * REVERSE;
+      else if (speed > -14 && this.stall <= 0) engine = -input.brake * REVERSE;
     }
     if (!input.throttle && !input.brake && abs < 0.6) brake = 4;   // hold still on slopes
-    [2, 3].forEach((i) => v.setWheelEngineForce(i, engine));
-    [0, 1].forEach((i) => v.setWheelBrake(i, brake * 0.6));
+    if (!input.throttle && !input.brake && abs >= 0.6) brake = 1.5;   // engine braking
+
+    // tyres: grip saturates — the front lets go first at speed (understeer); the handbrake unloads the rear (drift)
+    const speedFactor = Math.min(abs / 40, 1);
+    const frontSide = (1.0 - 0.55 * speedFactor) * wetGrip, rearSide = (input.handbrake ? 0.14 : 1.05 - 0.3 * speedFactor) * wetGrip;
+    [0, 1].forEach((i) => { v.setWheelFrictionSlip(i, (2.6 - 0.9 * speedFactor) * wetGrip); v.setWheelSideFrictionStiffness(i, frontSide); v.setWheelEngineForce(i, 0); v.setWheelBrake(i, brake * 0.6); });
     [2, 3].forEach((i) => {
-      v.setWheelBrake(i, input.handbrake ? BRAKE * 0.9 : brake * 0.4);
-      v.setWheelSideFrictionStiffness(i, input.handbrake ? 0.38 : 1.0);
+      v.setWheelFrictionSlip(i, (input.handbrake ? 1.1 : 2.4 - 0.6 * speedFactor) * wetGrip);
+      v.setWheelSideFrictionStiffness(i, rearSide);
+      v.setWheelEngineForce(i, engine);
+      v.setWheelBrake(i, input.handbrake ? BRAKE * 0.22 : brake * 0.4);
     });
     this.braking = brake > 5 || input.handbrake;
     this.brakeLight.value = this.braking ? 4.5 : 1.3;
 
-    // grip at speed: a little downforce
-    this.body.applyImpulse({ x: 0, y: -0.9 * speed * speed * dt, z: 0 }, true);
+    // aerodynamics: drag against the motion and a little downforce
+    const drag = 0.42 * abs * abs * dt;
+    if (abs > 1) this.body.applyImpulse({ x: -lv.x / abs * drag, y: -0.9 * abs * abs * dt, z: -lv.z / abs * drag }, true);
 
     v.updateVehicle(dt);
 
-    // slip: how much the car moves sideways
-    const side = Math.abs(this.velocity.clone().sub(this.forward.clone().multiplyScalar(speed)).setY(0).length());
-    this.slip = Math.min(1, Math.max(0, side - 2.5) / 6) * (abs > 4 ? 1 : 0);
+    // slip: sideways speed in the car's own frame (drifts, understeer, sliding on the wet)
+    this.slip = abs > 3 ? Math.min(1, Math.max(Math.max(0, Math.abs(lateral) - 1.0) / 4.5, abs > 12 ? this.understeer * 1.2 : 0)) : 0;
 
-    // impacts from sudden changes of velocity
+    // weight transfer (visual): pitch with braking and acceleration, roll with cornering
+    const longA = (speed - this.lastForward) / dt; this.lastForward = speed;
+    const yawRate = this.body.angvel().y;
+    this.accel.x = THREE.MathUtils.damp(this.accel.x, longA, 6, dt);
+    this.accel.y = THREE.MathUtils.damp(this.accel.y, speed * yawRate, 6, dt);
+
+    // impacts: sudden velocity changes, strongest one kept until the frame reads it
     const dv = this.velocity.distanceTo(this.lastVel);
-    this.impact = dv > 5 ? Math.min((dv - 5) / 12, 1) : 0;
+    this.impact = dv > 4 ? Math.min((dv - 4) / 12, 1) : 0;
+    if (this.impact > this.impactPeak) { this.impactPeak = this.impact; this.impactDir.copy(this.lastVel).sub(this.velocity).normalize(); }
     this.lastVel.copy(this.velocity);
+    if (this.impact > 0.55) this.stall = 1.0;   // a hard crash stalls the engine for a second
+    if (this.impact > 0.15) this.dent(this.impactDir, this.impact);
 
     // stuck on its roof or side: flip back after a moment
-    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(new THREE.Quaternion(rot.x, rot.y, rot.z, rot.w));
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(rq);
     this.upsideDown = up.y < 0.35 && abs < 3 ? this.upsideDown + dt : 0;
     if (this.upsideDown > 2) this.reset();
+  }
+
+  // dent the body where the hit came from (direction in world space), up to a limit
+  dent(worldDir, strength) {
+    if (this.damage >= 1) return;
+    const local = worldDir.clone().applyQuaternion(this.root.quaternion.clone().invert()).normalize();
+    const hit = new THREE.Vector3(local.x * 1.0, 0.5, local.z * 2.3);   // point on the body surface facing the hit
+    const pos = this.bodyMesh.geometry.attributes.position, a = pos.array, push = Math.min(0.12, 0.05 + strength * 0.1);
+    for (let i = 0; i < a.length; i += 3) {
+      const dx = a[i] - hit.x, dy = a[i + 1] - hit.y, dz = a[i + 2] - hit.z;
+      const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      if (d < 0.9) { const f = (1 - d / 0.9) * push; a[i] -= local.x * f; a[i + 2] -= local.z * f; a[i + 1] -= f * 0.25; }
+    }
+    pos.needsUpdate = true;
+    this.bodyMesh.geometry.computeVertexNormals();
+    this.damage = Math.min(1, this.damage + strength * 0.35);
+  }
+
+  repair() {
+    this.bodyMesh.geometry.attributes.position.array.set(this.restPositions);
+    this.bodyMesh.geometry.attributes.position.needsUpdate = true;
+    this.bodyMesh.geometry.computeVertexNormals();
+    this.damage = 0;
   }
 
   idle(dt) {
@@ -189,7 +264,8 @@ export class Car {
     this.brakeLight.value = 0.6;
     this.vehicle.updateVehicle(dt);
     const lv = this.body.linvel(); this.velocity.set(lv.x, lv.y, lv.z);
-    this.speed = this.velocity.length(); this.slip = 0; this.impact = 0;
+    this.speed = this.velocity.length(); this.slip = 0; this.impact = 0; this.rpm = IDLE_RPM; this.gear = 1;
+    this.lastVel.copy(this.velocity);
   }
 
   reset() {
@@ -199,7 +275,8 @@ export class Car {
     const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
     this.body.setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }, true);
     this.body.setLinvel({ x: 0, y: 0, z: 0 }, true); this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
-    this.upsideDown = 0;
+    this.lastVel.set(0, 0, 0); this.upsideDown = 0;
+    this.repair();
   }
 
   teleport(x, z, heading) {
@@ -207,13 +284,17 @@ export class Car {
     const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), heading);
     this.body.setRotation({ x: q.x, y: q.y, z: q.z, w: q.w }, true);
     this.body.setLinvel({ x: 0, y: 0, z: 0 }, true); this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    this.lastVel.set(0, 0, 0);
   }
 
-  // copy physics → visuals (called every rendered frame)
-  sync() {
+  // copy physics → visuals (called every rendered frame), plus lean, tyre smoke and skid marks
+  sync(dt = 1 / 60, wet = 0) {
     const t = this.body.translation(), r = this.body.rotation();
     this.root.position.set(t.x, t.y, t.z);
     this.root.quaternion.set(r.x, r.y, r.z, r.w);
+    this.lean.x = THREE.MathUtils.damp(this.lean.x, THREE.MathUtils.clamp(-this.accel.x * 0.006, -0.05, 0.05), 8, dt);
+    this.lean.y = THREE.MathUtils.damp(this.lean.y, THREE.MathUtils.clamp(-this.accel.y * 0.007, -0.06, 0.06), 8, dt);
+    this.model.rotation.set(this.lean.x, 0, this.lean.y);
     const v = this.vehicle;
     this.wheels.forEach((w, i) => {
       const len = v.wheelSuspensionLength(i) ?? REST;
@@ -222,6 +303,19 @@ export class Car {
       w.rotateY(v.wheelSteering(i) || 0);
       w.rotateX(v.wheelRotation(i) || 0);
     });
+    if (!this.fx) return;
+    // rear tyres: smoke and rubber marks while sliding or spinning
+    const spin = this.slip > 0.3 || (Math.abs(this.speed) < 6 && this.rpm > 5000);
+    [2, 3].forEach((i) => {
+      const cp = v.wheelIsInContact(i) ? v.wheelContactPoint(i) : null;
+      const p = cp ? new THREE.Vector3(cp.x, cp.y, cp.z) : null;
+      if (spin && p) {
+        if (Math.random() < 0.6) this.fx.smoke(p, this.slip, wet);
+        if (this.lastContacts[i]) this.fx.marks.add(this.lastContacts[i], p, 0.24, Math.min(1, this.slip + 0.3) * (1 - wet * 0.6));
+      }
+      this.lastContacts[i] = spin ? p : null;
+    });
+    if (this.damage > 0.65 && Math.random() < 0.3) this.fx.engineSmoke(new THREE.Vector3(0, 0.6, 1.6).applyQuaternion(this.root.quaternion).add(this.root.position));
   }
 }
 
