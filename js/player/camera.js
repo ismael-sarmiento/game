@@ -1,6 +1,7 @@
 // Third-person camera: orbit with mouse/stick/touch, recentres behind the car, widens the field of view with speed,
 // shakes on impacts and pulls in when a wall would block the view.
 import * as THREE from 'three/webgpu';
+import { GROUPS } from '../world/people.js';
 
 const DISTANCES = { car: [7.5, 10, 14], foot: [4.6, 6.2, 8.5] };
 
@@ -46,7 +47,7 @@ export class ChaseCamera {
     // keep walls out of the way: cast from the focus point back towards the camera
     this.ray.origin = { x: this.target.x, y: this.target.y, z: this.target.z };
     this.ray.dir = { x: -dir.x, y: dir.y, z: -dir.z };
-    const hit = this.world.castRay(this.ray, base, true, undefined, undefined, undefined, exclude);
+    const hit = this.world.castRay(this.ray, base, true, undefined, GROUPS.notPeople, undefined, exclude);   // people never push the camera
     const allowed = hit ? Math.max(1.2, hit.timeOfImpact - 0.4) : base;
     this.dist = allowed < this.dist ? allowed : THREE.MathUtils.damp(this.dist, allowed, 3, dt);
 

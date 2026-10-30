@@ -5,16 +5,12 @@ import { CITY, roadAt, blockAt, isCampus, districtAt, rng } from './layout.js';
 import { buildingMaterial, groundMaterial, pavementMaterial, neonMaterial, NIGHT, BUILDING_TYPES } from './materials.js';
 import { texture } from 'three/tsl';
 import { placeModel } from './kit.js';
+import { chunked, single } from './chunks.js';
 
 const unitBox = new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0);
 
 function instanced(geometry, material, items, write) {
-  const mesh = new THREE.InstancedMesh(geometry, material, items.length);
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3();
-  items.forEach((it, i) => { write(it, p, q, s); m.compose(p, q, s); mesh.setMatrixAt(i, m); });
-  mesh.instanceMatrix.needsUpdate = true;
-  mesh.computeBoundingSphere();
-  return mesh;
+  return single(geometry, material, items, write);
 }
 
 function radialTexture(inner, outer) {
@@ -142,7 +138,7 @@ export function buildCity({ scene, world, RAPIER }, textures, kit = null) {
     const seeds = new THREE.InstancedBufferAttribute(new Float32Array(list.length), 1);
     const accents = new THREE.InstancedBufferAttribute(new Float32Array(list.length * 3), 3);
     list.forEach((b, i) => { seeds.setX(i, b.seed); accents.setXYZ(i, b.accent.r, b.accent.g, b.accent.b); });
-    const mesh = instanced(unitBox, buildingMaterial(type, seeds, accents, textures), list, (b, p, q, s) => { p.set(b.x, b.y, b.z); s.set(b.w, b.h, b.d); });
+    const mesh = single(unitBox, buildingMaterial(type, seeds, accents, textures), list, (b, p, q, s) => { p.set(b.x, b.y, b.z); s.set(b.w, b.h, b.d); });
     mesh.castShadow = true; mesh.receiveShadow = true;
     scene.add(mesh);
   }
@@ -219,10 +215,8 @@ function buildRoofs(scene, roofs, rand) {
   const metal = new THREE.MeshStandardNodeMaterial({ color: 0xa4a9b0, roughness: 0.45, metalness: 0.6 });
   const wood = new THREE.MeshStandardNodeMaterial({ color: 0x5a4632, roughness: 0.9 });
   const put = (geo, mat, list, fn) => {
-    const m = new THREE.InstancedMesh(geo, mat, list.length);
-    const mx = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
-    list.forEach((it, i) => { fn(it, p, q, s, up); mx.compose(p, q, s); m.setMatrixAt(i, mx); });
-    m.castShadow = true; m.receiveShadow = true; m.computeBoundingSphere(); scene.add(m);
+    const g = single(geo, mat, list, (it, p, q, sc) => fn(it, p, q, sc, new THREE.Vector3(0, 1, 0)));
+    g.castShadow = true; g.receiveShadow = true; scene.add(g);
   };
   put(unit, concrete, parapets, (it, p, q, s) => { p.set(it.x, it.y, it.z); s.set(it.sx, it.h, it.sz); });
   put(unit, metal, units, (it, p, q, s, up) => { p.set(it.x, it.y, it.z); q.setFromAxisAngle(up, it.rot); s.set(2.2 * it.s, 1.3 * it.s, 1.4 * it.s); });

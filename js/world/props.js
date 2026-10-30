@@ -4,18 +4,17 @@ import * as THREE from 'three/webgpu';
 import { positionLocal, vec3, sin, time, instanceIndex, hash, float, mx_noise_float, positionWorld, mix, smoothstep, uniform, texture } from 'three/tsl';
 import { CITY, roadAt, blockAt, isCampus } from './layout.js';
 import { NIGHT, WET } from './timeofday.js';
+import { chunked, single, mergeStatic } from './chunks.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const LIGHT = { GREEN: 0, YELLOW: 1, RED: 2 };
 const CYCLE = 26, GREEN = 10, YELLOW = 3;           // seconds: each axis gets 10 s green + 3 s yellow
 
-function place(scene, geometry, material, items, write, { shadow = true } = {}) {
-  const mesh = new THREE.InstancedMesh(geometry, material, items.length);
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(1, 1, 1);
-  items.forEach((it, i) => { s.set(1, 1, 1); q.identity(); write(it, p, q, s); m.compose(p, q, s); mesh.setMatrixAt(i, m); });
-  mesh.castShadow = shadow; mesh.receiveShadow = true;
-  mesh.computeBoundingSphere();
-  scene.add(mesh);
-  return mesh;
+function place(scene, geometry, material, items, write, { shadow = true, tiles = false, far = Infinity } = {}) {
+  const group = tiles ? chunked(geometry, material, items, write, far) : single(geometry, material, items, write);
+  group.castShadow = shadow; group.receiveShadow = true;
+  scene.add(group);
+  return group;
 }
 
 export class TrafficLights {
@@ -135,7 +134,7 @@ export function buildProps({ scene, world, RAPIER }, lamps) {
   canopy.setAttribute('normal', new THREE.Float32BufferAttribute(nrmArr, 3));
   const up = new THREE.Vector3(0, 1, 0);
   place(scene, new THREE.CylinderGeometry(0.13, 0.2, 3.6, 7).translate(0, 1.8, 0), trunkMat, trees, (t, p, q, s) => { p.set(t.x, CITY.CURB, t.z); s.setScalar(t.s); });
-  place(scene, canopy, leafMat, trees, (t, p, q, s) => { p.set(t.x, CITY.CURB, t.z); q.setFromAxisAngle(up, t.rot); s.setScalar(t.s); });
+  place(scene, canopy, leafMat, trees, (t, p, q, s) => { p.set(t.x, CITY.CURB, t.z); q.setFromAxisAngle(up, t.rot); s.setScalar(t.s); }, { tiles: true, far: 380 });   // street trees fade into the fog
   place(scene, new THREE.BoxGeometry(1.3, 0.04, 1.3), new THREE.MeshStandardNodeMaterial({ color: 0x1c1712, roughness: 1 }), trees, (t, p) => p.set(t.x, CITY.CURB + 0.02, t.z), { shadow: false });
   trees.forEach((t) => fixed(RAPIER.ColliderDesc.cylinder(1.8, 0.22), t.x, CITY.CURB + 1.8, t.z));
 
@@ -219,6 +218,7 @@ export function buildBusStops({ scene, world, RAPIER }, t) {
   const glass = new THREE.MeshPhysicalNodeMaterial({ color: 0xcfe3ee, transparent: true, opacity: 0.25, roughness: 0.05, depthWrite: false });
   const poster = new THREE.MeshBasicNodeMaterial(); poster.colorNode = texture(posterTex).rgb.mul(NIGHT.mul(0.9).add(0.55));
   const wood = new THREE.MeshStandardNodeMaterial({ color: 0x6b4a2f, roughness: 0.8 });
+  const all = new THREE.Group();
   for (const s of stops) {
     const g = new THREE.Group();
     const back = new THREE.Mesh(new THREE.BoxGeometry(4, 2.3, 0.05), glass); back.position.set(0, 1.25, -0.9);
@@ -229,9 +229,10 @@ export function buildBusStops({ scene, world, RAPIER }, t) {
     [[-2, -0.9], [-2, 0.85], [1.55, -0.9]].forEach(([x, z]) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.4, 0.08), frame); p.position.set(x, 1.2, z); g.add(p); });
     [back, roof, ad, face, bench].forEach((m) => { m.castShadow = true; g.add(m); });
     g.position.set(s.x, CITY.CURB, s.z); g.rotation.y = s.face;
-    scene.add(g);
+    all.add(g);
     const fwd = new THREE.Vector3(0, 0, -0.9).applyAxisAngle(new THREE.Vector3(0, 1, 0), s.face);
     world.createCollider(RAPIER.ColliderDesc.cuboid(2, 1.2, 0.1).setTranslation(s.x + fwd.x, CITY.CURB + 1.2, s.z + fwd.z).setRotation(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), s.face)));
   }
+  scene.add(mergeStatic(all, mergeGeometries));   // ten shelters, one mesh per material
   return stops;
 }

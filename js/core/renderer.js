@@ -44,6 +44,7 @@ export class Pipeline {
     this.velocity = scenePass.getTextureNode('velocity');
     const normalTex = scenePass.getTextureNode('normal');
     this.normal = sample((uv) => colorToDirection(normalTex.sample(uv)));
+    this.cameraWorld = uniform(this.camera.matrixWorld);   // view → world for the normals (the post passes use their own camera)
     this.metalRough = scenePass.getTextureNode('metalrough');
 
     this.bloomNode = bloom(this.color, 0.6, 0.38, 0.82);
@@ -78,9 +79,11 @@ export class Pipeline {
     this.options = key;
     let c = this.color;
     if (options.reflections) {
-      // glossy surfaces (wet asphalt, glass, car paint) take the reflection; rough ones barely do
-      // SSR returns premultiplied colour: add it, weighted towards glossy surfaces (wet asphalt, glass, paint)
-      const strength = smoothstep(0.6, 0.08, this.metalRough.g).mul(0.9);
+      // only glossy surfaces facing up (wet asphalt, puddles, polished floors) take the reflection: on glass facades
+      // the screen has too little of what they would mirror, and the missing rays smear into streaks
+      // SSR returns premultiplied colour: add it
+      const up = this.cameraWorld.mul(vec4(this.normal.xyz, 0)).y;
+      const strength = smoothstep(0.6, 0.08, this.metalRough.g).mul(smoothstep(0.75, 0.95, up)).mul(0.9);
       c = vec4(c.rgb.add(this.ssrNode.rgb.mul(strength)), c.a);
     }
     if (options.occlusion) c = vec4(c.rgb.mul(mix(float(1), this.aoNode.getTextureNode().r, 0.85)), c.a);

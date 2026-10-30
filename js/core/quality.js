@@ -1,8 +1,8 @@
 // Quality presets and the automatic choice: start from the device class, then step down while frames are slow.
 export const PRESETS = {
-  high:   { pixelRatio: 1.5,  shadows: 2048, bloom: true, reflections: true, occlusion: true, aa: 'traa', rain: 2600, traffic: 34, walkers: 70, drawDistance: 900, lights: true },
-  medium: { pixelRatio: 1.25, shadows: 1024, bloom: true, reflections: false, occlusion: true, aa: 'fxaa', rain: 1400, traffic: 24, walkers: 48, drawDistance: 650, lights: true },
-  low:    { pixelRatio: 1,    shadows: 0,    bloom: false, reflections: false, occlusion: false, aa: 'fxaa', rain: 600, traffic: 14, walkers: 26, drawDistance: 420, lights: false },
+  high:   { pixelRatio: 1.5,  shadows: 2048, bloom: true, reflections: true, occlusion: true, aa: 'traa', rain: 2600, traffic: 34, walkers: 70, drawDistance: 900, detail: 1, lights: true },
+  medium: { pixelRatio: 1.25, shadows: 1024, bloom: true, reflections: false, occlusion: true, aa: 'fxaa', rain: 1400, traffic: 24, walkers: 48, drawDistance: 650, detail: 0.75, lights: true },
+  low:    { pixelRatio: 1,    shadows: 0,    bloom: false, reflections: false, occlusion: false, aa: 'fxaa', rain: 600, traffic: 14, walkers: 26, drawDistance: 420, detail: 0.55, lights: false },
 };
 
 export const isTouch = () => matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 1 && !matchMedia('(pointer: fine)').matches;

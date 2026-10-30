@@ -4,6 +4,7 @@ import * as THREE from 'three/webgpu';
 import { texture } from 'three/tsl';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { NIGHT } from './timeofday.js';
+import { chunked } from './chunks.js';
 
 const BUILDINGS = ['building_small', 'building_medium', 'building_large'];
 const PROPS = ['planter', 'bollard', 'manhole'];
@@ -43,17 +44,18 @@ export async function loadKit(onProgress) {
 // placements: [{ x, y, z, rot }] → one InstancedMesh per material of the model
 export function placeModel(scene, model, placements) {
   if (!placements.length) return;
-  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
+  const up = new THREE.Vector3(0, 1, 0), m = new THREE.Matrix4(), base = new THREE.Matrix4();
   for (const part of model.parts) {
-    const mesh = new THREE.InstancedMesh(part.geometry, part.material, placements.length);
-    placements.forEach((p, i) => {
-      q.setFromAxisAngle(up, p.rot || 0);
-      m.compose(new THREE.Vector3(p.x, p.y, p.z), q, new THREE.Vector3(1, 1, 1)).multiply(part.matrix);
-      mesh.setMatrixAt(i, m);
-    });
-    mesh.castShadow = !part.material.transparent; mesh.receiveShadow = true;
-    mesh.computeBoundingSphere();
-    scene.add(mesh);
+    // tiles of the city (chunks.js) so buildings out of view are skipped by the camera and the sun's shadow pass
+    // details only matter up close: rooms seen through the windows, then window frames and trims
+    const name = part.material.name || '';
+    const far = name.includes('Interior') && !name.includes('Fake') ? 170 : name.includes('Trim') ? 480 : Infinity;
+    const group = chunked(part.geometry, part.material, placements, (pl, p, q, s) => {
+      base.compose(new THREE.Vector3(pl.x, pl.y, pl.z), new THREE.Quaternion().setFromAxisAngle(up, pl.rot || 0), new THREE.Vector3(1, 1, 1));
+      m.copy(base).multiply(part.matrix);
+      m.decompose(p, q, s);
+    }, far);
+    group.castShadow = !part.material.transparent; group.receiveShadow = true;
+    scene.add(group);
   }
 }
-

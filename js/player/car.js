@@ -3,6 +3,7 @@
 import * as THREE from 'three/webgpu';
 import { uniform, vec3, texture } from 'three/tsl';
 import { neonMaterial } from '../world/materials.js';
+import { GROUPS } from '../world/people.js';
 
 const WHEELS = [   // [x, z] of each wheel; 0–1 front (steer), 2–3 rear (drive)
   [-0.84, 1.33], [0.84, 1.33], [-0.84, -1.3], [0.84, -1.3],
@@ -64,14 +65,26 @@ export function buildCarModel({ paint = '#d9dcea', accent = '#e2b25c', glow = '#
 
   const wheelGeo = new THREE.CylinderGeometry(RADIUS, RADIUS, 0.3, 24).rotateZ(Math.PI / 2);
   const tyre = new THREE.MeshStandardNodeMaterial({ color: 0x0b0b10, roughness: 0.85 });
-  const rimMat = neonMaterial(new THREE.Color(accent), 1.6);
+  // alloy rims: a dished face with five spokes and a thin accent ring that glows a little at night
+  const alloy = new THREE.MeshStandardNodeMaterial({ color: 0xb9bec6, metalness: 1, roughness: 0.28 });
+  const hubMat = new THREE.MeshStandardNodeMaterial({ color: 0x3a3d44, metalness: 0.8, roughness: 0.4 });
+  const rimMat = neonMaterial(new THREE.Color(accent), 0.6);
+  const lip = new THREE.TorusGeometry(0.235, 0.022, 8, 28).rotateY(Math.PI / 2);
+  const face = new THREE.CylinderGeometry(0.075, 0.075, 0.04, 16).rotateZ(Math.PI / 2);
+  const spokeGeo = new THREE.BoxGeometry(0.03, 0.2, 0.05).translate(0, 0.12, 0);
   const wheels = WHEELS.map(([x]) => {
     const w = new THREE.Group();
     const t = new THREE.Mesh(wheelGeo, tyre); t.castShadow = true;
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.025, 6, 20).rotateY(Math.PI / 2), rimMat);
-    rim.position.x = x < 0 ? -0.16 : 0.16;
-    const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.4, 0.05), rimMat); spoke.position.x = rim.position.x;
-    w.add(t, rim, spoke);
+    const out = x < 0 ? -0.155 : 0.155;
+    const rim = new THREE.Mesh(lip, alloy); rim.position.x = out;
+    const accentRing = new THREE.Mesh(new THREE.TorusGeometry(0.205, 0.006, 4, 28).rotateY(Math.PI / 2), rimMat); accentRing.position.x = out * 1.02;
+    const hub = new THREE.Mesh(face, hubMat); hub.position.x = out;
+    w.add(t, rim, accentRing, hub);
+    for (let k = 0; k < 5; k++) {
+      const spoke = new THREE.Mesh(spokeGeo, alloy);
+      spoke.position.x = out; spoke.rotation.x = (k / 5) * Math.PI * 2;
+      w.add(spoke);
+    }
     model.add(w);
     return w;
   });
@@ -110,7 +123,7 @@ export class Car {
     // collider = lower body (chassis space −0.48…0.24); a low centre of mass keeps it planted in corners
     const desc = RAPIER.ColliderDesc.cuboid(0.94, 0.36, 2.2).setTranslation(0, -0.12, 0)
       .setMassProperties(1250, { x: 0, y: -0.2, z: 0.05 }, { x: 1950, y: 2300, z: 520 }, { w: 1, x: 0, y: 0, z: 0 })
-      .setFriction(0.35).setRestitution(0.15)
+      .setFriction(0.35).setRestitution(0.15).setCollisionGroups(GROUPS.vehicle)
       .setActiveEvents(RAPIER.ActiveEvents.CONTACT_FORCE_EVENTS).setContactForceEventThreshold(9000);
     this.collider = world.createCollider(desc, this.body);
 

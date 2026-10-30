@@ -7,6 +7,14 @@ import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { CITY, blockAt, isCampus, rng } from './layout.js';
 
+// Collision groups (membership << 16 | filter): vehicles and people never touch physically — cars brake for people
+// instead (non-violent by design) — while the player on foot does bump into them.
+export const GROUPS = {
+  vehicle: ((0x0002 << 16) | (0xffff & ~0x0004)) >>> 0,
+  person: ((0x0004 << 16) | (0xffff & ~0x0002)) >>> 0,
+  notPeople: ((0xffff << 16) | (0xffff & ~0x0004)) >>> 0,
+};
+
 export const VARIANTS = ['man_beach', 'man_suit', 'man_worker', 'woman_casual', 'woman_formal', 'woman_suit', 'woman_worker'];
 const HEIGHT = { man: 1.78, woman: 1.67 };
 
@@ -52,7 +60,15 @@ export class PersonRig {
     this.root = new THREE.Group();
     const body = cloneSkinned(template.scene);
     body.scale.setScalar(template.scale);
-    body.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+    body.traverse((o) => {
+      if (!o.isMesh) return;
+      o.castShadow = true;
+      // cull people out of view: a generous sphere around the bind pose covers every animation
+      if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+      o.boundingSphere = o.geometry.boundingSphere.clone();
+      o.boundingSphere.radius *= 1.35;
+      o.frustumCulled = true;
+    });
     this.root.add(body);
     this.mixer = new THREE.AnimationMixer(body);
     this.actions = {};
@@ -89,8 +105,13 @@ const EDGE = CITY.BLOCK / 2 - 2.6;     // people walk 2.6 m inside the block edg
 const PERIM = EDGE * 8;
 
 export class Crowd {
-  constructor({ scene }, people, count) {
-    this.scene = scene; this.people = people; this.rand = rng(57);
+  constructor({ scene, world, RAPIER }, people, count) {
+    this.scene = scene; this.world = world; this.RAPIER = RAPIER; this.people = people; this.rand = rng(57);
+    this.doors = []; this.stops = [];
+    const canopy = new THREE.ConeGeometry(0.62, 0.32, 10, 1, true).translate(0, 2.18, 0);
+    const stick = new THREE.CylinderGeometry(0.015, 0.015, 0.95, 5).translate(0, 1.7, 0);
+    this.umbrellaGeo = { canopy, stick };
+    this.umbrellaMats = ['#14182c', '#7a1f2b', '#1f4a44', '#e2b25c', '#2e3c74'].map((c) => new THREE.MeshStandardNodeMaterial({ color: c, roughness: 0.5, side: THREE.DoubleSide }));
     this.list = [];
     this.bubbles = new Bubbles(scene);
     this.setCount(count);
@@ -101,9 +122,16 @@ export class Crowd {
       const variant = VARIANTS[this.list.length % VARIANTS.length];
       const rig = new PersonRig(this.people[variant]);
       this.scene.add(rig.root);
-      this.list.push({ rig, pos: new THREE.Vector3(), yaw: 0, s: 0, dir: 1, speed: 1.3, mode: 'walk', timer: 0, flee: 0, waved: false, placed: false });
+      // a solid body: the player on foot bumps into people instead of walking through them
+      const body = this.world.createRigidBody(this.RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, -30, 0));
+      this.world.createCollider(this.RAPIER.ColliderDesc.capsule(0.55, 0.3).setCollisionGroups(GROUPS.person), body);
+      // an umbrella for rainy days (most people carry one)
+      const k = this.list.length, umbrella = new THREE.Group();
+      umbrella.add(new THREE.Mesh(this.umbrellaGeo.canopy, this.umbrellaMats[k % this.umbrellaMats.length]), new THREE.Mesh(this.umbrellaGeo.stick, this.umbrellaMats[0]));
+      umbrella.position.set(0.18, 0, 0.12); umbrella.visible = false; rig.root.add(umbrella);
+      this.list.push({ rig, body, umbrella, carries: k % 10 < 7, pos: new THREE.Vector3(), yaw: 0, s: 0, dir: 1, speed: 1.3, mode: 'walk', timer: 0, flee: 0, waved: false, placed: false, anim: 0 });
     }
-    this.list.forEach((p, k) => { p.rig.root.visible = k < n; });
+    this.list.forEach((p, k) => { p.rig.root.visible = k < n; if (k >= n) p.body.setNextKinematicTranslation({ x: 0, y: -30, z: 0 }); });
     this.count = n;
   }
 
@@ -125,6 +153,23 @@ export class Crowd {
     p.timer = 6 + r() * 20;
     p.placed = true;
     const L = this.loop(p); p.pos.set(L.x, CITY.CURB, L.z); p.yaw = Math.atan2(L.fx, L.fz);
+    p.jog = null; p.out = null;
+    // joggers circle the campus park
+    const park = { x: blockAt(5), z: blockAt(6) };
+    const joggers = this.list.filter((q) => q.mode === 'jog').length;
+    if (joggers < 3 && Math.hypot(park.x - centre.x, park.z - centre.z) < 170 && r() < 0.16) {
+      p.mode = 'jog'; p.jog = { a: r() * Math.PI * 2, dir: r() < 0.5 ? 1 : -1, x: park.x, z: park.z };
+      return;
+    }
+    // others step out of a building door and join the sidewalk
+    const door = this.doors.find((dd) => Math.hypot(dd.x - centre.x, dd.z - centre.z) < 120 && r() < 0.25);
+    if (door) {
+      p.mode = 'out'; p.out = { t: 0, from: new THREE.Vector3(door.x, CITY.CURB, door.z), dir: door.face };
+      p.pos.copy(p.out.from); p.yaw = door.face;
+      const near = (v) => blockAt(THREE.MathUtils.clamp(Math.round((v - blockAt(0)) / CITY.PITCH), 0, CITY.N - 1));
+      p.bx = near(door.x); p.bz = near(door.z);
+      return;
+    }
     // some people wait at a nearby bus stop, facing the road
     const stop = (this.stops || []).find((st) => Math.hypot(st.x - centre.x, st.z - centre.z) < 110 && r() < 0.3);
     if (stop) {
@@ -195,8 +240,15 @@ export class Crowd {
     this.game = game;
     const player = game.player, onFoot = game.mode === 'foot';
     const car = game.car, carFast = game.mode === 'car' && Math.abs(car.speed) > 5;
+    const rainy = game.weather.p.rain > 0.3;
+    // fewer people about late at night
+    const hour = game.clock.hour, quiet = hour < 6 || hour > 23 ? 0.45 : hour < 7.5 || hour > 21.5 ? 0.75 : 1;
+    this.visibleCount = Math.round(this.count * quiet);
     for (let k = 0; k < this.count; k++) {
       const p = this.list[k];
+      const off = k >= this.visibleCount;
+      if (p.rig.root.visible === off) { p.rig.root.visible = !off; if (off) { this.unpair(p); p.body.setNextKinematicTranslation({ x: 0, y: -30, z: 0 }); } }
+      if (off) continue;
       if (!p.placed || p.pos.distanceToSquared(player) > 125 * 125) { this.unpair(p); this.respawn(p, player); }
       const d = Math.hypot(player.x - p.pos.x, player.z - p.pos.z);
       if (carFast && d < 9 && p.flee <= 0) this.startFlee(p, player);
@@ -242,6 +294,16 @@ export class Crowd {
           p.pos.lerpVectors(c.from, c.to, Math.min(c.t, 1));
           if (c.t >= 1) { p.bx = c.nbx; p.bz = c.nbz; this.resync(p); p.mode = 'walk'; p.cross = null; p.timer = 10 + this.rand() * 20; }
         }
+      } else if (p.mode === 'jog') {
+        const j = p.jog; speed = 3.3;
+        j.a += j.dir * speed / 27 * dt;
+        p.pos.set(j.x + Math.cos(j.a) * 27, CITY.CURB, j.z + Math.sin(j.a) * 27);
+        p.yaw = turn(p.yaw, Math.atan2(-Math.sin(j.a) * j.dir, Math.cos(j.a) * j.dir), dt * 8);
+      } else if (p.mode === 'out') {
+        // walk out of the doorway towards the kerb, then carry on along the sidewalk
+        const o = p.out; o.t += dt; speed = 1.3;
+        p.pos.x += Math.sin(o.dir) * speed * dt; p.pos.z += Math.cos(o.dir) * speed * dt;
+        if (o.t > 2.2) { this.resync(p); p.mode = 'walk'; p.timer = 10 + this.rand() * 20; }
       } else if (p.mode === 'idle') {
         // standing: on the phone or thinking; then off again
         p.timer -= dt; talking = Math.sin(game.time * 0.4 + k) > 0.6 ? 1 : 0;
@@ -262,10 +324,37 @@ export class Crowd {
       }
       p.rig.root.position.set(p.pos.x, CITY.CURB, p.pos.z);
       p.rig.root.rotation.y = p.yaw;
-      // animation cost only for people that are close enough to be seen in detail
-      p.rig.animate(d < 90 ? dt : 0, speed, { waving, talking });
+      p.body.setNextKinematicTranslation({ x: p.pos.x, y: CITY.CURB + 0.86, z: p.pos.z });
+      p.umbrella.visible = p.carries && rainy && p.mode !== 'jog';
+      // animation level of detail: every frame up close, every third frame further away, frozen beyond 90 m
+      p.anim += dt;
+      const every = d < 40 ? 0 : d < 90 ? 0.05 : Infinity;
+      if (p.anim >= every) { p.rig.animate(p.anim, speed, { waving, talking }); p.anim = 0; }
     }
     this.bubbles.update(dt, game.ctx.camera);
+  }
+
+  // the player's car stops before reaching a person (soft automatic braking) and the person steps away
+  guardCar(car, dt) {
+    const p0 = car.position, f = car.forward, r = car.right, v = car.speed;
+    if (Math.abs(v) < 0.3) return;
+    const sign = v > 0 ? 1 : -1;
+    let limit = Infinity;
+    for (let k = 0; k < (this.visibleCount ?? this.count); k++) {
+      const p = this.list[k];
+      const dx = p.pos.x - p0.x, dz = p.pos.z - p0.z;
+      if (dx * dx + dz * dz > 400) continue;
+      const ahead = (dx * f.x + dz * f.z) * sign, lat = Math.abs(dx * r.x + dz * r.z);
+      if (ahead > 0 && lat < 1.45 && ahead < 3.2 + Math.abs(v) * 0.35) {
+        limit = Math.min(limit, Math.max(0, (ahead - 3.0) * 2.2));
+        if (p.flee <= 0 && Math.abs(v) > 1) this.startFlee(p, p0);
+      }
+    }
+    if (limit < Math.abs(v)) {
+      const lv = car.body.linvel(), cut = (Math.abs(v) - limit) * sign;
+      car.body.setLinvel({ x: lv.x - f.x * cut, y: lv.y, z: lv.z - f.z * cut }, true);
+      car.lastVel.set(lv.x - f.x * cut, lv.y, lv.z - f.z * cut);   // a gentle stop, not a crash
+    }
   }
 
   // after fleeing: snap back onto the nearest point of their sidewalk loop

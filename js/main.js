@@ -24,7 +24,9 @@ import { Mentors } from './world/npcs.js';
 import { loadPeople, Crowd } from './world/people.js';
 import { Car } from './player/car.js';
 import { Avatar } from './player/avatar.js';
-import { FX } from './world/fx.js';
+import { FX, AMBIENT } from './world/fx.js';
+import { cullTiles, setDrawScale } from './world/chunks.js';
+import { Ambient } from './world/ambient.js';
 import { ChaseCamera } from './player/camera.js';
 import { Hud } from './game/hud.js';
 import { Dialogue } from './game/dialogue.js';
@@ -95,9 +97,14 @@ async function boot() {
   const traffic = new Traffic(ctx, preset.traffic, busStops);
   progress(64, 'boot.loadingPeople');
   const people = await loadPeople((f) => progress(64 + Math.round(f * 10)));
-  const CROWD = { high: 28, medium: 18, low: 10 };
+  const CROWD = { high: 44, medium: 26, low: 12 };
   const walkers = new Crowd(ctx, people, CROWD[level]);
   walkers.stops = busStops;
+  // building doors of the detailed kit buildings: people step out of them
+  for (const [name, list] of Object.entries(city.kitPlacements || {})) {
+    const m = kit.buildings[name];
+    for (const pl of list) walkers.doors.push({ x: pl.x + Math.sin(pl.rot) * (m.d / 2 + 0.4), z: pl.z + Math.cos(pl.rot) * (m.d / 2 + 0.4), face: pl.rot });
+  }
   const mentors = new Mentors(ctx, people);
 
   const car = new Car(ctx, new THREE.Vector3(5.8, 0, blockAt(6) - 4), Math.PI);
@@ -105,6 +112,7 @@ async function boot() {
   avatar.facing = -Math.PI * 0.75;
   const chase = new ChaseCamera(camera, ctx);
   const fx = new FX(ctx);
+  const ambient = new Ambient(ctx, { fx, audio, tower: city.tower });
   car.fx = fx;
   car.onShift = () => audio.play('shift');
   chase.snap(avatar.facing);
@@ -113,6 +121,7 @@ async function boot() {
   const applyGraphics = () => {
     renderer.setPixelRatio(Math.min(devicePixelRatio, preset.pixelRatio) * settings.gfx.scale);
     pipeline.configure(effects(preset, settings.gfx));
+    setDrawScale(preset.detail);
   };
   applyGraphics();
 
@@ -269,6 +278,7 @@ async function boot() {
       while (acc >= step && steps < 4) {
         if (game.mode === 'car') {
           car.drive({ throttle: input.throttle, brake: input.brake, steer: input.axis.x, handbrake: input.jump }, step, weather.wet);
+          walkers.guardCar(car, step);
         } else {
           car.idle(step);
           const { f, r } = chase.basis();
@@ -283,6 +293,7 @@ async function boot() {
 
       car.sync(dt, weather.wet);
       fx.update(dt, camera);
+      cullTiles(camera);
       if (game.mode === 'foot') avatar.sync(dt);
       const hit = car.takeImpact();
       if (hit > 0.05) {
@@ -340,6 +351,7 @@ async function boot() {
     renderer.toneMappingExposure = sky.exposure();
     pipeline.setNight(clock.night);
     car.spot.intensity = 40 + 220 * clock.night;
+    AMBIENT.value = 1 - clock.night * 0.78;
     // indoors: no rain falling on the camera and the rain only muffled through the glass
     const indoors = lobby.contains(camera.position, 0.5);
     if (game.started && lobby.contains(game.player)) game.achievements.unlock('lobby');
@@ -348,6 +360,7 @@ async function boot() {
     audio.setRain(game.started ? weather.p.rain * (indoors ? 0.3 : 1) : 0);
     props.wind.value = 0.6 + weather.p.rain * 0.6 + weather.p.storm * 1.4;
     landscape.update(dt, game.time, game.started ? game.player : camera.position, clock.night);
+    if (!game.paused) ambient.update(dt, { camera, player: game.started ? game.player : camera.position, car, driving: game.mode === 'car', weather, night: clock.night, traffic, crowd: walkers, indoors, time: game.time });
     lightsTimer -= dt;
     if (lightsTimer <= 0) { lightsTimer = 0.25; lights.update(game.time); }
     audio.setNight(clock.night);

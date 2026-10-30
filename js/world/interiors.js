@@ -4,6 +4,8 @@ import * as THREE from 'three/webgpu';
 import { texture, positionWorld, vec3, time, sin, float } from 'three/tsl';
 import { CITY } from './layout.js';
 import { neonMaterial } from './materials.js';
+import { mergeStatic } from './chunks.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 export const LOBBY = { size: 34, height: 8, door: 4 };
 
@@ -133,8 +135,16 @@ export function buildLobby({ scene, world, RAPIER }, tower, kitTextures, t) {
     const l = new THREE.PointLight(0xffe2b8, 22, 22, 1.8); l.position.set(x, H - 0.6, z); group.add(l);
   });
 
+  // merge the static furniture and structure into one mesh per material (keeps the draw count low)
+  const lights = group.children.filter((c) => c.isLight);
+  const merged = mergeStatic(group, mergeGeometries);
+  scene.remove(group);
+  merged.position.set(0, 0, 0);
+  scene.add(merged);
+  lights.forEach((l) => { l.position.add(new THREE.Vector3(cx, y0, cz)); scene.add(l); });
+
   return {
-    group,
+    group: merged,
     reception: { x: cx + 4.2, z: cz },
     contains(p, margin = 0) { return Math.abs(p.x - cx) < half + margin && Math.abs(p.z - cz) < half + margin && p.y < y0 + H; },
   };

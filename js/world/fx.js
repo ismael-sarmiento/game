@@ -1,7 +1,11 @@
-// Particle effects and road marks: tyre smoke, crash sparks, steam from manholes and skid marks that fade.
+// Particle effects and road marks: tyre smoke, crash sparks, steam from manholes, spray from wet tyres and skid
+// marks that fade.
 // Particles are instanced camera-facing quads from fixed pools, so the cost does not grow with the action.
 import * as THREE from 'three/webgpu';
-import { instancedBufferAttribute, texture, vec3, float } from 'three/tsl';
+import { instancedBufferAttribute, texture, vec3, float, uniform } from 'three/tsl';
+
+// how much daylight reaches smoke and steam (they are unlit sprites, so they would glow white at night otherwise)
+export const AMBIENT = uniform(1);
 
 function softDot() {
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -12,13 +16,13 @@ function softDot() {
 }
 
 class Pool {
-  constructor(scene, size, { additive = false, glow = 1 } = {}) {
+  constructor(scene, size, { additive = false, glow = 1, lit = true } = {}) {
     this.size = size; this.next = 0;
     this.alpha = new THREE.InstancedBufferAttribute(new Float32Array(size), 1);
     this.tint = new THREE.InstancedBufferAttribute(new Float32Array(size * 3), 3);
     const mat = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending });
     const tex = texture(softDot());
-    mat.colorNode = instancedBufferAttribute(this.tint).mul(glow);
+    mat.colorNode = instancedBufferAttribute(this.tint).mul(glow).mul(lit ? AMBIENT : float(1));
     mat.opacityNode = tex.a.mul(instancedBufferAttribute(this.alpha));
     this.mesh = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), mat, size);
     this.mesh.frustumCulled = false; this.mesh.renderOrder = 3;
@@ -88,7 +92,8 @@ class Marks {
 export class FX {
   constructor({ scene }) {
     this.smokePool = new Pool(scene, 180);
-    this.sparkPool = new Pool(scene, 120, { additive: true, glow: 4 });
+    this.sparkPool = new Pool(scene, 120, { additive: true, glow: 4, lit: false });
+    this.steamPool = new Pool(scene, 160);   // its own pool, so steady steam never steals tyre smoke
     this.marks = new Marks(scene);
     this.v = new THREE.Vector3();
   }
@@ -105,8 +110,13 @@ export class FX {
     }
   }
   steam(pos) {
-    this.smokePool.spawn(pos, this.v.set((Math.random() - 0.5) * 0.3, 1.2 + Math.random() * 0.6, (Math.random() - 0.5) * 0.3),
-      { life: 3 + Math.random() * 2, size: 0.8, grow: 1.1, drag: 0.4, color: [0.92, 0.93, 0.96], alpha: 0.22 });
+    this.steamPool.spawn(pos, this.v.set((Math.random() - 0.5) * 0.3, 1.2 + Math.random() * 0.6, (Math.random() - 0.5) * 0.3),
+      { life: 3 + Math.random() * 2, size: 0.6, grow: 1.3, drag: 0.4, color: [0.85, 0.86, 0.9], alpha: 0.1 });
+  }
+  // water thrown up behind a tyre on a wet road
+  spray(pos, back, speed) {
+    this.v.copy(back).multiplyScalar(speed * (0.15 + Math.random() * 0.15)).add(new THREE.Vector3((Math.random() - 0.5) * 1.5, 0.8 + Math.random() * 1.2, (Math.random() - 0.5) * 1.5));
+    this.smokePool.spawn(pos, this.v, { life: 0.5 + Math.random() * 0.4, size: 0.25, grow: 1.4, gravity: 4, drag: 2.2, color: [0.8, 0.84, 0.9], alpha: 0.28 });
   }
   engineSmoke(pos) {
     this.smokePool.spawn(pos, this.v.set((Math.random() - 0.5) * 0.4, 1 + Math.random() * 0.5, (Math.random() - 0.5) * 0.4),
@@ -115,6 +125,7 @@ export class FX {
   update(dt, camera) {
     this.smokePool.update(dt, camera);
     this.sparkPool.update(dt, camera);
+    this.steamPool.update(dt, camera);
     this.marks.update(dt);
   }
 }

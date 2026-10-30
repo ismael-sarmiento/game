@@ -10,6 +10,7 @@ class NoCache(http.server.SimpleHTTPRequestHandler):
 
 class DualStack(http.server.ThreadingHTTPServer):
     address_family = socket.AF_INET6
+    request_queue_size = 128   # the game asks for ~60 modules at once; the default backlog of 5 resets connections
     def server_bind(self):
         with contextlib.suppress(Exception):
             self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)

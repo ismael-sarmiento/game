@@ -1,4 +1,5 @@
-// All sound is synthesised with Web Audio: a slow synthwave score, engine, tyres, wind, rain and interface cues.
+// All sound is synthesised with Web Audio: a slow synthwave score, engine, tyres, wind, rain and interface cues, plus
+// the city around the player: traffic rumble, crowd murmur, waves, gusts and a helicopter, panned towards their source.
 // The context starts on the first user gesture (browser autoplay rules).
 const CHORDS = [   // A minor – F – C – G, voiced low for the pad
   [57, 60, 64, 69], [53, 57, 60, 65], [48, 55, 60, 64], [55, 59, 62, 67],
@@ -40,7 +41,7 @@ export class Audio {
     this.echo = delay;
 
     this.noise = this.makeNoise();
-    this.buildEngine(); this.buildBeds();
+    this.buildEngine(); this.buildBeds(); this.buildAmbient();
     this.step = 0; this.nextTime = ctx.currentTime + 0.1;
     this.timer = setInterval(() => this.schedule(), 60);
   }
@@ -92,6 +93,59 @@ export class Audio {
     // city hum: a low drone that sits under everything
     const hum = ctx.createOscillator(); hum.type = 'sine'; hum.frequency.value = 55;
     const hg = ctx.createGain(); hg.gain.value = 0.035; hum.connect(hg).connect(this.musicBus); hum.start();
+  }
+
+  // looping noise beds for the surroundings; setAmbient() fades each one with the distance to its source
+  buildAmbient() {
+    const ctx = this.ctx;
+    // noise → filter → level → optional slow tremolo (in series, so silence stays silent) → optional panner
+    const bed = (type, freq, q, { pan = false, wobble = 0, depth = 0 } = {}) => {
+      const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+      const g = ctx.createGain(); g.gain.value = 0;
+      let out = this.noiseSource().connect(f).connect(g);
+      if (wobble) { const w = ctx.createGain(); w.gain.value = 1 - depth; lfo(wobble, depth, w.gain); out = out.connect(w); }
+      const p = pan ? ctx.createStereoPanner() : null;
+      (p ? out.connect(p) : out).connect(this.ambBus);
+      return { f, g, p };
+    };
+    const lfo = (freq, depth, target) => { const o = ctx.createOscillator(), d = ctx.createGain(); o.frequency.value = freq; d.gain.value = depth; o.connect(d).connect(target); o.start(); return o; };
+    this.amb = {
+      traffic: bed('lowpass', 240, 0.7),
+      crowd: bed('bandpass', 850, 0.6, { wobble: 0.35, depth: 0.4 }),   // murmur rises and falls
+      waves: bed('lowpass', 520, 0.5, { pan: true, wobble: 0.11, depth: 0.7 }),   // swell
+      gust: bed('bandpass', 420, 1.4),
+      heli: bed('lowpass', 170, 0.8, { pan: true }),
+    };
+    lfo(0.07, 260, this.amb.gust.f.frequency);   // gusts sweep in pitch
+    // rotor blades chop the air: a square wave added to the level, scaled with it
+    const chop = ctx.createGain(); chop.gain.value = 0; chop.connect(this.amb.heli.g.gain);
+    const blades = ctx.createOscillator(); blades.type = 'square'; blades.frequency.value = 17; blades.connect(chop); blades.start();
+    this.amb.chop = chop;
+  }
+
+  // levels 0…1 and pans -1…1 for the beds of buildAmbient()
+  setAmbient({ traffic = 0, crowd = 0, waves = 0, wavesPan = 0, gust = 0, heli = 0, heliPan = 0 }) {
+    if (!this.amb) return;
+    const t = this.ctx.currentTime, a = this.amb, set = (param, v, tc = 0.6) => param.setTargetAtTime(v, t, tc);
+    set(a.traffic.g.gain, traffic * 0.09);
+    set(a.crowd.g.gain, crowd * 0.04);
+    set(a.waves.g.gain, waves * 0.05); set(a.waves.p.pan, wavesPan, 0.3);
+    set(a.gust.g.gain, gust * 0.05, 1.2);
+    set(a.heli.g.gain, heli * 0.07, 0.3); set(a.chop.gain, heli * 0.06, 0.3); set(a.heli.p.pan, heliPan, 0.2);
+  }
+
+  // a gull's cry: two or three falling squeals from one side
+  gull(pan = 0) {
+    if (!this.ctx || this.muted) return;
+    const ctx = this.ctx, p = ctx.createStereoPanner(); p.pan.value = pan; p.connect(this.ambBus);
+    const base = 1250 + Math.random() * 300;
+    for (let k = 0; k < 2 + Math.floor(Math.random() * 2); k++) {
+      const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime + k * 0.32;
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(base, t); o.frequency.exponentialRampToValueAtTime(base * 0.62, t + 0.26);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.02, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+      o.connect(g).connect(p); o.start(t); o.stop(t + 0.3);
+    }
   }
 
   // rain: 0 (dry) … 1.6 (storm)

@@ -7,6 +7,7 @@ import { CITY, roadAt, rng } from './layout.js';
 import { vertexColor, instancedBufferAttribute, vec3, step, float } from 'three/tsl';
 import { atNight } from './materials.js';
 import { buildVehicle, pickType, TYPE_NAMES } from './vehicles.js';
+import { GROUPS } from './people.js';
 
 const PAINTS = ['#c9cde3', '#0e1430', '#2e3c74', '#7a5212', '#5a0f1f', '#1f4a44', '#3a3f55', '#e7e9f5', '#101010', '#4b2a70'];
 const MASS = { sedan: 1350, suv: 1850, van: 2100, taxi: 1350, bus: 11000 };
@@ -50,7 +51,7 @@ export class Traffic {
       const slot = t.used++;
       const c = t.collider;
       const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, -50, 0).setLinearDamping(0.35).setAngularDamping(0.9));
-      const collider = world.createCollider(RAPIER.ColliderDesc.cuboid(c.hx, c.hy, c.hz).setTranslation(0, c.hy, 0).setMass(MASS[type]).setFriction(0.6).setRestitution(0.1), body);
+      const collider = world.createCollider(RAPIER.ColliderDesc.cuboid(c.hx, c.hy, c.hz).setTranslation(0, c.hy, 0).setMass(MASS[type]).setFriction(0.6).setRestitution(0.1).setCollisionGroups(GROUPS.vehicle), body);
       t.parts.body.setColorAt(slot, new THREE.Color(t.def.paint || PAINTS[k % PAINTS.length]));
       this.cars.push(this.spawn({ id: k, type, slot, length: t.def.L, body, collider, pos: new THREE.Vector3(), quat: new THREE.Quaternion(), heading: 0, spin: 0, honk: 0, dyn: 0 }));
     }
@@ -169,6 +170,9 @@ export class Traffic {
       if (pmode === 'foot') { const cp = pc.position; check(cp.x, cp.z, 2.4, 18); }   // the parked player car
       const blockedByPlayer = want < 1;
       for (let o = 0; o < this.count; o++) if (o !== k) check(this.cars[o].pos.x, this.cars[o].pos.z, 1.6, 15 + (this.cars[o].length + car.length) / 2 - 4.6);
+      // people on the road (crossing, fleeing): stop for them
+      const crowd = game.walkers;
+      if (crowd) for (let o = 0; o < (crowd.visibleCount ?? crowd.count); o++) { const pp = crowd.list[o].pos; check(pp.x, pp.z, 1.8, 14); }
       // kept waiting by the player: honk after three seconds, then go round
       car.blocked = blockedByPlayer ? (car.blocked || 0) + dt : 0;
       if (car.blocked > 3 && !car.honked && car.pos.distanceTo(player) < 35) { car.honked = true; game.audio.play('horn'); }
