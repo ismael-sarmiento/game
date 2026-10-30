@@ -2,8 +2,9 @@
 // junctions and brake for the player. Instanced visuals; kinematic colliders so the player can bump into them.
 import * as THREE from 'three/webgpu';
 import { CITY, roadAt, rng } from './layout.js';
-import { carGeometries } from '../player/car.js';
-import { neonMaterial } from './materials.js';
+import { vertexColor } from 'three/tsl';
+import { atNight } from './materials.js';
+import { buildVehicle, pickType, TYPE_NAMES } from './vehicles.js';
 
 const PAINTS = ['#c9cde3', '#0e1430', '#2e3c74', '#7a5212', '#5a0f1f', '#1f4a44', '#3a3f55', '#e7e9f5', '#101010', '#4b2a70'];
 const LANES = [1.9, 5.55];
@@ -13,24 +14,41 @@ const MAX = 40;
 export class Traffic {
   constructor({ scene, world, RAPIER }, count) {
     this.rand = rng(9);
-    const geo = carGeometries();
-    this.body = new THREE.InstancedMesh(geo.body, new THREE.MeshPhysicalNodeMaterial({ metalness: 0.7, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08 }), MAX);
-    this.cabin = new THREE.InstancedMesh(geo.cabin, new THREE.MeshPhysicalNodeMaterial({ color: 0x05070f, metalness: 0.9, roughness: 0.06 }), MAX);
-    this.wheels = new THREE.InstancedMesh(geo.wheel, new THREE.MeshStandardNodeMaterial({ color: 0x0b0b10, roughness: 0.85 }), MAX * 4);
-    this.heads = new THREE.InstancedMesh(new THREE.BoxGeometry(1.5, 0.07, 0.05), neonMaterial(new THREE.Color('#e6f4ff'), 5, {}, 0.35), MAX);
-    this.tails = new THREE.InstancedMesh(new THREE.BoxGeometry(1.7, 0.08, 0.05), neonMaterial(new THREE.Color('#ff1530'), 2.4), MAX);
-    this.body.castShadow = true;
-    [this.body, this.cabin, this.wheels, this.heads, this.tails].forEach((m) => { m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(m); });
+    // one set of instanced meshes per vehicle type; every car slot owns one instance in its type's set
+    const paint = new THREE.MeshPhysicalNodeMaterial({ metalness: 0.6, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.08 });
+    const glass = new THREE.MeshPhysicalNodeMaterial({ color: 0x0a0f18, metalness: 0.85, roughness: 0.05 });
+    const trim = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.3 });
+    const lights = new THREE.MeshBasicNodeMaterial({ vertexColors: true });
+    lights.colorNode = vertexColor().mul(atNight(0.45).mul(3));
+    this.types = {};
+    for (const name of TYPE_NAMES) {
+      const v = buildVehicle(name);
+      const parts = { body: new THREE.InstancedMesh(v.body, paint, MAX), glass: new THREE.InstancedMesh(v.glass, glass, MAX),
+        trim: new THREE.InstancedMesh(v.trim, trim, MAX), lights: new THREE.InstancedMesh(v.lights, lights, MAX) };
+      Object.values(parts).forEach((m) => { m.frustumCulled = false; m.count = 0; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(m); });
+      parts.body.castShadow = true;
+      this.types[name] = { ...v, parts, used: 0 };
+    }
+    this.wheels = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 1, 0.28, 16).rotateZ(Math.PI / 2), new THREE.MeshStandardNodeMaterial({ color: 0x0d0d10, roughness: 0.85 }), MAX * 4);
+    this.wheels.frustumCulled = false; this.wheels.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(this.wheels);
 
     this.cars = [];
     this.nodes = new Map();
     for (let k = 0; k < MAX; k++) {
+      const type = pickType(this.rand());
+      const t = this.types[type];
+      const slot = t.used++;
+      const c = t.collider;
       const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, -50, 0));
-      world.createCollider(RAPIER.ColliderDesc.cuboid(0.92, 0.6, 2.15).setTranslation(0, 0.65, 0), body);
-      this.body.setColorAt(k, new THREE.Color(PAINTS[k % PAINTS.length]));
-      this.cars.push(this.spawn({ id: k, body, pos: new THREE.Vector3(), heading: 0, spin: 0, honk: 0 }));
+      world.createCollider(RAPIER.ColliderDesc.cuboid(c.hx, c.hy, c.hz).setTranslation(0, c.hy + 0.15, 0), body);
+      const col = new THREE.Color(t.def.paint || PAINTS[k % PAINTS.length]);
+      t.parts.body.setColorAt(slot, col);
+      this.cars.push(this.spawn({ id: k, type, slot, length: t.def.L, body, pos: new THREE.Vector3(), heading: 0, spin: 0, honk: 0 }));
     }
-    this.body.instanceColor.needsUpdate = true;
+    for (const t of Object.values(this.types)) {
+      Object.values(t.parts).forEach((m) => { m.count = t.used; });
+      if (t.parts.body.instanceColor) t.parts.body.instanceColor.needsUpdate = true;
+    }
     this.m = new THREE.Matrix4(); this.q = new THREE.Quaternion(); this.s = new THREE.Vector3(1, 1, 1); this.v = new THREE.Vector3();
     this.setCount(count);
   }
@@ -87,7 +105,7 @@ export class Traffic {
       check(player.x, player.z, pmode === 'car' ? 2.4 : 1.6, 18);
       if (pmode === 'foot') { const pc = game.car.position; check(pc.x, pc.z, 2.4, 18); }   // the parked player car
       const blockedByPlayer = want < 1;
-      for (let o = 0; o < this.count; o++) if (o !== k) check(this.cars[o].pos.x, this.cars[o].pos.z, 1.6, 15);
+      for (let o = 0; o < this.count; o++) if (o !== k) check(this.cars[o].pos.x, this.cars[o].pos.z, 1.6, 15 + (this.cars[o].length + car.length) / 2 - 4.6);
       // stuck behind the player for a while: change lane and go round
       car.blocked = blockedByPlayer ? (car.blocked || 0) + dt : 0;
       if (car.blocked > 2.5) { car.lane = 1 - car.lane; car.blocked = 0; }
@@ -125,7 +143,7 @@ export class Traffic {
       car.pos.z = THREE.MathUtils.damp(car.pos.z, tg.z, 7, dt);
       let dh = tg.heading - car.heading; dh = Math.atan2(Math.sin(dh), Math.cos(dh));
       car.heading += dh * Math.min(1, dt * 5);
-      car.spin += car.speed * dt / 0.36;
+      car.spin += car.speed * dt / this.types[car.type].def.r;
       this.q.setFromAxisAngle(this.v.set(0, 1, 0), car.heading);
       car.body.setNextKinematicTranslation({ x: car.pos.x, y: 0, z: car.pos.z });
       car.body.setNextKinematicRotation({ x: this.q.x, y: this.q.y, z: this.q.z, w: this.q.w });
@@ -136,21 +154,20 @@ export class Traffic {
 
   draw() {
     const { m, q, s, v } = this;
-    const up = new THREE.Vector3(0, 1, 0), local = new THREE.Vector3(), wq = new THREE.Quaternion();
+    const up = new THREE.Vector3(0, 1, 0), local = new THREE.Vector3(), wq = new THREE.Quaternion(), axis = new THREE.Vector3(1, 0, 0);
     for (let k = 0; k < MAX; k++) {
-      const car = this.cars[k], on = k < this.count;
+      const car = this.cars[k], on = k < this.count, t = this.types[car.type];
       q.setFromAxisAngle(up, car.heading);
       s.setScalar(on ? 1 : 0);
       m.compose(v.set(car.pos.x, 0, car.pos.z), q, s);
-      this.body.setMatrixAt(k, m); this.cabin.setMatrixAt(k, m);
-      local.set(0, 0.52, 2.27).applyQuaternion(q).add(car.pos); m.compose(local, q, s); this.heads.setMatrixAt(k, m);
-      local.set(0, 0.64, -2.27).applyQuaternion(q).add(car.pos); m.compose(local, q, s); this.tails.setMatrixAt(k, m);
-      [[-0.84, 1.33], [0.84, 1.33], [-0.84, -1.3], [0.84, -1.3]].forEach(([x, z], w) => {
-        wq.setFromAxisAngle(new THREE.Vector3(1, 0, 0), car.spin).premultiply(q);
-        local.set(x, 0.36, z).applyQuaternion(q).add(car.pos);
-        m.compose(local, wq, s); this.wheels.setMatrixAt(k * 4 + w, m);
+      for (const part of Object.values(t.parts)) part.setMatrixAt(car.slot, m);
+      t.wheels.forEach(([x, z], w) => {
+        wq.setFromAxisAngle(axis, car.spin).premultiply(q);
+        local.set(x, t.def.r, z).applyQuaternion(q).add(car.pos);
+        m.compose(local, wq, v.set(on ? t.def.r : 0, on ? t.def.r : 0, on ? t.def.r : 0)); this.wheels.setMatrixAt(k * 4 + w, m);
       });
     }
-    [this.body, this.cabin, this.wheels, this.heads, this.tails].forEach((x) => { x.instanceMatrix.needsUpdate = true; });
+    for (const t of Object.values(this.types)) for (const part of Object.values(t.parts)) part.instanceMatrix.needsUpdate = true;
+    this.wheels.instanceMatrix.needsUpdate = true;
   }
 }
