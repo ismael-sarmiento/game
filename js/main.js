@@ -13,7 +13,7 @@ import { buildCity } from './world/city.js';
 import { loadTextures } from './world/textures.js';
 import { loadKit } from './world/kit.js';
 import { buildLobby } from './world/interiors.js';
-import { buildProps, TrafficLights } from './world/props.js';
+import { buildProps, TrafficLights, buildBusStops } from './world/props.js';
 import { buildLandscape } from './world/landscape.js';
 import { buildSky } from './world/sky.js';
 import { TimeOfDay } from './world/timeofday.js';
@@ -75,6 +75,7 @@ async function boot() {
   const city = buildCity(ctx, textures, kit);
   const props = buildProps(ctx, city.lamps);
   const lights = new TrafficLights(ctx);
+  const busStops = buildBusStops(ctx, t);
   const landscape = buildLandscape(ctx);
   const marble = await new THREE.TextureLoader().loadAsync('assets/kit/textures/T_MarbleFloor_BaseColor.jpg').then((tx) => { tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.colorSpace = THREE.SRGBColorSpace; return tx; }).catch(() => null);
   const lobby = buildLobby(ctx, city.tower, { marble }, t);
@@ -91,11 +92,12 @@ async function boot() {
   const audio = new Audio();
   const input = new Input(renderer.domElement, $('joy'), [...document.querySelectorAll('#touch .tbtn')]);
   input.sensitivity = settings.sens;
-  const traffic = new Traffic(ctx, preset.traffic);
+  const traffic = new Traffic(ctx, preset.traffic, busStops);
   progress(64, 'boot.loadingPeople');
   const people = await loadPeople((f) => progress(64 + Math.round(f * 10)));
   const CROWD = { high: 28, medium: 18, low: 10 };
   const walkers = new Crowd(ctx, people, CROWD[level]);
+  walkers.stops = busStops;
   const mentors = new Mentors(ctx, people);
 
   const car = new Car(ctx, new THREE.Vector3(5.8, 0, blockAt(6) - 4), Math.PI);

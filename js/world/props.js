@@ -1,7 +1,7 @@
 // Street life that is not alive: trees that sway, benches and bins on the sidewalks, traffic lights at every crossing
 // (the traffic obeys them) and the campus park with lawns and a fountain.
 import * as THREE from 'three/webgpu';
-import { positionLocal, vec3, sin, time, instanceIndex, hash, float, mx_noise_float, positionWorld, mix, smoothstep, uniform } from 'three/tsl';
+import { positionLocal, vec3, sin, time, instanceIndex, hash, float, mx_noise_float, positionWorld, mix, smoothstep, uniform, texture } from 'three/tsl';
 import { CITY, roadAt, blockAt, isCampus } from './layout.js';
 import { NIGHT, WET } from './timeofday.js';
 
@@ -190,3 +190,48 @@ function buildPark(scene, world, RAPIER, trunkMat, leafMat, canopy, wood) {
 }
 
 export { LIGHT };
+
+// Bus stops: glass shelter with a bench and a lit IsAcademy poster, on the kerb where buses pull in.
+export function buildBusStops({ scene, world, RAPIER }, t) {
+  const e = CITY.ROAD / 2 + 1.2;
+  const defs = [
+    [roadAt(2), blockAt(3), 0, 1], [roadAt(2), blockAt(8), 0, -1], [roadAt(6), blockAt(3), 0, 1], [roadAt(6), blockAt(8), 0, -1],
+    [roadAt(10), blockAt(3), 0, -1], [roadAt(10), blockAt(8), 0, 1], [blockAt(3), roadAt(4), 1, 1], [blockAt(8), roadAt(4), 1, -1],
+    [blockAt(4), roadAt(8), 1, -1], [blockAt(9), roadAt(8), 1, 1],
+  ];
+  // [road coordinate, along, 0 = road runs along z / 1 = along x, travel direction] → stop on the right-hand kerb
+  const stops = defs.map(([a, b, alongX, dir]) => {
+    if (!alongX) { const x = a - dir * e; return { x, z: b, face: dir > 0 ? Math.PI / 2 : -Math.PI / 2 }; }
+    const z = b + dir * e; return { x: a, z, face: dir > 0 ? Math.PI : 0 };
+  }).map((s) => ({ ...s, x: s.x, z: s.z }));
+  const posterTex = (() => {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 512;
+    const g = c.getContext('2d');
+    const grd = g.createLinearGradient(0, 0, 0, 512); grd.addColorStop(0, '#0d1229'); grd.addColorStop(1, '#2e3c74');
+    g.fillStyle = grd; g.fillRect(0, 0, 256, 512);
+    g.fillStyle = '#f2d18b'; g.font = '64px Allura, cursive'; g.textAlign = 'center'; g.fillText('IsAcademy', 128, 110);
+    g.fillStyle = '#ffffff'; g.font = '700 34px "Space Grotesk", sans-serif';
+    String(t('lobby.motto')).split('. ').forEach((line, i) => g.fillText(line.replace(/\.$/, ''), 128, 230 + i * 46, 230));
+    g.fillStyle = '#3fe0ff'; g.font = '500 24px "Space Grotesk", sans-serif'; g.fillText('Python · SQL · IA', 128, 440);
+    const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx;
+  })();
+  const frame = new THREE.MeshStandardNodeMaterial({ color: 0x2a2f3a, roughness: 0.4, metalness: 0.8 });
+  const glass = new THREE.MeshPhysicalNodeMaterial({ color: 0xcfe3ee, transparent: true, opacity: 0.25, roughness: 0.05, depthWrite: false });
+  const poster = new THREE.MeshBasicNodeMaterial(); poster.colorNode = texture(posterTex).rgb.mul(NIGHT.mul(0.9).add(0.55));
+  const wood = new THREE.MeshStandardNodeMaterial({ color: 0x6b4a2f, roughness: 0.8 });
+  for (const s of stops) {
+    const g = new THREE.Group();
+    const back = new THREE.Mesh(new THREE.BoxGeometry(4, 2.3, 0.05), glass); back.position.set(0, 1.25, -0.9);
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.1, 1.9), frame); roof.position.set(0, 2.45, 0);
+    const ad = new THREE.Mesh(new THREE.BoxGeometry(1.1, 2.0, 0.12), frame); ad.position.set(2.1, 1.15, -0.2);
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.9), poster); face.position.set(2.1, 1.15, -0.13);
+    const bench = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.08, 0.45), wood); bench.position.set(-0.3, 0.48, -0.6);
+    [[-2, -0.9], [-2, 0.85], [1.55, -0.9]].forEach(([x, z]) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.4, 0.08), frame); p.position.set(x, 1.2, z); g.add(p); });
+    [back, roof, ad, face, bench].forEach((m) => { m.castShadow = true; g.add(m); });
+    g.position.set(s.x, CITY.CURB, s.z); g.rotation.y = s.face;
+    scene.add(g);
+    const fwd = new THREE.Vector3(0, 0, -0.9).applyAxisAngle(new THREE.Vector3(0, 1, 0), s.face);
+    world.createCollider(RAPIER.ColliderDesc.cuboid(2, 1.2, 0.1).setTranslation(s.x + fwd.x, CITY.CURB + 1.2, s.z + fwd.z).setRotation(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), s.face)));
+  }
+  return stops;
+}

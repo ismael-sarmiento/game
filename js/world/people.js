@@ -125,6 +125,14 @@ export class Crowd {
     p.timer = 6 + r() * 20;
     p.placed = true;
     const L = this.loop(p); p.pos.set(L.x, CITY.CURB, L.z); p.yaw = Math.atan2(L.fx, L.fz);
+    // some people wait at a nearby bus stop, facing the road
+    const stop = (this.stops || []).find((st) => Math.hypot(st.x - centre.x, st.z - centre.z) < 110 && r() < 0.3);
+    if (stop) {
+      const side = new THREE.Vector3((r() - 0.5) * 3, 0, -0.2).applyAxisAngle(new THREE.Vector3(0, 1, 0), stop.face);
+      p.pos.set(stop.x + side.x, CITY.CURB, stop.z + side.z); p.yaw = stop.face; p.mode = 'idle'; p.timer = 25 + r() * 40; p.atStop = true;
+      const near = (v) => blockAt(THREE.MathUtils.clamp(Math.round((v - blockAt(0)) / CITY.PITCH), 0, CITY.N - 1));
+      p.bx = near(stop.x); p.bz = near(stop.z);   // the block whose sidewalk the stop stands on
+    } else p.atStop = false;
   }
 
   loop(p) {
@@ -237,7 +245,7 @@ export class Crowd {
       } else if (p.mode === 'idle') {
         // standing: on the phone or thinking; then off again
         p.timer -= dt; talking = Math.sin(game.time * 0.4 + k) > 0.6 ? 1 : 0;
-        if (p.timer <= 0) { p.mode = 'walk'; p.timer = 10 + this.rand() * 25; }
+        if (p.timer <= 0) { p.mode = 'walk'; p.timer = 10 + this.rand() * 25; if (p.atStop) { p.atStop = false; this.resync(p); } }
       } else {
         const before = Math.floor(((p.s % PERIM) + PERIM) % PERIM / (EDGE * 2));
         p.s += p.speed * p.dir * dt; speed = p.speed;
