@@ -18,7 +18,8 @@ import { TimeOfDay } from './world/timeofday.js';
 import { Weather } from './world/weather.js';
 import { buildSigns } from './world/signs.js';
 import { Traffic } from './world/traffic.js';
-import { Walkers, Mentors } from './world/npcs.js';
+import { Mentors } from './world/npcs.js';
+import { loadPeople, Crowd } from './world/people.js';
 import { Car } from './player/car.js';
 import { Avatar } from './player/avatar.js';
 import { ChaseCamera } from './player/camera.js';
@@ -83,11 +84,14 @@ async function boot() {
   const input = new Input(renderer.domElement, $('joy'), [...document.querySelectorAll('#touch .tbtn')]);
   input.sensitivity = settings.sens;
   const traffic = new Traffic(ctx, preset.traffic);
-  const walkers = new Walkers(ctx, preset.walkers);
-  const mentors = new Mentors(ctx);
+  progress(64, 'boot.loadingPeople');
+  const people = await loadPeople((f) => progress(64 + Math.round(f * 10)));
+  const CROWD = { high: 28, medium: 18, low: 10 };
+  const walkers = new Crowd(ctx, people, CROWD[level]);
+  const mentors = new Mentors(ctx, people);
 
   const car = new Car(ctx, new THREE.Vector3(5.8, 0, blockAt(6) - 4), Math.PI);
-  const avatar = new Avatar(ctx, new THREE.Vector3(18, 0.2, blockAt(6) - 18));
+  const avatar = new Avatar(ctx, new THREE.Vector3(18, 0.2, blockAt(6) - 18), people, settings.character);
   avatar.facing = -Math.PI * 0.75;
   const chase = new ChaseCamera(camera, ctx);
   chase.snap(avatar.facing);
@@ -129,7 +133,7 @@ async function boot() {
     sky.setShadows(preset.shadows);
     sky.rain.setCount(preset.rain);
     traffic.setCount(preset.traffic);
-    walkers.setCount(preset.walkers);
+    walkers.setCount(CROWD[next]);
     pool.forEach((l) => { l.visible = preset.lights; });
     if (auto) game.hud.toast(t('hud.qualityAuto', { level: t(`settings.${next}`) }));
   }

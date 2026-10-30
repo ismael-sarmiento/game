@@ -18,7 +18,8 @@
   "hint": "Best with headphones. WASD to move, E to interact, Esc to pause.",
   "back": "← Back to IsAcademy",
   "error": "We could not start the game in this browser. Try an up-to-date Chrome, Edge or Safari",
-  "loadingTextures": "Loading textures…"
+  "loadingTextures": "Loading textures…",
+  "loadingPeople": "People are arriving…"
  },
  "settings": {
   "language": "Language",

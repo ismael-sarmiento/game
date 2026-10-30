@@ -3,7 +3,7 @@ const KEY = 'isgame.v1';
 
 const DEFAULTS = {
   settings: {
-    lang: '', quality: 'auto', music: 0.55, sfx: 0.8, sens: 1, time: 'auto', cycle: 24, weather: 'auto', fps: false,
+    lang: '', quality: 'auto', music: 0.55, sfx: 0.8, sens: 1, time: 'auto', cycle: 24, weather: 'auto', fps: false, character: 'man_beach',
     gfx: { scale: 1, reflections: 'auto', occlusion: 'auto', aa: 'auto', motionBlur: false, grain: true },
   },
   missions: {},        // id -> 'done'

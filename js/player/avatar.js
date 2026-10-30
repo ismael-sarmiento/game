@@ -3,6 +3,7 @@
 import * as THREE from 'three/webgpu';
 import { normalView, positionViewDirection, dot, pow, float, vec3 } from 'three/tsl';
 import { neonMaterial } from '../world/materials.js';
+import { PersonRig } from '../world/people.js';
 
 // soft coloured rim so dark suits still read against the night city
 const rim = (color, strength) => { const c = new THREE.Color(color); return vec3(c.r, c.g, c.b).mul(pow(float(1).sub(dot(normalView, positionViewDirection).abs()), 2.6)).mul(strength); };
@@ -73,9 +74,9 @@ export function buildAndroid({ suit = '#1a2142', trim = '#e2b25c', visor = '#3fe
 }
 
 export class Avatar {
-  constructor({ scene, world, RAPIER }, at) {
+  constructor({ scene, world, RAPIER }, at, people, variant = 'man_beach') {
     this.RAPIER = RAPIER; this.world = world;
-    this.look = buildAndroid({ suit: '#202a55', trim: '#e2b25c', visor: '#3fe0ff' });
+    this.look = new PersonRig(people[variant] || people.man_beach);
     this.root = this.look.root;
     scene.add(this.root);
     this.body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(at.x, at.y + 1, at.z));
@@ -137,6 +138,6 @@ export class Avatar {
     const t = this.body.translation();
     this.root.position.set(t.x, t.y - 0.87 - 0.05, t.z);
     this.root.rotation.y = this.facing;
-    this.look.animate(dt, Math.hypot(this.velocity.x, this.velocity.z), { airborne: !this.grounded && this.vy > -6 });
+    this.look.animate(dt, Math.hypot(this.velocity.x, this.velocity.z));
   }
 }

@@ -3,7 +3,7 @@
 import * as THREE from 'three/webgpu';
 import { CITY, blockAt, isCampus, rng } from './layout.js';
 import { neonMaterial } from './materials.js';
-import { buildAndroid } from '../player/avatar.js';
+import { PersonRig } from './people.js';
 
 const MAX = 80;
 const EDGE = CITY.BLOCK / 2 - 2.5;          // walkers stay 2.5 m inside the block edge, on the sidewalk
@@ -102,11 +102,11 @@ export class Walkers {
 
 // Mentor definitions: position on a sidewalk of their district, colours and mission.
 export const MENTORS = [
-  { id: 'iris', x: 24, z: 26, face: Math.PI * 1.25, suit: '#2a2150', trim: '#f2d18b', visor: '#f2d18b', color: '#f2d18b', district: 'campus' },
-  { id: 'byte', x: blockAt(8) - EDGE, z: blockAt(3), face: -Math.PI / 2, suit: '#3a2a10', trim: '#e2b25c', visor: '#e2b25c', color: '#e2b25c', district: 'data', mission: 'route' },
-  { id: 'kernel', x: blockAt(9) - EDGE, z: blockAt(8), face: -Math.PI / 2, suit: '#0f3326', trim: '#5dffa8', visor: '#5dffa8', color: '#5dffa8', district: 'sec', mission: 'debug' },
-  { id: 'nova', x: blockAt(3) + EDGE, z: blockAt(3), face: Math.PI / 2, suit: '#0d2c3a', trim: '#3fe0ff', visor: '#3fe0ff', color: '#3fe0ff', district: 'ia', mission: 'train' },
-  { id: 'echo', x: blockAt(3) + EDGE, z: blockAt(8), face: Math.PI / 2, suit: '#24164a', trim: '#a98bff', visor: '#a98bff', color: '#a98bff', district: 'net' },
+  { id: 'iris', variant: 'woman_formal', x: 24, z: 26, face: Math.PI * 1.25, suit: '#2a2150', trim: '#f2d18b', visor: '#f2d18b', color: '#f2d18b', district: 'campus' },
+  { id: 'byte', variant: 'woman_casual', x: blockAt(8) - EDGE, z: blockAt(3), face: -Math.PI / 2, suit: '#3a2a10', trim: '#e2b25c', visor: '#e2b25c', color: '#e2b25c', district: 'data', mission: 'route' },
+  { id: 'kernel', variant: 'man_worker', x: blockAt(9) - EDGE, z: blockAt(8), face: -Math.PI / 2, suit: '#0f3326', trim: '#5dffa8', visor: '#5dffa8', color: '#5dffa8', district: 'sec', mission: 'debug' },
+  { id: 'nova', variant: 'woman_suit', x: blockAt(3) + EDGE, z: blockAt(3), face: Math.PI / 2, suit: '#0d2c3a', trim: '#3fe0ff', visor: '#3fe0ff', color: '#3fe0ff', district: 'ia', mission: 'train' },
+  { id: 'echo', variant: 'man_suit', x: blockAt(3) + EDGE, z: blockAt(8), face: Math.PI / 2, suit: '#24164a', trim: '#a98bff', visor: '#a98bff', color: '#a98bff', district: 'net' },
 ];
 
 function labelTexture(text, color) {
@@ -119,9 +119,9 @@ function labelTexture(text, color) {
 }
 
 export class Mentors {
-  constructor({ scene, world, RAPIER }) {
+  constructor({ scene, world, RAPIER }, people) {
     this.list = MENTORS.map((def) => {
-      const look = buildAndroid({ suit: def.suit, trim: def.trim, visor: def.visor, scale: 1.06 });
+      const look = new PersonRig(people[def.variant]);
       look.root.position.set(def.x, CITY.CURB, def.z);
       look.root.rotation.y = def.face;
       scene.add(look.root);
