@@ -13,7 +13,7 @@ import { buildCity } from './world/city.js';
 import { loadTextures } from './world/textures.js';
 import { loadKit } from './world/kit.js';
 import { buildLobby } from './world/interiors.js';
-import { buildProps, TrafficLights, buildBusStops } from './world/props.js';
+import { buildProps, TrafficLights, buildBusStops, buildHackathon } from './world/props.js';
 import { buildLandscape } from './world/landscape.js';
 import { buildSky } from './world/sky.js';
 import { TimeOfDay } from './world/timeofday.js';
@@ -27,6 +27,7 @@ import { Avatar } from './player/avatar.js';
 import { FX, AMBIENT } from './world/fx.js';
 import { cullTiles, setDrawScale } from './world/chunks.js';
 import { Ambient } from './world/ambient.js';
+import { Robots } from './world/robots.js';
 import { ChaseCamera } from './player/camera.js';
 import { Hud } from './game/hud.js';
 import { Dialogue } from './game/dialogue.js';
@@ -81,6 +82,7 @@ async function boot() {
   const landscape = buildLandscape(ctx);
   const marble = await new THREE.TextureLoader().loadAsync('assets/kit/textures/T_MarbleFloor_BaseColor.jpg').then((tx) => { tx.wrapS = tx.wrapT = THREE.RepeatWrapping; tx.colorSpace = THREE.SRGBColorSpace; return tx; }).catch(() => null);
   const lobby = buildLobby(ctx, city.tower, { marble }, t);
+  buildHackathon(ctx, { x: city.tower.x + 20, z: city.tower.z + 22 }, t);
   const clock = new TimeOfDay(17.4);   // golden hour; night falls about a minute later (24-minute day)
   clock.set(settings.time, settings.cycle);
   const weather = new Weather(settings.weather === 'auto' ? 'clear' : settings.weather);
@@ -99,6 +101,7 @@ async function boot() {
   const people = await loadPeople((f) => progress(64 + Math.round(f * 10)));
   const CROWD = { high: 44, medium: 26, low: 12 };
   const walkers = new Crowd(ctx, people, CROWD[level]);
+  const robots = new Robots(ctx, { high: 10, medium: 8, low: 4 }[level]);
   walkers.stops = busStops;
   // building doors of the detailed kit buildings: people step out of them
   for (const [name, list] of Object.entries(city.kitPlacements || {})) {
@@ -314,6 +317,7 @@ async function boot() {
       }
 
       walkers.update(dt, game);
+      robots.update(dt, { player: game.player, people: walkers.list.slice(0, walkers.visibleCount ?? walkers.count) });
       mentors.update(dt, game);
       game.collectibles.update(dt);
       game.missions.update(dt);

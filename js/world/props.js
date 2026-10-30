@@ -1,5 +1,6 @@
 // Street life that is not alive: trees that sway, benches and bins on the sidewalks, traffic lights at every crossing
-// (the traffic obeys them) and the campus park with lawns and a fountain.
+// (the traffic obeys them), the campus park with lawns and a fountain, bus stops with IsAcademy posters and a
+// hackathon tent on the campus plaza.
 import * as THREE from 'three/webgpu';
 import { positionLocal, vec3, sin, time, instanceIndex, hash, float, mx_noise_float, positionWorld, mix, smoothstep, uniform, texture } from 'three/tsl';
 import { CITY, roadAt, blockAt, isCampus } from './layout.js';
@@ -203,28 +204,39 @@ export function buildBusStops({ scene, world, RAPIER }, t) {
     if (!alongX) { const x = a - dir * e; return { x, z: b, face: dir > 0 ? Math.PI / 2 : -Math.PI / 2 }; }
     const z = b + dir * e; return { x: a, z, face: dir > 0 ? Math.PI : 0 };
   }).map((s) => ({ ...s, x: s.x, z: s.z }));
+  // three IsAcademy posters side by side on one canvas (a course each); every stop shows one of them
+  const subjects = t('lobby.subjects');
+  const featured = [subjects[0], subjects[2], subjects[6]];   // Python, SQL, AI
   const posterTex = (() => {
-    const c = document.createElement('canvas'); c.width = 256; c.height = 512;
+    const c = document.createElement('canvas'); c.width = 768; c.height = 512;
     const g = c.getContext('2d');
-    const grd = g.createLinearGradient(0, 0, 0, 512); grd.addColorStop(0, '#0d1229'); grd.addColorStop(1, '#2e3c74');
-    g.fillStyle = grd; g.fillRect(0, 0, 256, 512);
-    g.fillStyle = '#f2d18b'; g.font = '64px Allura, cursive'; g.textAlign = 'center'; g.fillText('IsAcademy', 128, 110);
-    g.fillStyle = '#ffffff'; g.font = '700 34px "Space Grotesk", sans-serif';
-    String(t('lobby.motto')).split('. ').forEach((line, i) => g.fillText(line.replace(/\.$/, ''), 128, 230 + i * 46, 230));
-    g.fillStyle = '#3fe0ff'; g.font = '500 24px "Space Grotesk", sans-serif'; g.fillText('Python · SQL · IA', 128, 440);
-    const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx;
+    featured.forEach((course, i) => {
+      const x = i * 256;
+      g.fillStyle = '#f1ece2'; g.fillRect(x, 0, 256, 512);
+      g.fillStyle = '#14171c'; g.fillRect(x, 0, 256, 300);
+      g.textAlign = 'left'; g.fillStyle = '#d9b26a'; g.font = '62px Allura, cursive'; g.fillText('Is', x + 24, 74);
+      g.fillStyle = '#f1ece2'; g.font = '600 34px "Space Grotesk", sans-serif'; g.fillText('Academy', x + 70, 70);
+      g.font = '700 40px "Space Grotesk", sans-serif'; g.fillText(course, x + 24, 190, 210);
+      g.fillStyle = '#d9b26a'; g.fillRect(x + 24, 214, 60, 4);
+      g.fillStyle = '#1f2329'; g.font = '600 22px "Space Grotesk", sans-serif';
+      String(t('lobby.motto')).split('. ').forEach((line, k) => g.fillText(line.replace(/\.$/, ''), x + 24, 352 + k * 30, 210));
+      g.fillStyle = '#5b6470'; g.font = '400 13px "Space Grotesk", sans-serif'; g.fillText('ismael-sarmiento.github.io/isacademy', x + 24, 480, 210);
+    });
+    const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4; return tx;
   })();
   const frame = new THREE.MeshStandardNodeMaterial({ color: 0x2a2f3a, roughness: 0.4, metalness: 0.8 });
   const glass = new THREE.MeshPhysicalNodeMaterial({ color: 0xcfe3ee, transparent: true, opacity: 0.25, roughness: 0.05, depthWrite: false });
-  const poster = new THREE.MeshBasicNodeMaterial(); poster.colorNode = texture(posterTex).rgb.mul(NIGHT.mul(0.9).add(0.55));
+  const poster = new THREE.MeshBasicNodeMaterial(); poster.colorNode = texture(posterTex).rgb.mul(NIGHT.mul(0.25).add(0.75));   // a backlit panel
   const wood = new THREE.MeshStandardNodeMaterial({ color: 0x6b4a2f, roughness: 0.8 });
   const all = new THREE.Group();
-  for (const s of stops) {
+  stops.forEach((s, k) => {
     const g = new THREE.Group();
     const back = new THREE.Mesh(new THREE.BoxGeometry(4, 2.3, 0.05), glass); back.position.set(0, 1.25, -0.9);
     const roof = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.1, 1.9), frame); roof.position.set(0, 2.45, 0);
     const ad = new THREE.Mesh(new THREE.BoxGeometry(1.1, 2.0, 0.12), frame); ad.position.set(2.1, 1.15, -0.2);
-    const face = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.9), poster); face.position.set(2.1, 1.15, -0.13);
+    const faceGeo = new THREE.PlaneGeometry(1.0, 1.9), fuv = faceGeo.attributes.uv;
+    for (let n = 0; n < fuv.count; n++) fuv.setX(n, (fuv.getX(n) + (k % 3)) / 3);   // this stop's poster
+    const face = new THREE.Mesh(faceGeo, poster); face.position.set(2.1, 1.15, -0.13);
     const bench = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.08, 0.45), wood); bench.position.set(-0.3, 0.48, -0.6);
     [[-2, -0.9], [-2, 0.85], [1.55, -0.9]].forEach(([x, z]) => { const p = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.4, 0.08), frame); p.position.set(x, 1.2, z); g.add(p); });
     [back, roof, ad, face, bench].forEach((m) => { m.castShadow = true; g.add(m); });
@@ -232,7 +244,63 @@ export function buildBusStops({ scene, world, RAPIER }, t) {
     all.add(g);
     const fwd = new THREE.Vector3(0, 0, -0.9).applyAxisAngle(new THREE.Vector3(0, 1, 0), s.face);
     world.createCollider(RAPIER.ColliderDesc.cuboid(2, 1.2, 0.1).setTranslation(s.x + fwd.x, CITY.CURB + 1.2, s.z + fwd.z).setRotation(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), s.face)));
-  }
+  });
   scene.add(mergeStatic(all, mergeGeometries));   // ten shelters, one mesh per material
   return stops;
+}
+
+// Hackathon on the campus plaza: a white canopy tent with a banner, two long tables with laptops and a screen with
+// code, so the campus reads as a place where people build things together.
+export function buildHackathon({ scene, world, RAPIER }, at, t) {
+  const g = new THREE.Group();
+  const white = new THREE.MeshStandardNodeMaterial({ color: 0xf2f1ec, roughness: 0.8, side: THREE.DoubleSide });
+  const metal = new THREE.MeshStandardNodeMaterial({ color: 0x9aa0a8, roughness: 0.35, metalness: 0.9 });
+  const dark = new THREE.MeshStandardNodeMaterial({ color: 0x24272c, roughness: 0.45, metalness: 0.6 });
+  const top = new THREE.MeshStandardNodeMaterial({ color: 0xd8cbb4, roughness: 0.5 });
+  const W = 9, D = 6, H = 2.6;
+  // tent: four poles, a pyramid roof and a valance
+  [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(([sx, sz]) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, H, 6), metal); p.position.set(sx * W / 2, H / 2, sz * D / 2); g.add(p); });
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.hypot(W, D) / 2, 1.3, 4, 1, true).rotateY(Math.PI / 4).scale(1, 1, D / W), white);
+  roof.position.y = H + 0.65; roof.castShadow = true; g.add(roof);
+  const banner = canvasTex((c) => {
+    c.fillStyle = '#14171c'; c.fillRect(0, 0, 1024, 128);
+    c.fillStyle = '#d9b26a'; c.font = '72px Allura, cursive'; c.fillText('Is', 30, 92);
+    c.fillStyle = '#f1ece2'; c.font = '600 46px "Space Grotesk", sans-serif'; c.fillText(t('world.hackathon'), 100, 84, 900);
+  }, 1024, 128);
+  [-1, 1].forEach((sz) => {
+    const val = new THREE.Mesh(new THREE.PlaneGeometry(W, W / 8), new THREE.MeshStandardNodeMaterial({ map: banner, roughness: 0.7 }));
+    val.position.set(0, H - W / 16, sz * (D / 2 + 0.01)); val.rotation.y = sz > 0 ? 0 : Math.PI; g.add(val);
+  });
+  // two long tables with laptops facing each other
+  const screen = new THREE.MeshBasicNodeMaterial(); screen.colorNode = vec3(0.55, 0.68, 0.85).mul(0.9);
+  [-1.3, 1.3].forEach((x) => {
+    const tt = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.05, 4.4), top); tt.position.set(x, 0.75, 0); tt.castShadow = true; g.add(tt);
+    [-2, 2].forEach((dz) => { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.72, 0.05), dark); leg.position.set(x, 0.36, dz); g.add(leg); });
+    [-1.5, 0, 1.5].forEach((dz) => [-1, 1].forEach((side) => {
+      const lid = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.22, 0.32), dark); lid.position.set(x + side * 0.2, 0.89, dz); lid.rotation.z = side * 0.25; g.add(lid);
+      const sc = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.18), screen); sc.position.set(x + side * 0.19, 0.89, dz); sc.rotation.set(0, -side * Math.PI / 2, -side * 0.25); g.add(sc);
+      const base = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.015, 0.32), dark); base.position.set(x + side * 0.06, 0.785, dz); g.add(base);
+    }));
+  });
+  // screen on a stand at the back with code on it
+  const code = canvasTex((c) => {
+    c.fillStyle = '#0b0f16'; c.fillRect(0, 0, 512, 288);
+    c.font = '500 22px Menlo, Consolas, monospace';
+    ['import pandas as pd', '', "df = pd.read_csv('bicis.csv')", "df.groupby('barrio')['viajes'].sum()", '  .sort_values(ascending=False)', '  .head(5)']
+      .forEach((line, i) => { c.fillStyle = i === 0 ? '#d9b26a' : '#cfe3f2'; c.fillText(line, 24, 48 + i * 36); });
+  }, 512, 288);
+  const stand = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.6, 0.08), dark); stand.position.set(0, 0.8, -D / 2 + 0.5); g.add(stand);
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.1, 0.06), dark); panel.position.set(0, 1.9, -D / 2 + 0.5); g.add(panel);
+  const codeMat = new THREE.MeshBasicNodeMaterial(); codeMat.colorNode = texture(code).rgb.mul(0.95);
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.0), codeMat); face.position.set(0, 1.9, -D / 2 + 0.54); g.add(face);
+  g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  g.position.set(at.x, CITY.CURB, at.z);
+  [-1.3, 1.3].forEach((x) => world.createCollider(RAPIER.ColliderDesc.cuboid(0.5, 0.4, 2.2).setTranslation(at.x + x, CITY.CURB + 0.4, at.z)));
+  scene.add(mergeStatic(g, mergeGeometries));
+}
+
+function canvasTex(draw, w, h) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'));
+  const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4; return tx;
 }

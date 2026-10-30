@@ -1,7 +1,8 @@
 # IsGame · Neo Academia
 
-Open-world browser game of [IsAcademy](https://ismael-sarmiento.github.io/isacademy/): a neon tech city at night where you
-drive, walk, talk to android mentors and learn data, networks, debugging and AI through missions.
+Open-world browser game of [IsAcademy](https://ismael-sarmiento.github.io/isacademy/): a living tech city, by day and by
+night, built around programming, data and AI, with the IsAcademy campus at its heart. You drive, walk, talk to android
+mentors and learn data, networks, debugging and AI through missions.
 
 ## Run locally
 
@@ -34,7 +35,8 @@ Open `http://localhost:8765/`. Useful parameters: `?renderer=webgl` (force WebGL
 - `index.html` — shell, screens and HUD; CSP with a hash for the inline import map.
 - `js/core/` — renderer and post-processing, loop, input, audio, i18n, save, quality.
 - `js/world/` — city layout and materials, MegaKit buildings (`kit.js`), props and traffic lights, sky, time of day and
-  weather, landscape (bay, mountains, birds), neon signs, traffic and vehicles, people and crowd, mentors, the tower lobby.
+  weather, landscape (bay, mountains, birds), shop and company signage and LED screens, traffic and vehicles, people and
+  crowd, delivery robots, ambient life (steam, litter, rain rings, gulls, aircraft), mentors, the campus and tower lobby.
 - `js/player/` — car (Rapier ray-cast vehicle), avatar (character controller), camera.
 - `js/game/` — missions, dialogue, 40 facts, achievements, HUD, minimap and full map, menus and settings.
 - `i18n/` — every text in ES and EN, including the 20 verifiable facts and the mentors' dialogue.
