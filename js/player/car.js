@@ -1,8 +1,8 @@
 // The player's car: a Rapier ray-cast vehicle (suspension, grip, drift with the handbrake) dressed as a low
-// electric coupé with headlights that really light the street, underglow and brake lights.
+// electric coupé with headlights that really light the street and brake lights.
 import * as THREE from 'three/webgpu';
-import { uniform, vec3, texture } from 'three/tsl';
-import { neonMaterial } from '../world/materials.js';
+import { uniform, vec3, float, mix, step, attribute, vertexColor } from 'three/tsl';
+import { buildVehicle } from '../world/vehicles.js';
 import { GROUPS } from '../world/people.js';
 
 const WHEELS = [   // [x, z] of each wheel; 0–1 front (steer), 2–3 rear (drive)
@@ -12,63 +12,34 @@ const RADIUS = 0.36, REST = 0.3, CONNECT_Y = -0.12;
 const GROUND_OFFSET = CONNECT_Y - REST - RADIUS + 0.06;   // chassis origin → road surface at rest
 const ENGINE = 4300, BRAKE = 95, MAX_SPEED = 56, REVERSE = 2200;
 
-function profileShape() {
-  const s = new THREE.Shape();
-  s.moveTo(-2.18, 0.24);
-  s.lineTo(-1.76, 0.24); s.absarc(-1.3, 0.3, 0.46, Math.PI, 0, true);
-  s.lineTo(0.87, 0.24); s.absarc(1.33, 0.3, 0.46, Math.PI, 0, true);
-  s.lineTo(2.14, 0.24); s.lineTo(2.24, 0.42); s.lineTo(2.06, 0.6); s.lineTo(0.72, 0.76);
-  s.lineTo(-1.55, 0.8); s.lineTo(-2.12, 0.74); s.lineTo(-2.24, 0.46); s.closePath();
-  return s;
-}
-function cabinShape() {
-  const s = new THREE.Shape();
-  s.moveTo(-1.5, 0.78); s.lineTo(-0.95, 1.22); s.quadraticCurveTo(-0.3, 1.3, 0.35, 1.22); s.lineTo(1.0, 0.76); s.closePath();
-  return s;
-}
-function extrude(shape, width, bevel) {
-  const g = new THREE.ExtrudeGeometry(shape, { depth: width, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 3, curveSegments: 14 });
-  g.rotateY(-Math.PI / 2);
-  g.translate(width / 2, 0, 0);
-  return g;
-}
-function glowTexture(rgba) {
-  const c = document.createElement('canvas'); c.width = c.height = 128;
-  const g = c.getContext('2d'), grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-  grd.addColorStop(0, rgba); grd.addColorStop(1, 'rgba(0,0,0,0)');
-  g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
-}
-
-export function buildCarModel({ paint = '#d9dcea', accent = '#e2b25c', glow = '#3fe0ff', lights = true } = {}) {
+// Body from the same lofted shell as the traffic (see vehicles.js), as a coupé: paint, glass and black plastic from
+// the `part` attribute, chrome-free trim, shaped head and tail lamps (the tail ones brighten when braking).
+export function buildCarModel({ paint = '#d9dcea', lights = true } = {}) {
   const model = new THREE.Group();
-  const body = new THREE.Mesh(extrude(profileShape(), 1.8, 0.07), new THREE.MeshPhysicalNodeMaterial({ color: paint, metalness: 0.55, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.05 }));
-  const cabin = new THREE.Mesh(extrude(cabinShape(), 1.5, 0.05), new THREE.MeshPhysicalNodeMaterial({ color: 0x05070f, metalness: 0.9, roughness: 0.05, clearcoat: 1 }));
-  body.castShadow = cabin.castShadow = true;
-  model.add(body, cabin);
-  const stripe = neonMaterial(new THREE.Color(accent), 2.2);
-  [-0.97, 0.97].forEach((x) => {
-    const st = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.05, 3.3), stripe);
-    st.position.set(x, 0.55, 0.1); model.add(st);
-  });
-  const head = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.06, 0.04), neonMaterial(new THREE.Color('#dff6ff'), 3.2));
-  head.position.set(0, 0.52, 2.26); model.add(head);
+  const v = buildVehicle('coupe');
+  // the shell stands on y = 0 with its wheels at ±wheelbase/2; here the road is at y = −0.06 and the axles at z 1.33/−1.3
+  const place = (g) => g.translate(0, -0.06, 0.015);
+  const part = attribute('part', 'float'), plastic = step(0.5, part).mul(step(part, 1.5)), glassy = step(1.5, part);
+  const shell = new THREE.MeshPhysicalNodeMaterial({ clearcoatRoughness: 0.05 });
+  shell.colorNode = mix(mix(uniform(new THREE.Color(paint)), vec3(0.025, 0.027, 0.03), plastic), vec3(0.02, 0.025, 0.035), glassy);
+  shell.metalnessNode = mix(mix(float(0.35), float(0), plastic), float(0.1), glassy);
+  shell.roughnessNode = mix(mix(float(0.3), float(0.62), plastic), float(0.04), glassy);
+  shell.clearcoatNode = float(1).sub(plastic);
+  const body = new THREE.Mesh(place(v.body), shell);
+  const trim = new THREE.Mesh(place(v.trim), new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.3 }));
+  body.castShadow = trim.castShadow = true;
+  model.add(body, trim);   // the body must stay the first child: crashes dent its vertices
   const brake = uniform(1);
-  const tailMat = new THREE.MeshBasicNodeMaterial(); tailMat.colorNode = vec3(1.0, 0.08, 0.15).mul(brake);
-  const tail = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.08, 0.04), tailMat);
-  tail.position.set(0, 0.64, -2.27); model.add(tail);
-  const under = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 5.6).rotateX(-Math.PI / 2), new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-  const ug = texture(glowTexture('rgba(255,255,255,0.8)'));
-  under.material.colorNode = ug.rgb.mul(new THREE.Color(glow).multiplyScalar(0.9));
-  under.material.opacityNode = ug.a;
-  under.position.y = 0.03; model.add(under);
+  const lampMat = new THREE.MeshBasicNodeMaterial();
+  const vc = vertexColor(), red = step(0.8, vc.r).mul(step(vc.g, 0.3));
+  lampMat.colorNode = mix(vc.mul(3.2), vec3(1.0, 0.08, 0.15).mul(brake), red);
+  model.add(new THREE.Mesh(place(v.lights), lampMat));
 
   const wheelGeo = new THREE.CylinderGeometry(RADIUS, RADIUS, 0.3, 24).rotateZ(Math.PI / 2);
   const tyre = new THREE.MeshStandardNodeMaterial({ color: 0x0b0b10, roughness: 0.85 });
-  // alloy rims: a dished face with five spokes and a thin accent ring that glows a little at night
+  // alloy rims: a dished face with five spokes
   const alloy = new THREE.MeshStandardNodeMaterial({ color: 0xb9bec6, metalness: 1, roughness: 0.28 });
   const hubMat = new THREE.MeshStandardNodeMaterial({ color: 0x3a3d44, metalness: 0.8, roughness: 0.4 });
-  const rimMat = neonMaterial(new THREE.Color(accent), 0.6);
   const lip = new THREE.TorusGeometry(0.235, 0.022, 8, 28).rotateY(Math.PI / 2);
   const face = new THREE.CylinderGeometry(0.075, 0.075, 0.04, 16).rotateZ(Math.PI / 2);
   const spokeGeo = new THREE.BoxGeometry(0.03, 0.2, 0.05).translate(0, 0.12, 0);
@@ -77,9 +48,8 @@ export function buildCarModel({ paint = '#d9dcea', accent = '#e2b25c', glow = '#
     const t = new THREE.Mesh(wheelGeo, tyre); t.castShadow = true;
     const out = x < 0 ? -0.155 : 0.155;
     const rim = new THREE.Mesh(lip, alloy); rim.position.x = out;
-    const accentRing = new THREE.Mesh(new THREE.TorusGeometry(0.205, 0.006, 4, 28).rotateY(Math.PI / 2), rimMat); accentRing.position.x = out * 1.02;
     const hub = new THREE.Mesh(face, hubMat); hub.position.x = out;
-    w.add(t, rim, accentRing, hub);
+    w.add(t, rim, hub);
     for (let k = 0; k < 5; k++) {
       const spoke = new THREE.Mesh(spokeGeo, alloy);
       spoke.position.x = out; spoke.rotation.x = (k / 5) * Math.PI * 2;
@@ -332,8 +302,3 @@ export class Car {
   }
 }
 
-// Body and cabin geometry shared with the traffic (instanced, no lights).
-export function carGeometries() {
-  return { body: extrude(profileShape(), 1.8, 0.07), cabin: extrude(cabinShape(), 1.5, 0.05), wheel: new THREE.CylinderGeometry(RADIUS, RADIUS, 0.3, 14).rotateZ(Math.PI / 2) };
-}
-export const CAR_GROUND_OFFSET = GROUND_OFFSET;

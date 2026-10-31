@@ -4,9 +4,10 @@
 // shares momentum, pushes and spins it. Once it settles out of sight it rejoins the traffic elsewhere.
 import * as THREE from 'three/webgpu';
 import { CITY, roadAt, nearestRoad, rng } from './layout.js';
-import { vertexColor, instancedBufferAttribute, vec3, step, float } from 'three/tsl';
+import { vertexColor, instancedBufferAttribute, vec3, step, float, mix, attribute } from 'three/tsl';
 import { atNight } from './materials.js';
-import { buildVehicle, pickType, TYPE_NAMES } from './vehicles.js';
+import { NIGHT } from './timeofday.js';
+import { buildVehicle, buildWheel, pickType, TYPE_NAMES } from './vehicles.js';
 import { GROUPS, inView } from './people.js';
 
 const PAINTS = ['#c9cde3', '#0e1430', '#2e3c74', '#7a5212', '#5a0f1f', '#1f4a44', '#3a3f55', '#e7e9f5', '#101010', '#4b2a70'];
@@ -19,24 +20,36 @@ export class Traffic {
   constructor({ scene, world, RAPIER }, count, busStops = []) {
     this.world = world; this.RAPIER = RAPIER; this.stops = busStops;
     this.rand = rng(9);
-    const paint = new THREE.MeshPhysicalNodeMaterial({ metalness: 0.6, roughness: 0.32, clearcoat: 1, clearcoatRoughness: 0.08 });
-    const glass = new THREE.MeshPhysicalNodeMaterial({ color: 0x0a0f18, metalness: 0.85, roughness: 0.05 });
     const trim = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.5, metalness: 0.3 });
     this.types = {};
     for (const name of TYPE_NAMES) {
       const v = buildVehicle(name);
+      // one material for the whole shell: per-car paint, dark tinted glass and black plastic (see vehicles.js `part`)
+      const paintAttr = new THREE.InstancedBufferAttribute(new Float32Array(MAX * 3), 3);
+      const part = attribute('part', 'float'), plastic = step(0.5, part).mul(step(part, 1.5)), glassy = step(1.5, part);
+      const paint = new THREE.MeshPhysicalNodeMaterial({ clearcoatRoughness: 0.06 });
+      paint.colorNode = mix(mix(instancedBufferAttribute(paintAttr), vec3(0.025, 0.027, 0.03), plastic), vec3(0.02, 0.025, 0.035), glassy);
+      paint.metalnessNode = mix(mix(float(0.3), float(0), plastic), float(0.1), glassy);
+      paint.roughnessNode = mix(mix(float(0.36), float(0.62), plastic), float(0.04), glassy);
+      paint.clearcoatNode = float(1).sub(plastic);
+      // buses are lit inside at night
+      if (v.def.tall) paint.emissiveNode = vec3(0.95, 0.9, 0.75).mul(glassy).mul(NIGHT).mul(0.55);
       // lights: headlights glow at night; the red tail lamps get brighter while braking (per-instance value)
       const brakeAttr = new THREE.InstancedBufferAttribute(new Float32Array(MAX), 1);
       const lights = new THREE.MeshBasicNodeMaterial({ vertexColors: true });
       const vc = vertexColor(), red = step(0.8, vc.r).mul(step(vc.g, 0.3));
       lights.colorNode = vc.mul(atNight(0.45).mul(3)).add(vec3(1.2, 0.05, 0.08).mul(red).mul(instancedBufferAttribute(brakeAttr)).mul(float(3)));
-      const parts = { body: new THREE.InstancedMesh(v.body, paint, MAX), glass: new THREE.InstancedMesh(v.glass, glass, MAX),
+      const parts = { body: new THREE.InstancedMesh(v.body, paint, MAX),
         trim: new THREE.InstancedMesh(v.trim, trim, MAX), lights: new THREE.InstancedMesh(v.lights, lights, MAX) };
       Object.values(parts).forEach((m) => { m.frustumCulled = false; m.count = 0; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(m); });
       parts.body.castShadow = true;
-      this.types[name] = { ...v, parts, brakeAttr, used: 0 };
+      this.types[name] = { ...v, parts, brakeAttr, paintAttr, used: 0 };
     }
-    this.wheels = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 1, 0.28, 16).rotateZ(Math.PI / 2), new THREE.MeshStandardNodeMaterial({ color: 0x0d0d10, roughness: 0.85 }), MAX * 4);
+    // tyres and alloys share one mesh: bright vertex colours are metal, dark ones rubber
+    const wheelMat = new THREE.MeshStandardNodeMaterial({ vertexColors: true });
+    const bright = step(0.3, vertexColor().r);
+    wheelMat.metalnessNode = bright.mul(0.9); wheelMat.roughnessNode = mix(float(0.88), float(0.3), bright);
+    this.wheels = new THREE.InstancedMesh(buildWheel(), wheelMat, MAX * 4);
     this.wheels.frustumCulled = false; this.wheels.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(this.wheels);
     // indicators: two blinking amber lamps (front and rear corner) on the side the car is turning to
     const amber = new THREE.MeshBasicNodeMaterial(); amber.colorNode = vec3(1.0, 0.55, 0.05).mul(4);
@@ -52,12 +65,12 @@ export class Traffic {
       const c = t.collider;
       const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, -50, 0).setLinearDamping(0.35).setAngularDamping(0.9));
       const collider = world.createCollider(RAPIER.ColliderDesc.cuboid(c.hx, c.hy, c.hz).setTranslation(0, c.hy, 0).setMass(MASS[type]).setFriction(0.6).setRestitution(0.1).setCollisionGroups(GROUPS.vehicle), body);
-      t.parts.body.setColorAt(slot, new THREE.Color(t.def.paint || PAINTS[k % PAINTS.length]));
+      const paint = new THREE.Color(t.def.paint || PAINTS[k % PAINTS.length]); t.paintAttr.setXYZ(slot, paint.r, paint.g, paint.b);
       this.cars.push(this.spawn({ id: k, type, slot, length: t.def.L, body, collider, pos: new THREE.Vector3(), quat: new THREE.Quaternion(), heading: 0, spin: 0, honk: 0, dyn: 0 }));
     }
     for (const t of Object.values(this.types)) {
       Object.values(t.parts).forEach((m) => { m.count = t.used; });
-      if (t.parts.body.instanceColor) t.parts.body.instanceColor.needsUpdate = true;
+      t.paintAttr.needsUpdate = true;
     }
     this.m = new THREE.Matrix4(); this.q = new THREE.Quaternion(); this.s = new THREE.Vector3(1, 1, 1); this.v = new THREE.Vector3();
     this.setCount(count);
@@ -278,7 +291,7 @@ export class Traffic {
       });
       const show = on && car.blink && blinkOn;
       const L = t.def.L / 2 + 0.02, W = t.def.W / 2;
-      [[L, 0.62], [-L, 0.72]].forEach(([z, y], b) => {
+      [[L, t.blink.front], [-L, t.blink.rear]].forEach(([z, y], b) => {
         local.set(car.blink * -(W - 0.05), y, z).applyQuaternion(q).add(v.set(car.pos.x, 0, car.pos.z));
         m.compose(local, q, new THREE.Vector3(show ? 1 : 0, show ? 1 : 0, show ? 1 : 0)); this.blinkers.setMatrixAt(k * 2 + b, m);
       });
