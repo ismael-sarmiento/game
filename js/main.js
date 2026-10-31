@@ -79,7 +79,7 @@ async function boot() {
   kit.max = { high: 30, medium: 16, low: 6 }[level];   // detailed buildings are ~30k triangles each
   progress(36, 'boot.loadingCity'); await nextFrame();
   const city = buildCity(ctx, textures, kit);
-  const props = buildProps(ctx, city.lamps);
+  const props = buildProps(ctx, city.lamps, textures);
   const lights = new TrafficLights(ctx);
   const busStops = buildBusStops(ctx, t);
   const landscape = buildLandscape(ctx);

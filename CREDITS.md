@@ -4,7 +4,7 @@ IsGame's code, city, music and sound effects are original and generated in code.
 
 ## Textures (CC0 1.0, public domain)
 
-From [ambientCG](https://ambientcg.com/), resized and recompressed (colour and roughness only):
+From [ambientCG](https://ambientcg.com/), resized and recompressed (colour and roughness only, unless noted):
 
 | Folder | Source asset |
 |---|---|
@@ -13,6 +13,8 @@ From [ambientCG](https://ambientcg.com/), resized and recompressed (colour and r
 | `assets/textures/bricks` | [Bricks105](https://ambientcg.com/view?id=Bricks105) |
 | `assets/textures/plaster` | [PaintedPlaster006](https://ambientcg.com/view?id=PaintedPlaster006) |
 | `assets/textures/tiles` | [Tiles141](https://ambientcg.com/view?id=Tiles141) |
+| `assets/textures/bark` | [Bark012](https://ambientcg.com/view?id=Bark012) (colour and normal) |
+| `assets/textures/foliage` | [LeafSet009](https://ambientcg.com/view?id=LeafSet009) and [LeafSet010](https://ambientcg.com/view?id=LeafSet010): the scanned leaves composed into two leafy twigs by `tools/make_foliage.py` |
 
 ## Characters (CC0 1.0, public domain)
 

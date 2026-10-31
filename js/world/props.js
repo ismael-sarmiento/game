@@ -2,10 +2,11 @@
 // (the traffic obeys them), the campus park with lawns and a fountain, bus stops with IsAcademy posters and a
 // hackathon tent on the campus plaza.
 import * as THREE from 'three/webgpu';
-import { positionLocal, vec3, sin, time, instanceIndex, hash, float, mx_noise_float, positionWorld, mix, smoothstep, uniform, texture, attribute } from 'three/tsl';
+import { vec3, time, float, mx_noise_float, positionWorld, mix, smoothstep, texture, uv, length, fract, abs, step } from 'three/tsl';
 import { CITY, roadAt, blockAt, isCampus } from './layout.js';
 import { NIGHT, WET } from './timeofday.js';
 import { chunked, single, mergeStatic } from './chunks.js';
+import { buildTreeKit, SPECIES_NAMES } from './trees.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const LIGHT = { GREEN: 0, YELLOW: 1, RED: 2 };
@@ -16,6 +17,18 @@ function place(scene, geometry, material, items, write, { shadow = true, tiles =
   group.castShadow = shadow; group.receiveShadow = true;
   scene.add(group);
   return group;
+}
+
+// one instanced trunk and crown per species, for the trees of that species
+function plantTrees(scene, kit, trees, far = Infinity) {
+  const up = new THREE.Vector3(0, 1, 0);
+  for (const [name, { wood, leaves }] of Object.entries(kit.species)) {
+    const mine = trees.filter((t) => t.kind === name);
+    if (!mine.length) continue;
+    const write = (t, p, q, s) => { p.set(t.x, CITY.CURB, t.z); q.setFromAxisAngle(up, t.rot || 0); s.setScalar(t.s); };
+    place(scene, wood, kit.woodMat, mine, write, { tiles: far < Infinity, far });
+    place(scene, leaves, kit.leafMat, mine, write, { tiles: far < Infinity, far });   // street trees fade into the fog
+  }
 }
 
 export class TrafficLights {
@@ -84,7 +97,7 @@ export class TrafficLights {
   }
 }
 
-export function buildProps({ scene, world, RAPIER }, lamps) {
+export function buildProps({ scene, world, RAPIER }, lamps, textures) {
   const fixed = (shape, x, y, z) => world.createCollider(shape.setTranslation(x, y, z));
   const trees = [], benches = [], bins = [];
   const lampAt = new Set(lamps.map((l) => `${Math.round(l.x / 4)},${Math.round(l.z / 4)}`));
@@ -104,56 +117,21 @@ export function buildProps({ scene, world, RAPIER }, lamps) {
     }
   }
 
-  // trees: trunk, a lumpy canopy that sways with the wind (stronger in storms) and a dark tree pit
-  const wind = uniform(1);
-  const trunkMat = new THREE.MeshStandardNodeMaterial({ color: 0x4a3a2c, roughness: 0.95 });
-  const leafMat = new THREE.MeshStandardNodeMaterial({ roughness: 0.85 });
-  const seed = hash(float(instanceIndex).mul(1.37));
-  const sway = sin(time.mul(1.4).add(seed.mul(30))).mul(0.12).mul(wind).mul(positionLocal.y.sub(2.4).max(0));
-  leafMat.positionNode = positionLocal.add(vec3(sway, 0, sway.mul(0.6)));
-  const leafNoise = mx_noise_float(positionWorld.mul(1.6)).mul(0.5).add(0.5);
-  // `shade`: how open each point of the crown is to the sky (dark inside and underneath, bright on top)
-  leafMat.colorNode = mix(vec3(0.06, 0.12, 0.035), vec3(0.2, 0.3, 0.07), leafNoise.mul(seed.mul(0.6).add(0.4)))
-    .mul(attribute('shade', 'float')).mul(float(1).sub(WET.mul(0.25)));
-  // light passing through the leaves keeps the shaded side from going black
-  leafMat.emissiveNode = vec3(0.025, 0.045, 0.012).mul(float(1).sub(NIGHT)).mul(attribute('shade', 'float'));
-  // canopy: five leafy clumps around the crown, their surface broken at two scales; the normals blend the clump's own
-  // with the whole crown's, so the light reads one tree with a bumpy surface instead of separate balls
-  const clumps = [[0, 4.6, 0, 1.5], [1.0, 4.1, 0.4, 1.15], [-0.9, 4.2, -0.5, 1.2], [0.3, 3.8, -1.0, 1.05], [-0.4, 5.3, 0.6, 1.0]];
-  const crown = new THREE.Vector3(0, 4.5, 0);
-  const posArr = [], nrmArr = [], shadeArr = [];
-  clumps.forEach(([cx, cy, cz, rr], ci) => {
-    const g = new THREE.IcosahedronGeometry(rr, 1);
-    const p = g.attributes.position;
-    for (let k = 0; k < p.count; k++) {
-      const v = new THREE.Vector3().fromBufferAttribute(p, k);
-      const n = v.clone().normalize();
-      const bump = 1 + 0.16 * Math.sin(v.x * 5.1 + ci) * Math.cos(v.z * 4.3 + v.y * 3.7) + 0.07 * Math.sin(v.x * 13 + v.y * 11 + ci * 3);
-      v.multiplyScalar(bump);
-      const w = new THREE.Vector3(v.x + cx, v.y * 0.9 + cy, v.z + cz);
-      const out = w.clone().sub(crown).normalize();
-      const nn = n.multiplyScalar(0.55).add(out.multiplyScalar(0.45)).normalize();
-      posArr.push(w.x, w.y, w.z);
-      nrmArr.push(nn.x, nn.y, nn.z);
-      shadeArr.push(THREE.MathUtils.clamp(0.55 + 0.3 * out.y + 0.25 * Math.min(1, w.distanceTo(crown) / 1.9), 0.45, 1.1));
-    }
-  });
-  const canopy = new THREE.BufferGeometry();
-  canopy.setAttribute('position', new THREE.Float32BufferAttribute(posArr, 3));
-  canopy.setAttribute('normal', new THREE.Float32BufferAttribute(nrmArr, 3));
-  canopy.setAttribute('shade', new THREE.Float32BufferAttribute(shadeArr, 1));
-  // trunk that forks into three limbs under the crown
-  // (open-ended: the caps are hidden in the ground and in the crown)
-  const limb = (x, z, tilt) => new THREE.CylinderGeometry(0.06, 0.1, 1.6, 4, 1, true).translate(0, 0.8, 0).rotateZ(tilt * x).rotateX(-tilt * z).translate(0, 3.2, 0);
-  const trunk = mergeGeometries([new THREE.CylinderGeometry(0.13, 0.2, 3.6, 7, 1, true).translate(0, 1.8, 0), limb(1, 0.3, -0.5), limb(-0.8, -0.5, -0.5), limb(0.2, -1, -0.5)]
-    .map((g) => g.toNonIndexed()).map((g) => { g.deleteAttribute('uv'); return g; }));
-  const up = new THREE.Vector3(0, 1, 0);
-  place(scene, trunk, trunkMat, trees, (t, p, q, s) => { p.set(t.x, CITY.CURB, t.z); q.setFromAxisAngle(up, t.rot); s.setScalar(t.s); }, { tiles: true, far: 380 });
-  place(scene, canopy, leafMat, trees, (t, p, q, s) => { p.set(t.x, CITY.CURB, t.z); q.setFromAxisAngle(up, t.rot); s.setScalar(t.s); }, { tiles: true, far: 380 });   // street trees fade into the fog
-  place(scene, new THREE.BoxGeometry(1.3, 0.04, 1.3), new THREE.MeshStandardNodeMaterial({ color: 0x1c1712, roughness: 1 }), trees, (t, p) => p.set(t.x, CITY.CURB + 0.02, t.z), { shadow: false });
+  // trees (see trees.js): a linden or a maple at random, swaying with the wind (stronger in storms), in a tree pit
+  // with a cast-iron grate
+  const kit = buildTreeKit(textures);
+  trees.forEach((t) => { t.kind = SPECIES_NAMES[Math.floor(seedRand() * SPECIES_NAMES.length)]; });
+  plantTrees(scene, kit, trees, 380);
+  const grate = new THREE.MeshStandardNodeMaterial({ roughness: 0.55, metalness: 0.6 });
+  const g = uv().sub(0.5), ring = length(g);
+  // concentric slots around an opening for the trunk, soil showing through
+  const slots = step(0.5, fract(ring.mul(16))).mul(step(0.14, ring)).mul(step(abs(g.x).max(abs(g.y)), 0.47));
+  grate.colorNode = mix(vec3(0.07, 0.055, 0.04), vec3(0.16, 0.16, 0.17), slots);
+  place(scene, new THREE.BoxGeometry(1.3, 0.04, 1.3), grate, trees, (t, p) => p.set(t.x, CITY.CURB + 0.02, t.z), { shadow: false });
   trees.forEach((t) => fixed(RAPIER.ColliderDesc.cylinder(1.8, 0.22), t.x, CITY.CURB + 1.8, t.z));
 
   // benches facing the road and litter bins
+  const up = new THREE.Vector3(0, 1, 0);
   const wood = new THREE.MeshStandardNodeMaterial({ color: 0x6b4a2f, roughness: 0.8 });
   const iron = new THREE.MeshStandardNodeMaterial({ color: 0x23262d, roughness: 0.5, metalness: 0.7 });
   place(scene, new THREE.BoxGeometry(1.8, 0.08, 0.5).translate(0, 0.46, 0), wood, benches, (b, p, q) => { p.set(b.x, CITY.CURB, b.z); q.setFromAxisAngle(up, b.rot); });
@@ -162,12 +140,12 @@ export function buildProps({ scene, world, RAPIER }, lamps) {
   place(scene, new THREE.CylinderGeometry(0.28, 0.24, 0.9, 10).translate(0, 0.45, 0), new THREE.MeshStandardNodeMaterial({ color: 0x1f3b2c, roughness: 0.6, metalness: 0.4 }), bins, (b, p) => p.set(b.x, CITY.CURB, b.z));
   benches.forEach((b) => fixed(RAPIER.ColliderDesc.cuboid(0.9, 0.45, 0.3), b.x, CITY.CURB + 0.45, b.z));
 
-  buildPark(scene, world, RAPIER, trunkMat, leafMat, canopy, wood);
-  return { trees: trees.length, benches: benches.length, wind };
+  buildPark(scene, world, RAPIER, kit, wood);
+  return { trees: trees.length, benches: benches.length, wind: kit.wind };
 }
 
 // Campus park (block 5, 6): lawns with paths, trees, benches and a fountain with a lit pool at night.
-function buildPark(scene, world, RAPIER, trunkMat, leafMat, canopy, wood) {
+function buildPark(scene, world, RAPIER, kit, wood) {
   const cx = blockAt(5), cz = blockAt(6);
   const grass = new THREE.MeshStandardNodeMaterial({ roughness: 0.95 });
   const g = mx_noise_float(positionWorld.xz.mul(0.35)).mul(0.5).add(0.5);
@@ -180,8 +158,8 @@ function buildPark(scene, world, RAPIER, trunkMat, leafMat, canopy, wood) {
   });
   const trees = [];
   lawns.forEach(([ox, oz]) => { for (let k = 0; k < 3; k++) trees.push({ x: cx + ox + Math.cos(k * 2.1 + ox) * 6.5, z: cz + oz + Math.sin(k * 2.1 + oz) * 6.5, s: 1.1 + (k % 2) * 0.35 }); });
-  place(scene, new THREE.CylinderGeometry(0.15, 0.24, 3.6, 7).translate(0, 1.8, 0), trunkMat, trees, (t, p, q, s) => { p.set(t.x, CITY.CURB, t.z); s.setScalar(t.s); });
-  place(scene, canopy, leafMat, trees, (t, p, q, s) => { p.set(t.x, CITY.CURB, t.z); s.setScalar(t.s); });
+  trees.forEach((t, k) => { t.kind = 'linden'; t.rot = k * 1.7; });
+  plantTrees(scene, kit, trees);
   trees.forEach((t) => world.createCollider(RAPIER.ColliderDesc.cylinder(1.8, 0.25).setTranslation(t.x, CITY.CURB + 1.8, t.z)));
 
   // fountain in the middle of the paths
