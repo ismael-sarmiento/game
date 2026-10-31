@@ -29,9 +29,7 @@ export class Collectibles {
     this.core = new THREE.InstancedMesh(new THREE.BoxGeometry(0.55, 0.55, 0.55), neonMaterial(gold, 3.2), COUNT);
     this.shell = new THREE.InstancedMesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), new THREE.MeshPhysicalNodeMaterial({ color: '#0a1a2a', metalness: 0.2, roughness: 0.05, transmission: 0, transparent: true, opacity: 0.35, emissive: cyan, emissiveIntensity: 0.6 }), COUNT);
     this.ring = new THREE.InstancedMesh(new THREE.TorusGeometry(0.95, 0.03, 6, 32), neonMaterial(cyan, 3), COUNT);
-    this.beam = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.18, 0.18, 40, 8, 1, true).translate(0, 20, 0),
-      new THREE.MeshBasicNodeMaterial({ color: cyan.clone().multiplyScalar(0.8), transparent: true, opacity: 0.16, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }), COUNT);
-    [this.core, this.shell, this.ring, this.beam].forEach((m) => { m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(m); });
+    [this.core, this.shell, this.ring].forEach((m) => { m.frustumCulled = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(m); });
     this.m = new THREE.Matrix4(); this.q = new THREE.Quaternion(); this.e = new THREE.Euler(); this.v = new THREE.Vector3(); this.s = new THREE.Vector3();
     this.burst = null;
   }
@@ -47,10 +45,9 @@ export class Collectibles {
       q.setFromEuler(e.set(-t * 0.4, -t * 0.6 + k, 0.3));
       m.compose(v, q, s); this.shell.setMatrixAt(k, m);
       q.setFromEuler(e.set(Math.PI / 2, 0, t * 1.5)); m.compose(v.set(it.x, y - 0.9 + Math.sin(t * 2 + k) * 0.3, it.z), q, s); this.ring.setMatrixAt(k, m);
-      q.identity(); m.compose(v.set(it.x, CITY.CURB, it.z), q, s); this.beam.setMatrixAt(k, m);
       if (!it.taken && Math.hypot(p.x - it.x, p.z - it.z) < (g.mode === 'car' ? 3.4 : 2.0) && Math.abs(p.y - y) < 3.5) this.collect(it);
     });
-    [this.core, this.shell, this.ring, this.beam].forEach((x) => { x.instanceMatrix.needsUpdate = true; });
+    [this.core, this.shell, this.ring].forEach((x) => { x.instanceMatrix.needsUpdate = true; });
   }
 
   collect(it) {

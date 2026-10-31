@@ -132,20 +132,17 @@ export class Mentors {
       marker.scale.y = 1.5; scene.add(marker);
       const ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.15, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicNodeMaterial({ color: color.clone().multiplyScalar(2), transparent: true, opacity: 0.8, depthWrite: false, blending: THREE.AdditiveBlending }));
       ring.position.set(def.x, CITY.CURB + 0.03, def.z); scene.add(ring);
-      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 120, 12, 1, true).translate(0, 60, 0),
-        new THREE.MeshBasicNodeMaterial({ color: color.clone().multiplyScalar(0.9), transparent: true, opacity: 0.18, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false }));
-      beam.position.set(def.x, CITY.CURB, def.z); scene.add(beam);
       const label = new THREE.Sprite(new THREE.SpriteNodeMaterial({ transparent: true, depthWrite: false }));
       label.material.map = labelTexture(def.id === 'lia' ? 'Lía' : def.id[0].toUpperCase() + def.id.slice(1), def.color);
       label.material.color.setScalar(0.7);   // readable without blooming into a blob
       label.scale.set(1.8, 0.45, 1); label.position.set(def.x, CITY.CURB + 2.75, def.z); scene.add(label);
-      return { ...def, look, marker, ring, beam, label, yaw: def.face, waved: false, talking: 0, state: 'idle' };
+      return { ...def, look, marker, ring, label, yaw: def.face, waved: false, talking: 0, state: 'idle' };
     });
   }
 
   byId(id) { return this.list.find((m) => m.id === id); }
 
-  // state: 'offer' (has something for you: tall beam), 'active', 'done', 'idle'
+  // state: 'offer' (has something for you), 'active', 'done', 'idle'
   setState(id, state) { const m = this.byId(id); if (m) m.state = state; }
 
   nearest(p, radius = 3.4) {
@@ -169,10 +166,7 @@ export class Mentors {
       m.look.animate(dt, 0, { talking: m.talking, waving, t: t + m.x });
       m.marker.position.set(m.x, CITY.CURB + 3.4 + Math.sin(t * 2 + m.z) * 0.12, m.z);
       m.marker.rotation.y += dt * 1.6;
-      const show = m.state === 'offer' || m.state === 'active';
       m.marker.visible = !m.noMarker && (m.state !== 'done' || m.id === 'iris' || m.id === 'echo');
-      m.beam.visible = show && d > 12;
-      m.beam.material.opacity = 0.12 + Math.sin(t * 2) * 0.04;
       m.ring.scale.setScalar(1 + Math.sin(t * 3) * 0.06);
       m.label.visible = d > 5 && d < 30;   // close up the dialogue box already names them
     }

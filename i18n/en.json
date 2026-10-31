@@ -188,7 +188,7 @@
   "welcome": "Welcome to Neo Academia. Find Iris on the campus.",
   "welcomeBack": "Neo Academia missed you.",
   "talkIris": "Talk to Iris on the IsAcademy Campus (press E next to her).",
-  "introDone": "The mentors are waiting: follow the columns of light.",
+  "introDone": "The mentors are waiting: follow the arrow and the minimap.",
   "visit": "Visit {name} in the {district}: there is a mission for you.",
   "graduate": "You completed the three missions. Go back to Iris to graduate.",
   "explore": "Explore the city and find the facts ({n}/40).",
@@ -202,7 +202,7 @@
    "intro": [
     "Hi! I'm Iris, the guide of Neo Academia: a city where every neighbourhood teaches something.",
     "Byte is waiting in the Data District, Kernel in Sec and Nova in the AI District. Each of them has a mission for you.",
-    "Your car is parked right there on the avenue. Follow the columns of light and the minimap. And if you see golden cubes floating around, grab them: they hold facts."
+    "Your car is parked right there on the avenue. Follow the arrow and the minimap. And if you see golden cubes floating around, grab them: they hold facts."
    ],
    "introAccept": "Let's go!",
    "greet": "How is it going? You have done {n} of 3 missions. When you finish them all, come back: I have something for you.",

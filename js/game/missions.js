@@ -14,17 +14,15 @@ const BUGS = [
 const ROUTE_TIME = 150, TRAIN_TIME = 120, TRAIN_GOAL = 8;
 
 
-// A pulsing gate: ring on the ground, translucent wall and a tall beam.
+// A pulsing gate: ring on the ground and a translucent wall.
 function gate(scene, color, radius = 7) {
   const c = new THREE.Color(color);
   const g = new THREE.Group();
   const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.12, 8, 64).rotateX(Math.PI / 2), neonMaterial(c, 3));
   const wall = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 5, 48, 1, true).translate(0, 2.5, 0),
     new THREE.MeshBasicNodeMaterial({ color: c.clone().multiplyScalar(0.7), transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }));
-  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 160, 12, 1, true).translate(0, 80, 0),
-    new THREE.MeshBasicNodeMaterial({ color: c.clone().multiplyScalar(0.9), transparent: true, opacity: 0.2, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
   ring.position.y = 0.15;
-  g.add(ring, wall, beam);
+  g.add(ring, wall);
   scene.add(g);
   return { group: g, wall, dispose() { scene.remove(g); } };
 }
@@ -79,7 +77,7 @@ export class Missions {
     this.refreshObjective();
   }
 
-  // mentor beams + objective text for the current state of the story
+  // mentor markers + objective text for the current state of the story
   refreshObjective() {
     const g = this.game, t = g.t, M = g.mentors;
     M.list.forEach((m) => M.setState(m.id, 'idle'));
@@ -236,9 +234,6 @@ export class Missions {
       cube.position.set((Math.random() - 0.5) * 1.6, 1 + Math.random() * 1.8, (Math.random() - 0.5) * 1.6);
       group.add(cube);
     }
-    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 140, 10, 1, true).translate(0, 70, 0),
-      new THREE.MeshBasicNodeMaterial({ color: red.clone().multiplyScalar(0.9), transparent: true, opacity: 0.2, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
-    group.add(beam);
     group.position.set(at.x, CITY.CURB, at.z);
     scene.add(group);
     return { group, dispose() { scene.remove(group); } };

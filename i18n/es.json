@@ -188,7 +188,7 @@
   "welcome": "Te damos la bienvenida a Neo Academia. Busca a Iris en el campus.",
   "welcomeBack": "Neo Academia te echaba de menos.",
   "talkIris": "Habla con Iris en el Campus IsAcademy (pulsa E cerca de ella).",
-  "introDone": "Los mentores ya te esperan: sigue las columnas de luz.",
+  "introDone": "Los mentores ya te esperan: sigue la flecha y el minimapa.",
   "visit": "Visita a {name} en el {district}: tiene una misión para ti.",
   "graduate": "Has completado las tres misiones. Vuelve con Iris para graduarte.",
   "explore": "Explora la ciudad y encuentra las curiosidades ({n}/40).",
@@ -202,7 +202,7 @@
    "intro": [
     "¡Hola! Soy Iris, la guía de Neo Academia: una ciudad donde cada barrio enseña algo.",
     "En el Distrito Data te espera Byte, en Sec está Kernel y en el Distrito IA, Nova. Cada uno tiene una misión para ti.",
-    "Tu coche está aparcado ahí, en la avenida. Sigue las columnas de luz y el minimapa. Y si ves cubos dorados flotando, recógelos: guardan curiosidades."
+    "Tu coche está aparcado ahí, en la avenida. Sigue la flecha y el minimapa. Y si ves cubos dorados flotando, recógelos: guardan curiosidades."
    ],
    "introAccept": "¡Vamos allá!",
    "greet": "¿Qué tal vas? Llevas {n} de 3 misiones. Cuando las termines todas, vuelve: tengo algo para ti.",
