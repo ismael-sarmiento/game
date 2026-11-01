@@ -442,6 +442,7 @@ function turn(from, to, k) {
 const pick = (list) => (Array.isArray(list) ? list[Math.floor(Math.random() * list.length)] : '');
 
 // Speech bubbles above people's heads (a small pool of sprites with canvas text).
+const BUBBLE_NDC = new THREE.Vector3();
 class Bubbles {
   constructor(scene) {
     this.pool = Array.from({ length: 6 }, () => {
@@ -467,12 +468,20 @@ class Bubbles {
     b.life = 2.8; b.who = person; b.sprite.visible = true;
     b.sprite.scale.set(2.4, 0.6, 1);
   }
-  update(dt) {
+  update(dt, camera) {
     for (const b of this.pool) {
       if (b.life <= 0) continue;
       b.life -= dt;
       const p = b.who.pos;
       b.sprite.position.set(p.x, CITY.CURB + 2.25, p.z);
+      if (camera) {
+        // keep the whole bubble on screen: near the edge it slides in sideways instead of being cut off
+        const v = BUBBLE_NDC.copy(b.sprite.position).project(camera);
+        const dist = camera.position.distanceTo(b.sprite.position);
+        const half = b.sprite.scale.x / 2 / (dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect);
+        const lim = Math.max(0, 0.98 - half);
+        if (v.z < 1 && Math.abs(v.x) > lim && Math.abs(v.x) < 1 + half) { v.x = THREE.MathUtils.clamp(v.x, -lim, lim); b.sprite.position.copy(v.unproject(camera)); }   // only bubbles already partly in view
+      }
       b.sprite.material.opacity = Math.min(1, b.life * 3);
       if (b.life <= 0) b.sprite.visible = false;
     }

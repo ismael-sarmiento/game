@@ -179,6 +179,10 @@ body.photo-mode #hud, body.photo-mode #touch { display: none !important; }
 @keyframes toast { 0% { opacity: 0; transform: translateY(-10px); } 8%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(-6px); } }
 .prompt { animation-name: none; }
 
+/* medium widths: the centred toasts would run into the objective card, so they drop below it */
+@media (min-width: 701px) and (max-width: 1240px) {
+  .toasts { top: calc(max(14px, env(safe-area-inset-top)) + 122px); width: min(460px, calc(100vw - 340px)); }
+}
 @media (max-width: 700px) {
   .hud-objective { max-width: calc(100vw - 150px); padding: .55rem .8rem; }
   #objective-text { font-size: .85rem; }

@@ -38,15 +38,19 @@ export class Ambient {
 
     // papers and leaves: a few dozen around the player, recycled upwind when left behind
     const LITTER = 44;
-    const leaf = new THREE.PlaneGeometry(1, 1);
+    // a leaf-shaped flake (a flattened diamond, a little bent) instead of a square card; paper is a crumpled ball
+    const leaf = new THREE.PlaneGeometry(1, 1, 2, 2);
+    const lp = leaf.attributes.position;
+    for (let i = 0; i < lp.count; i++) { const x = lp.getX(i), y = lp.getY(i); lp.setX(i, x * (1 - Math.abs(y) * 1.2)); lp.setZ(i, (x * x) * 0.35); }
+    leaf.computeVertexNormals();
     const litterMat = new THREE.MeshStandardNodeMaterial({ roughness: 0.85, side: THREE.DoubleSide });
     this.litter = new THREE.InstancedMesh(leaf, litterMat, LITTER);
     this.litter.frustumCulled = false; this.litter.castShadow = false;
-    const paper = new THREE.Color(0xe8e6df), leaves = [0x8a5a2b, 0xa8742f, 0x6d4a22, 0x9b8a3a].map((c) => new THREE.Color(c));
+    const paper = new THREE.Color(0xc9c5b8), leaves = [0x8a5a2b, 0xa8742f, 0x6d4a22, 0x9b8a3a].map((c) => new THREE.Color(c));
     this.bits = Array.from({ length: LITTER }, (_, k) => {
-      const isPaper = k % 3 === 0;
+      const isPaper = k % 5 === 0;
       this.litter.setColorAt(k, isPaper ? paper : leaves[k % leaves.length]);
-      return { isPaper, size: isPaper ? 0.24 : 0.13, pos: new THREE.Vector3(1e4, 0, 0), vel: new THREE.Vector3(), rot: new THREE.Euler(-Math.PI / 2, r() * 6, 0), spin: new THREE.Vector3(), air: false };
+      return { isPaper, size: isPaper ? 0.18 : 0.13, pos: new THREE.Vector3(1e4, 0, 0), vel: new THREE.Vector3(), rot: new THREE.Euler(-Math.PI / 2, r() * 6, 0), spin: new THREE.Vector3(), air: false };
     });
     scene.add(this.litter);
     this.windAngle = r() * Math.PI * 2;

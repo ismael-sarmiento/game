@@ -248,7 +248,7 @@ export class Hud {
     for (const r of this.hudRects()) {
       if (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom) continue;
       const out = [[r.left - cx, 0], [r.right - cx, 0], [0, r.top - cy], [0, r.bottom - cy]]
-        .filter(([dx, dy]) => cx + dx > m && cx + dx < innerWidth - m && cy + dy > m && cy + dy < innerHeight - m)
+        .filter(([dx, dy]) => cx + dx >= m && cx + dx <= innerWidth - m && cy + dy >= m && cy + dy <= innerHeight - m)   // the marker may already sit on the clamp line
         .sort((a, b) => Math.abs(a[0] + a[1]) - Math.abs(b[0] + b[1]))[0];
       if (out) { cx += out[0]; cy += out[1]; }
     }
