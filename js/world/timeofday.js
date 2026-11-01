@@ -1,12 +1,13 @@
 // Game clock and celestial positions. One full day lasts `cycleMinutes` real minutes (24 by default); a fixed
 // setting (dawn, day, dusk, night) stops the clock. NIGHT and DUSK are shared TSL uniforms (0..1) that materials read
-// to switch on windows, neon and lamps.
+// to switch on windows, neon and lamps; SKY tints the sky reflected by windows.
 import * as THREE from 'three/webgpu';
 import { uniform } from 'three/tsl';
 
 export const NIGHT = uniform(1);
 export const DUSK = uniform(0);
 export const WET = uniform(1);
+export const SKY = uniform(new THREE.Color(0.6, 0.7, 0.85));   // colour of the sky near the horizon, for glass reflections
 
 export const FIXED_HOURS = { dawn: 6.35, day: 13, dusk: 17.65, night: 23.2 };
 const smooth = (a, b, x) => { const t = THREE.MathUtils.clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };

@@ -4,7 +4,7 @@
 import * as THREE from 'three/webgpu';
 import { uniform, vec3, vec4, float, normalize, positionWorld, cameraPosition, smoothstep, pow, max, dot, hash, floor, step, sin, time } from 'three/tsl';
 import { SkyMesh } from 'three/addons/objects/SkyMesh.js';
-import { NIGHT } from './timeofday.js';
+import { NIGHT, SKY } from './timeofday.js';
 
 const c = (hex) => new THREE.Color(hex);
 const lerpColor = (out, a, b, t) => out.copy(a).lerp(b, THREE.MathUtils.clamp(t, 0, 1));
@@ -127,12 +127,14 @@ export function buildSky({ scene, renderer, preset }, clock, weather) {
       lerpColor(hemi.groundColor, colors.groundDay, colors.groundNight, n);
       // sky fill: enough by day that streets in a building's shadow keep their colour; little at night, when facades
       // should be lit by windows and lamps, not by a grey glow
-      hemi.intensity = THREE.MathUtils.lerp(0.5, 0.36, n) * THREE.MathUtils.lerp(1, 1.4, w.cover * (1 - n)) + weather.flash * 1.5;
+      // with the sun low the open sky still lights the streets: a little more fill at dusk, so 17:30 does not look like night
+      hemi.intensity = THREE.MathUtils.lerp(0.5, 0.36, n) * THREE.MathUtils.lerp(1, 1.4, w.cover * (1 - n)) * (1 + d * 0.5) + weather.flash * 1.5;
 
       lerpColor(tmp, colors.fogDay, colors.fogNight, n);
       tmp.lerp(colors.fogDusk, d * 0.55);
       lerpColor(tmp2, tmp, colors.fogStorm, (w.cover - 0.3) * (1 - n) * 0.9);
       scene.fog.color.copy(tmp2);
+      SKY.value.copy(tmp2).lerp(hemi.color, 0.35);
       scene.fog.density = THREE.MathUtils.lerp(0.00045, 0.0019, n) * w.fog;
       scene.environmentIntensity = THREE.MathUtils.lerp(0.55, 0.6, n);
 

@@ -3,10 +3,10 @@
 import * as THREE from 'three/webgpu';
 import {
   vec3, float, positionWorld, normalWorld, abs, fract, floor, hash, step, smoothstep, mix, select, time,
-  instancedBufferAttribute, mx_noise_float, mod, min, max, texture, vec2, bumpMap,
+  instancedBufferAttribute, mx_noise_float, mod, min, max, texture, vec2, bumpMap, normalView, positionViewDirection, dot, pow,
 } from 'three/tsl';
 import { CITY } from './layout.js';
-import { NIGHT, WET } from './timeofday.js';
+import { NIGHT, WET, SKY } from './timeofday.js';
 
 const atNight = (dayLevel) => mix(float(dayLevel), float(1), NIGHT);
 
@@ -29,7 +29,9 @@ export function buildingMaterial(type, seedAttr, accentAttr, textures) {
   const wp = positionWorld, nw = normalWorld;
   const sideX = abs(nw.x).greaterThan(0.5);
   const hor = select(sideX, wp.z, wp.x);
-  const cx = hor.div(cfg.cellW), cy = wp.y.div(cfg.cellH);
+  // each building spaces its windows a little differently, so neighbours do not share one grid
+  const cellW = float(cfg.cellW).mul(hash(seed.mul(41.0)).mul(0.35).add(0.85));
+  const cx = hor.div(cellW), cy = wp.y.div(cfg.cellH);
   const fx = fract(cx), fy = fract(cy);
   const wall = step(abs(nw.y), 0.5);
   const upper = smoothstep(3.6, 4.4, wp.y);
@@ -39,7 +41,7 @@ export function buildingMaterial(type, seedAttr, accentAttr, textures) {
   const occupancy = mix(float(0.6), float(0.92), hash(seed.mul(3.1)));   // some towers are almost dark
   const lit = step(occupancy, hash(cell.add(floor(time.mul(0.02).add(r.mul(9.0))).mul(7.3))));
   const warm = vec3(1.0, 0.74, 0.46), cool = vec3(0.62, 0.86, 1.0);
-  const tint = mix(warm, mix(cool, accent, 0.12), step(0.72, r));   // offices: warm or cool white, barely a hint of the district
+  const tint = mix(warm, mix(cool, accent, 0.04), step(0.72, r));   // offices: warm or cool white, barely a hint of the district
   // blinds: some rooms half lit
   // rooms: brighter towards the ceiling lights, some with blinds half down; never a flat white plate
   const roomLight = smoothstep(cfg.winY[0], cfg.winY[1], fy).mul(0.55).add(0.45);
@@ -64,6 +66,16 @@ export function buildingMaterial(type, seedAttr, accentAttr, textures) {
   const m = new THREE.MeshStandardNodeMaterial();
   const glassColor = mix(vec3(0.025, 0.04, 0.06), vec3(0.05, 0.07, 0.09), hash(seed.mul(5.0)));
   const glassPane = win.add(glassFront.mul(float(1).sub(upper)));
+  // by day the glass shows the sky (more at grazing angles) and, behind it, rooms: some with blinds lowered to a
+  // random height, some with curtains drawn to the sides, the rest dim interiors
+  const look = hash(cell.add(17.0));
+  const blindTo = mix(float(cfg.winY[1]), float(cfg.winY[0]), hash(cell.add(23.0)));
+  const blinds = step(0.62, look).mul(step(blindTo, fy)).mul(step(0.5, fract(fy.mul(28.0))).mul(0.25).add(0.75));
+  const curtains = step(0.4, look).mul(step(look, 0.62)).mul(band(fx, cfg.winX[0], cfg.winX[0] + 0.12, 0.01).add(band(fx, cfg.winX[1] - 0.12, cfg.winX[1], 0.01)).min(1));
+  const room = vec3(0.05, 0.045, 0.04).mul(r.mul(0.8).add(0.6));
+  const inside = mix(mix(room, vec3(0.42, 0.4, 0.36), blinds), mix(vec3(0.5, 0.46, 0.4), vec3(0.32, 0.36, 0.42), hash(cell.add(29.0))), curtains);
+  const fresnel = pow(float(1).sub(abs(dot(normalView, positionViewDirection))), 3.0);
+  const dayGlass = inside.mul(win).mul(0.5).add(SKY.mul(mix(float(0.08), float(0.38), fresnel)).mul(win.add(glassFront.mul(float(1).sub(upper)).mul(0.45)))).mul(float(1).sub(NIGHT));
   if (cfg.tex) {
     const t = textures[cfg.tex];
     const uvW = vec2(hor, wp.y).div(cfg.tile).add(vec2(seed.mul(13.0), seed.mul(7.0)));
@@ -88,7 +100,7 @@ export function buildingMaterial(type, seedAttr, accentAttr, textures) {
     m.metalnessNode = mix(float(0.92), float(0.7), frameMetal);
   }
   // shop interiors: faintly visible through the glass by day; at night a lit room, not a white plate
-  m.emissiveNode = windows.mul(mix(float(0.025), float(1.0), NIGHT)).add(shops.mul(mix(float(0.18), float(0.6), NIGHT)));
+  m.emissiveNode = windows.mul(mix(float(0.025), float(1.0), NIGHT)).add(shops.mul(mix(float(0.18), float(0.6), NIGHT))).add(dayGlass);
   return m;
 }
 
@@ -150,13 +162,21 @@ export function pavementMaterial(textures, plaza = false) {
   // soften the contrast so the paving reads as clean, slightly warm limestone
   const grey = vec3(raw.dot(vec3(0.299, 0.587, 0.114)));
   const base = plaza ? mix(grey, vec3(0.6, 0.58, 0.55), 0.35).mul(vec3(1.0, 0.98, 0.94)) : raw;
-  const albedo = base.mul(plaza ? 0.85 : 0.62).mul(dirt.mul(0.25).add(0.85));
+  const albedo = base.mul(plaza ? 0.7 : 0.62).mul(dirt.mul(0.25).add(0.85));
   const slab = albedo.mul(float(1).sub(WET.mul(0.35)));
   m.colorNode = mix(slab, vec3(0.5, 0.5, 0.52).mul(float(1).sub(WET.mul(0.3))), curb);
   const rough = texture(t.rough, uvP).r.mul(0.3).add(0.62);
   m.roughnessNode = mix(rough, mix(float(0.3), float(0.14), smoothstep(0.55, 0.7, mx_noise_float(wp.xz.mul(0.4)).mul(0.5).add(0.5))), WET);
   m.metalnessNode = float(0.02);
   m.normalNode = bumpMap(texture(t.color, uvP), float(0.8));
+  if (!plaza) {
+    // at night the lit shop windows spill warm light on the sidewalk in front of them (the facades stand 5 m in)
+    const alongZ = step(min(bx, float(CITY.BLOCK).sub(bx)), min(bz, float(CITY.BLOCK).sub(bz)));   // nearest edge runs along z
+    const along = mix(wp.x, wp.z, alongZ);
+    const front = floor(along.div(6.0)).add(mix(floor(wp.z.div(p)), floor(wp.x.div(p)), alongZ).mul(13.0));
+    const spill = smoothstep(2.6, 5.0, edge).pow(2.0).mul(step(edge, 5.05)).mul(step(0.25, hash(front))).mul(band(fract(along.div(6.0)), 0.15, 0.85, 0.16));
+    m.emissiveNode = vec3(1.0, 0.8, 0.58).mul(spill).mul(NIGHT).mul(0.09);
+  }
   return m;
 }
 

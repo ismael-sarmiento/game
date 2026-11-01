@@ -189,6 +189,11 @@ export function buildCity({ scene, world, RAPIER }, textures, kit = null) {
     (l, p, q, s) => { p.set(l.x + l.dx * 3.2, 0.03, l.z + l.dz * 3.2); s.set(1, 1, 1); });
   pools.renderOrder = 1;
   scene.add(pools);
+  // and the sidewalk behind each pole (raised by the curb, so it needs its own pool)
+  const walkPools = instanced(new THREE.PlaneGeometry(8, 8).rotateX(-Math.PI / 2), poolMat, lamps,
+    (l, p) => { p.set(l.x - l.dx * 2.2, CITY.CURB + 0.02, l.z - l.dz * 2.2); });
+  walkPools.renderOrder = 1;
+  scene.add(walkPools);
 
   if (kit) for (const [name, list] of Object.entries(kitPlacements)) placeModel(scene, kit.buildings[name], list);
   return { buildings, signAnchors, lamps, tower: { x: tx, z: tz, top: towerTop }, instanced, fixed, rand, kitCount: Object.values(kitPlacements).reduce((a, l) => a + l.length, 0), kitPlacements };

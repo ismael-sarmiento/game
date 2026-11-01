@@ -117,6 +117,19 @@ export function buildProps({ scene, world, RAPIER }, lamps, textures) {
     }
   }
 
+  // the two open campus plazas: a row of trees with benches between them along each side, clear of Iris' spot
+  for (const [i, j] of [[6, 5], [6, 6]]) {
+    const cx = blockAt(i), cz = blockAt(j), e = CITY.BLOCK / 2 - 7;
+    for (let u = -e; u <= e; u += 10) {
+      [[cx + u, cz - e, 0], [cx + u, cz + e, Math.PI], [cx - e, cz + u, Math.PI / 2], [cx + e, cz + u, -Math.PI / 2]].forEach(([x, z, rot], side) => {
+        if (side >= 2 && Math.abs(u) > e - 1) return;   // corners once
+        if (Math.hypot(x - 24, z - 26) < 6) return;
+        trees.push({ x, z, s: 1 + seedRand() * 0.25, rot: seedRand() * 6.28 });
+        if (Math.abs(u) < e - 1) benches.push({ x: x + (side < 2 ? 5 : 0), z: z + (side < 2 ? 0 : 5), rot });
+      });
+    }
+  }
+
   // trees (see trees.js): a linden or a maple at random, swaying with the wind (stronger in storms), in a tree pit
   // with a cast-iron grate
   const kit = buildTreeKit(textures);
