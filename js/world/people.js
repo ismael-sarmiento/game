@@ -1,10 +1,13 @@
 // People: seven clothed CC0 characters (Quaternius, see CREDITS.md) with skeletal animation. Each model is merged into
-// a single vertex-coloured skinned mesh (one draw call). PersonRig drives the animations from the speed; Crowd keeps
-// a few dozen people around the player: they stroll the sidewalks, chat in pairs, wave and run from fast cars.
+// a single vertex-coloured skinned mesh (one draw call) with smoothed normals (hard edges only where the model folds
+// sharply). Every vertex knows what it is (skin, clothes, hair, eyes, metal), so each passer-by gets their own skin
+// tone, hair and clothes colours. PersonRig drives the animations from the speed; Crowd keeps a few dozen people
+// around the player: they stroll the sidewalks, chat in pairs, wave and run from fast cars.
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { mergeGeometries, toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
+import { vertexColor, attribute, uniform, mix, step, float } from 'three/tsl';
 import { CITY, blockAt, isCampus, rng } from './layout.js';
 
 // Collision groups (membership << 16 | filter): vehicles and people never touch physically — cars brake for people
@@ -16,7 +19,15 @@ export const GROUPS = {
 };
 
 export const VARIANTS = ['man_beach', 'man_suit', 'man_worker', 'woman_casual', 'woman_formal', 'woman_suit', 'woman_worker'];
+const STREET = VARIANTS.filter((v) => v !== 'man_beach');   // swimwear stays a choice for the player, not the city
 const HEIGHT = { man: 1.78, woman: 1.67 };
+// what each material of the models is: 0 skin, 1 clothes, 2 hair, 3 eyes, 4 metal
+const KIND = (name) => (name === 'Skin' ? 0 : /Hair|Eyebrows|Moustache/.test(name) ? 2 : name === 'Eye' ? 3 : /Gold|Earrings/.test(name) ? 4 : 1);
+// clothes that keep their colour: high-visibility workwear
+const KEEP = /^Worker_/;
+const SKIN = ['#f1d3bf', '#e6bc98', '#d6a27c', '#b77f5a', '#8d5a3c', '#6b4129', '#4a2c1d'];
+const HAIR = ['#141110', '#2a1b12', '#4a3020', '#6f4a2c', '#a07a4a', '#c9a66b', '#7a3b22', '#8c8c8c'];
+const CLOTH = ['#2b3a55', '#1d1d20', '#4a4a52', '#5b6f8a', '#e8e6e1', '#3f5d3a', '#7a2e2e', '#2f6f73', '#a33b3b', '#6d5a7a', '#9aa3ad', '#24324a', '#5e4636'];   // nothing close to a skin tone
 
 export async function loadPeople(onProgress) {
   const loader = new GLTFLoader();
@@ -36,32 +47,69 @@ function prepare(gltf, height) {
   scene.updateMatrixWorld(true);
   const parts = [];
   scene.traverse((o) => { if (o.isSkinnedMesh) parts.push(o); });
+  const slots = new Map();   // clothes materials in order of appearance: up to three recolourable garments
+  const whole = new THREE.Box3().setFromObject(scene), tall = whole.max.y - whole.min.y;
   const geos = parts.map((mesh) => {
-    const g = mesh.geometry.clone();
-    for (const key of Object.keys(g.attributes)) if (!['position', 'normal', 'skinIndex', 'skinWeight'].includes(key)) g.deleteAttribute(key);
+    // some models name their hair after its colour ('Brown'): anything that is not skin and sits on the head is hair
+    const box = new THREE.Box3().setFromBufferAttribute(mesh.geometry.attributes.position).applyMatrix4(mesh.matrixWorld);
+    const onHead = (box.min.y - whole.min.y) / tall > 0.8;
+    let g = mesh.geometry.clone();
+    for (const key of Object.keys(g.attributes)) if (!['position', 'skinIndex', 'skinWeight'].includes(key)) g.deleteAttribute(key);
     g.morphAttributes = {};
-    const c = (mesh.material.color || new THREE.Color(1, 1, 1)).clone();
-    const colors = new Float32Array(g.attributes.position.count * 3);
+    g = toCreasedNormals(g, THREE.MathUtils.degToRad(50));
+    const name = mesh.material.name || '', kind = KEEP.test(name) ? 1 : onHead && KIND(name) === 1 ? 2 : KIND(name);
+    if (kind === 1 && !KEEP.test(name) && !slots.has(name)) slots.set(name, slots.size % 3);
+    const slot = kind === 1 && !KEEP.test(name) ? slots.get(name) : -1;
+    const c = (mesh.material.color || new THREE.Color(1, 1, 1)).clone(), n = g.attributes.position.count;
+    const colors = new Float32Array(n * 3);
     for (let i = 0; i < colors.length; i += 3) { colors[i] = c.r; colors[i + 1] = c.g; colors[i + 2] = c.b; }
     g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    g.setAttribute('kind', new THREE.BufferAttribute(new Float32Array(n).fill(kind), 1));
+    g.setAttribute('slot', new THREE.BufferAttribute(new Float32Array(n).fill(slot), 1));
     return g;
   });
   const merged = mergeGeometries(geos, false);
   const keep = parts[0];
   keep.geometry = merged;
-  keep.material = new THREE.MeshStandardNodeMaterial({ vertexColors: true, roughness: 0.72, metalness: 0.02 });
+  keep.material = personMaterial();
   parts.slice(1).forEach((p) => p.parent.remove(p));
-  const box = new THREE.Box3().setFromObject(scene);
-  return { scene, animations: gltf.animations, scale: height / Math.max(0.1, box.max.y - box.min.y) };
+  return { scene, animations: gltf.animations, scale: height / Math.max(0.1, tall) };   // measured before the merge
+}
+
+// skin a little satin, clothes matte, hair with a sheen, glossy eyes. With a `look` ({ skin, hair, cloth: [3] }, sRGB
+// strings), skin, hair and the recolourable garments take those colours instead of the model's own.
+function personMaterial(look = null) {
+  const m = new THREE.MeshStandardNodeMaterial();
+  const kind = attribute('kind', 'float'), slot = attribute('slot', 'float');
+  const is = (k) => step(k - 0.5, kind).mul(step(kind, k + 0.5));
+  let color = vertexColor();
+  if (look) {
+    const col = (hex) => uniform(new THREE.Color(hex));
+    const garment = mix(mix(col(look.cloth[0]), col(look.cloth[1]), step(0.5, slot)), col(look.cloth[2]), step(1.5, slot));
+    color = mix(mix(mix(color, col(look.skin), is(0)), col(look.hair), is(2)), garment, is(1).mul(step(-0.5, slot)));
+  }
+  m.colorNode = color;
+  m.roughnessNode = float(0.88).sub(is(0).mul(0.36)).sub(is(2).mul(0.46)).sub(is(3).mul(0.72)).sub(is(4).mul(0.58));
+  m.metalnessNode = is(4).mul(0.9);
+  return m;
+}
+
+// a random but plausible look for a passer-by
+export function randomLook(r) {
+  const pick = (list) => list[Math.floor(r() * list.length)];
+  const cloth = [];
+  while (cloth.length < 3) { const c = pick(CLOTH); if (!cloth.includes(c)) cloth.push(c); }   // garments in different colours
+  return { skin: pick(SKIN), hair: pick(HAIR), cloth };
 }
 
 export class PersonRig {
-  constructor(template) {
+  constructor(template, look = null) {
     this.root = new THREE.Group();
     const body = cloneSkinned(template.scene);
     body.scale.setScalar(template.scale);
     body.traverse((o) => {
       if (!o.isMesh) return;
+      if (look) o.material = personMaterial(look);
       o.castShadow = true;
       // cull people out of view: a generous sphere around the bind pose covers every animation
       if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
@@ -128,8 +176,8 @@ export class Crowd {
 
   setCount(n) {
     while (this.list.length < n) {
-      const variant = VARIANTS[this.list.length % VARIANTS.length];
-      const rig = new PersonRig(this.people[variant]);
+      const variant = STREET[this.list.length % STREET.length];
+      const rig = new PersonRig(this.people[variant], randomLook(this.rand));
       this.scene.add(rig.root);
       // a solid body: the player on foot bumps into people instead of walking through them
       const body = this.world.createRigidBody(this.RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, -30, 0));
