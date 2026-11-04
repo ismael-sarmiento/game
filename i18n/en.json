@@ -190,6 +190,10 @@
    "Left stick, RT accelerates, LT brakes, Y interacts, A handbrake"
   ],
   [
+   "Gamepad in menus",
+   "D-pad or stick to move, A selects, B goes back, LB/RB switch tabs"
+  ],
+  [
    "Touch",
    "Joystick on the left, drag on the right to look, E and ⤒ buttons"
   ]

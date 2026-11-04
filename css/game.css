@@ -32,6 +32,7 @@ button, input, select { font: inherit; color: inherit; }
 a { color: var(--gold-300); }
 [hidden] { display: none !important; }
 :focus-visible { outline: 2px solid var(--gold-400); outline-offset: 2px; }
+body.pad-nav .pad-focus { outline: 2px solid var(--gold-400); outline-offset: 2px; }   /* gamepad: no :focus-visible without a key */
 
 #stage { position: fixed; inset: 0; }
 #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
@@ -102,6 +103,14 @@ input[type="range"] { accent-color: var(--gold-400); width: 100%; }
 .progress-list { list-style: none; margin: -.3rem 0 0; padding: 0; display: grid; gap: .4rem; font-size: .92rem; }
 .progress-list li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .5rem .8rem; border-radius: var(--radius-sm); background: rgba(255, 255, 255, .04); }
 .progress-list li b { flex: none; color: var(--gold-300); }
+.ach-details { display: grid; }
+.ach-details summary { display: flex; align-items: center; gap: .4rem; min-height: 44px; padding: .5rem .8rem; cursor: pointer; list-style: none; border-radius: var(--radius-sm); border: 1px solid var(--glass-line); }
+.ach-details summary:hover { border-color: var(--gold-400); }
+.ach-details summary::-webkit-details-marker { display: none; }
+.ach-details summary::after { content: '▸'; margin-left: auto; color: var(--gold-300); font-size: 1.1rem; letter-spacing: 0; transition: transform var(--dur-fast) var(--ease-out); }
+.ach-details[open] summary::after { transform: rotate(90deg); }
+.ach-details summary:hover::after { color: var(--gold-300); }
+.ach-details .progress-list { margin-top: .5rem; }
 .ach-list li > span { display: grid; gap: .1rem; }
 .ach-list small { font-size: .82rem; color: var(--text-2); line-height: 1.35; }
 .ach-list li.locked strong { color: var(--text-2); font-weight: 500; }

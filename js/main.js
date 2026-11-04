@@ -8,6 +8,7 @@ import { PRESETS, initialLevel, AutoQuality, isTouch, effects } from './core/qua
 import { Input } from './core/input.js';
 import { Audio } from './core/audio.js';
 import { save } from './core/save.js';
+import { padNav } from './game/padnav.js';
 import { loadLang, t, pickLang } from './core/i18n.js';
 import { buildCity } from './world/city.js';
 import { loadTextures } from './world/textures.js';
@@ -270,6 +271,7 @@ async function boot() {
     const now = performance.now();
     let dt = Math.min((now - last) / 1000, 0.1); last = now;
     input.update(dt);
+    if (game.started && input.padEdges.length) padNav(input.padEdges);
 
     if (input.take('pause') && game.started) game.menu.toggle();
     if (input.take('mute')) game.hud.toast(t(audio.toggleMute() ? 'hud.muted' : 'hud.unmuted'));

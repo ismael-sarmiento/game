@@ -154,8 +154,10 @@
           </div>
           <h3 class="menu-sub" data-i18n="menu.progress">Progreso</h3>
           <ul class="progress-list" id="progress-list"></ul>
-          <h3 class="menu-sub"><span data-i18n="menu.achievements">Logros</span> <span id="ach-count" class="menu-count"></span></h3>
-          <ul class="progress-list ach-list" id="achievements-list"></ul>
+          <details class="ach-details" id="ach-details">
+            <summary class="menu-sub"><span data-i18n="menu.achievements">Logros</span> <span id="ach-count" class="menu-count"></span></summary>
+            <ul class="progress-list ach-list" id="achievements-list"></ul>
+          </details>
           <div class="danger-zone">
             <button id="reset-progress" class="btn btn-sm btn-danger" type="button" data-i18n="menu.reset">Borrar progreso</button>
             <div id="reset-confirm" class="confirm" role="group" aria-labelledby="reset-ask" hidden>
