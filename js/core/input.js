@@ -22,6 +22,9 @@ export class Input {
     this.touchHeld = new Set();
     this.dragId = null; this.dragLast = null;
     this.prevPad = [];
+    this.padEdges = [];     // gamepad buttons pressed this frame (12-15 = d-pad, the left stick counts too, with repeat)
+    this.navDir = -1; this.navTimer = 0;
+    this.blockA = false;    // after a menu closes, A must be released before it jumps again
 
     addEventListener('keydown', (e) => this.onKey(e, true));
     addEventListener('keyup', (e) => this.onKey(e, false));
@@ -96,6 +99,9 @@ export class Input {
     btn.addEventListener('pointerup', end); btn.addEventListener('pointercancel', end); btn.addEventListener('pointerleave', end);
   }
 
+  // A menu or card just closed: forget actions queued while it was open (Enter on «Continuar» used to get you in the car).
+  flush() { this.queue.clear(); this.blockA = true; }
+
   take(action) {
     const had = this.queue.has(action);
     this.queue.delete(action);
@@ -117,6 +123,7 @@ export class Input {
       sprint = Math.hypot(x, y) > 0.92;
     }
 
+    this.padEdges = [];
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     for (const pad of pads) {
       if (!pad || pad.mapping !== 'standard') continue;
@@ -129,13 +136,21 @@ export class Input {
       if (lt > 0.05) brake = Math.max(brake, lt);
       this.look.x += rx * dt * 2.6 * this.sensitivity;
       this.look.y += ry * dt * 1.8 * this.sensitivity;
-      jump = jump || pad.buttons[0]?.pressed;
+      if (!pad.buttons[0]?.pressed) this.blockA = false;
+      jump = jump || (pad.buttons[0]?.pressed && !this.blockA);
       sprint = sprint || pad.buttons[10]?.pressed;
       pad.buttons.forEach((b, i) => {
         const was = this.prevPad[i];
         if (b.pressed && !was && GAMEPAD_BUTTONS[i]) { this.queue.add(GAMEPAD_BUTTONS[i]); this.lastDevice = 'gamepad'; }
+        if (b.pressed && !was && (i < 12 || i > 15)) this.padEdges.push(i);
         this.prevPad[i] = b.pressed;
       });
+      // menu navigation: d-pad or left stick as directions, repeating while held
+      const sx = pad.axes[0] || 0, sy = pad.axes[1] || 0;
+      let dir = [12, 13, 14, 15].find((i) => pad.buttons[i]?.pressed) ?? -1;
+      if (dir < 0 && Math.max(Math.abs(sx), Math.abs(sy)) > 0.5) dir = Math.abs(sy) >= Math.abs(sx) ? (sy < 0 ? 12 : 13) : (sx < 0 ? 14 : 15);
+      if (dir !== this.navDir) { this.navDir = dir; this.navTimer = 0.35; if (dir >= 0) this.padEdges.push(dir); }
+      else if (dir >= 0 && (this.navTimer -= dt) <= 0) { this.navTimer = 0.12; this.padEdges.push(dir); }
       break;
     }
 

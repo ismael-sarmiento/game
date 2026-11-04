@@ -203,6 +203,7 @@ export class Menu {
     const g = this.game;
     $('pause').hidden = true;
     g.paused = false; g.input.enabled = !g.dialogue.open;
+    g.input.flush();
     g.audio.suspend(false);
     g.ctx.renderer.domElement.focus();
   }
@@ -242,6 +243,7 @@ export class Menu {
     $('card').hidden = true;
     this.cardOpen = false;
     g.paused = false; g.input.enabled = !g.dialogue.open;
+    g.input.flush();
     g.ctx.renderer.domElement.focus();
   }
 }
