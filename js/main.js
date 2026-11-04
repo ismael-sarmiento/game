@@ -246,7 +246,8 @@ async function boot() {
     if (open && (game.paused || game.menu.cardOpen)) return;
     box.hidden = !open;
     game.paused = open; input.enabled = !open;
-    if (open) game.hud.drawBigMap(); else { input.flush(); renderer.domElement.focus(); }
+    if (open) { game.hud.drawBigMap(); $('bigmap-close').focus({ preventScroll: true }); }   // focus inside: Escape reaches the map
+    else { input.flush(); renderer.domElement.focus(); }
   }
   $('bigmap-close').addEventListener('click', () => toggleMap());
   $('bigmap').addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); toggleMap(); } });

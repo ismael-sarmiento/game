@@ -197,7 +197,7 @@ export class Menu {
   toggle() { if ($('pause').hidden) this.open(); else this.close(); }
   open() {
     const g = this.game;
-    if (!g.started || this.cardOpen) return;
+    if (!g.started || this.cardOpen || !$('bigmap').hidden) return;   // never on top of the full map (it would resume under it)
     this.refresh();
     this.cancelReset();
     $('pause').hidden = false;
