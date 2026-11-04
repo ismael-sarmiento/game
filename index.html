@@ -114,8 +114,8 @@
 
   <!-- NPC dialogue -->
   <section id="dialog" class="dialog glass" hidden aria-labelledby="dialog-name" role="dialog">
-    <header><span class="dialog-avatar" id="dialog-avatar"></span><h2 id="dialog-name"></h2><span class="dialog-role" id="dialog-role"></span></header>
-    <p id="dialog-text" class="dialog-text" aria-live="polite"></p>
+    <header><span class="dialog-avatar" id="dialog-avatar" aria-hidden="true"></span><h2 id="dialog-name"></h2><span class="dialog-role" id="dialog-role"></span><span class="dialog-step" id="dialog-step" aria-hidden="true"></span></header>
+    <p id="dialog-text" class="dialog-text" aria-live="polite" tabindex="-1"></p>
     <div id="dialog-choices" class="choices"></div>
     <form id="dialog-form" class="dialog-form" hidden>
       <input id="dialog-input" type="text" maxlength="200" autocomplete="off" data-i18n-placeholder="dialog.placeholder" placeholder="Pregúntale algo…">

@@ -160,7 +160,10 @@ export class Missions {
     if (this.active && this.active.id === id) {
       return D.show(m, [L('activeReminder')], [
         { label: t('dialog.continueMission'), primary: true, onPick: () => D.close() },
-        { label: t('dialog.abandon'), onPick: () => { D.close(); this.stop(); this.refreshObjective(); } },
+        { label: t('dialog.abandon'), onPick: () => D.show(m, [t('dialog.abandonAsk')], [   // ask first: the mission's progress is lost
+          { label: t('dialog.continueMission'), primary: true, onPick: () => D.close() },
+          { label: t('dialog.abandonYes'), onPick: () => { D.close(); this.stop(); this.refreshObjective(); } },
+        ]) },
       ]);
     }
     if (this.active) return D.show(m, [t('story.busy', { name: t(`mentors.${this.mentorOf(this.active.id)}.name`) })]);

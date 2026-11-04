@@ -14,7 +14,11 @@ export class Dialogue {
     this.history = [];
     this.typing = null;
     $('dialog-form').addEventListener('submit', (e) => { e.preventDefault(); this.ask(); });
-    $('dialog').addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.close(); } });
+    $('dialog').addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { e.stopPropagation(); this.close(); return; }
+      // Enter, Space or E while a line is being typed complete it at once (and never reach the game)
+      if (this.skip && e.target === $('dialog-text') && ['Enter', ' ', 'e', 'E'].includes(e.key)) { e.preventDefault(); e.stopPropagation(); this.skip(); }
+    });
   }
 
   // lines: array of strings shown in sequence; choices: [{ label, primary, onPick }]
@@ -25,12 +29,16 @@ export class Dialogue {
     const name = g.t(`mentors.${mentor.id}.name`);
     $('dialog-name').textContent = name;
     $('dialog-role').textContent = g.t(`mentors.${mentor.id}.role`);
-    $('dialog-avatar').style.color = mentor.color;
+    $('dialog-avatar').style.setProperty('--mentor', mentor.color);
+    $('dialog-avatar').textContent = [...name][0] || '';
     $('dialog').hidden = false;
     $('dialog-form').hidden = true;
     const queue = Array.isArray(lines) ? [...lines] : [lines];
+    const total = queue.length;
     const next = () => {
       const line = queue.shift();
+      $('dialog-step').textContent = total > 1 ? `${total - queue.length}/${total}` : '';
+      $('dialog-text').focus({ preventScroll: true });   // keys and the gamepad A can complete the line
       this.type(line, () => {
         if (queue.length) this.renderChoices([{ label: g.t('dialog.next'), primary: true, onPick: next }]);
         else this.renderChoices(choices.length ? choices : [{ label: g.t('dialog.bye'), onPick: () => this.close() }]);

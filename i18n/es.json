@@ -109,7 +109,9 @@
   "accept": "Acepto la misión",
   "later": "Ahora no",
   "continueMission": "Sigo con ello",
-  "abandon": "Abandonar la misión"
+  "abandon": "Abandonar la misión",
+  "abandonAsk": "¿Seguro? Perderás el avance de esta misión.",
+  "abandonYes": "Sí, abandonar"
  },
  "world": {
   "hackathon": "Hackathon de datos abiertos · IsAcademy",
