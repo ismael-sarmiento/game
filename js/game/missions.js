@@ -341,21 +341,25 @@ export class Missions {
       eyebrow: t('missions.debug.quizEyebrow', { n: i + 1 }), title: q.question, code: q.code,
       actions: q.options.map((opt, k) => ({
         label: opt, choice: true, keepOpen: true,
-        onPick: ({ feedback }) => {
-          if (a.fixed[i]) return false;   // already solved: ignore extra clicks while the card closes
+        onPick: ({ feedback, button }) => {
+          if (a.fixed[i]) return false;   // already solved
           if (k === q.answer) {
             feedback.className = 'feedback good'; feedback.textContent = q.explain;
             g.audio.play('success');
             a.fixed[i] = true;
             this.gates[i].group.visible = false;
-            setTimeout(() => {
-              g.menu.closeCard();
-              if (a.fixed.every(Boolean)) this.complete('debug', {});
+            button.classList.add('right');
+            document.querySelectorAll('#card-actions .choice').forEach((c) => { c.disabled = true; });
+            // the player reads the explanation and moves on when ready (no timer)
+            g.menu.addCardAction({ label: t('dialog.continue'), primary: true, onPick: () => {
+              if (a.fixed.every(Boolean)) setTimeout(() => this.complete('debug', {}), 0);   // after this card closes
               else { g.hud.toast(t('missions.debug.fixed', { n: a.fixed.filter(Boolean).length }), 'good'); this.updateActiveObjective(); }
-            }, 2200);
+            } });
           } else {
             feedback.className = 'feedback bad'; feedback.textContent = q.hint;
             g.audio.play('fail');
+            button.classList.add('wrong'); button.disabled = true;
+            document.querySelector('#card-actions .choice:not(:disabled)')?.focus({ preventScroll: true });   // keep keyboard and gamepad on an answer
           }
           return false;
         },
@@ -373,7 +377,7 @@ export class Missions {
     const result = id === 'route' ? t('missions.route.result', stats) : id === 'train' ? t(stats.noisy ? (stats.noisy === 1 ? 'missions.train.resultNoisyOne' : 'missions.train.resultNoisy') : 'missions.train.resultClean', stats) : t('missions.debug.result');
     g.menu.card({
       eyebrow: t('missions.completed'), title: t(`missions.${id}.title`), badge: t('missions.badge', { n: Object.keys(this.data.missions).length }),
-      paragraphs: [result, t(`missions.${id}.lesson`), t('missions.academyLine')],
+      paragraphs: [result, t(`missions.${id}.lesson`)], note: t('missions.academyLine'),
       actions: [
         { label: t('dialog.continue'), primary: true, onPick: () => this.refreshObjective() },
         { label: t('missions.learnMore'), href: CONFIG.ACADEMY_URL },

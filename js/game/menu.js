@@ -119,6 +119,13 @@ export class Menu {
 
     $('resume').addEventListener('click', () => this.close());
     $('pause-btn').addEventListener('click', () => this.open());
+    // Escape (B on a gamepad) dismisses a card with its last plain button: «Seguir jugando», «Más tarde»…
+    // never a link or a retry; a question has none until it is answered
+    $('card').addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      [...$('card-actions').querySelectorAll('button.btn')].pop()?.click();
+    });
     $('pause').addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
       e.stopPropagation();
@@ -208,8 +215,36 @@ export class Menu {
     g.ctx.renderer.domElement.focus();
   }
 
-  // { eyebrow, title, paragraphs: [text], code, badge, kind, actions: [{ label, primary, onPick, keepOpen }], pause }
-  card({ eyebrow = '', title = '', paragraphs = [], code = '', badge = '', kind = '', actions = [], pause = true }) {
+  // one action of a card: a button, an answer choice or a link (links open a new tab and say so)
+  cardAction(a, feedback) {
+    const g = this.game;
+    const btn = a.href ? document.createElement('a') : document.createElement('button');
+    if (a.href) { btn.href = a.href; btn.target = '_blank'; btn.rel = 'noopener'; } else btn.type = 'button';
+    btn.className = a.choice ? 'choice' : `btn ${a.primary ? 'btn-primary' : 'btn-ghost'}`;
+    btn.textContent = a.label;
+    if (a.href) {
+      const arrow = document.createElement('span'); arrow.setAttribute('aria-hidden', 'true'); arrow.textContent = '↗';
+      const note = document.createElement('span'); note.className = 'sr-only'; note.textContent = g.t('menu.newTab');
+      btn.append(arrow, note);
+    }
+    btn.addEventListener('click', () => {
+      g.audio.play('ui');
+      const result = a.onPick ? a.onPick({ feedback, button: btn }) : undefined;
+      if (!a.keepOpen && result !== false && !a.href) this.closeCard();
+    });
+    return btn;
+  }
+
+  // adds an action to the card already open (a quiz shows «Seguir jugando» once it is solved)
+  addCardAction(a) {
+    const btn = this.cardAction(a, this.cardFeedback);
+    $('card-actions').append(btn);
+    btn.focus({ preventScroll: true });
+    return btn;
+  }
+
+  // { eyebrow, title, paragraphs: [text], code, note, badge, kind, actions: [{ label, primary, choice, href, onPick, keepOpen }], pause }
+  card({ eyebrow = '', title = '', paragraphs = [], code = '', note = '', badge = '', kind = '', actions = [], pause = true }) {
     const g = this.game;
     this.cardOpen = true;
     $('card-eyebrow').textContent = eyebrow;
@@ -218,20 +253,12 @@ export class Menu {
     if (badge) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = badge; body.append(b); }
     paragraphs.forEach((text, i) => { const p = document.createElement('p'); p.textContent = text; if (i === 0) p.className = 'strong'; body.append(p); });
     if (code) { const pre = document.createElement('pre'); pre.textContent = code; body.append(pre); }
-    const feedback = document.createElement('p'); feedback.className = 'feedback'; feedback.setAttribute('aria-live', 'polite'); body.append(feedback);
+    if (note) { const p = document.createElement('p'); p.className = 'aside'; p.textContent = note; body.append(p); }
+    const feedback = document.createElement('p'); feedback.className = 'feedback'; feedback.setAttribute('aria-live', 'polite');
+    if (actions.some((a) => a.choice)) body.append(feedback);   // only questions answer back
+    this.cardFeedback = feedback;
     const box = $('card-actions'); box.replaceChildren();
-    actions.forEach((a) => {
-      const btn = a.href ? document.createElement('a') : document.createElement('button');
-      if (a.href) { btn.href = a.href; btn.target = '_blank'; btn.rel = 'noopener'; } else btn.type = 'button';
-      btn.className = a.choice ? 'choice' : `btn ${a.primary ? 'btn-primary' : 'btn-ghost'}`;
-      btn.textContent = a.label;
-      btn.addEventListener('click', () => {
-        g.audio.play('ui');
-        const result = a.onPick ? a.onPick({ feedback, button: btn }) : undefined;
-        if (!a.keepOpen && result !== false && !a.href) this.closeCard();
-      });
-      box.append(btn);
-    });
+    actions.forEach((a) => box.append(this.cardAction(a, feedback)));
     $('card').querySelector('.card').className = `card glass ${kind}`;
     $('card').hidden = false;
     $('prompt').hidden = true; $('waypoint').hidden = true; g.hud.promptKey = '';
