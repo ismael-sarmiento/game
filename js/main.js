@@ -206,6 +206,7 @@ async function boot() {
     $('hud').hidden = false;
     if (isTouch()) $('touch').hidden = false;
     game.started = true; game.paused = false;
+    input.flush();   // Enter on «Jugar» must not also count as «use» in the first frame
     renderer.domElement.focus();
     game.missions.start();
   }, { once: true });
