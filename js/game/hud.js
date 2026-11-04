@@ -190,33 +190,88 @@ export class Hud {
     c.restore();
   }
 
-  // full map (M): the whole city with the player, the car, mentors, facts still to find and the objective
+  // full map (M): the whole city, north up, with the districts, the player, the car, mentors, facts still to find and
+  // the objective. Sizes follow the canvas on screen, so labels read at about 13 px on a phone too.
   drawBigMap() {
-    const g = this.game, c = $('bigmap-canvas').getContext('2d'), W = 900, k = W / MAP_PX;
+    const g = this.game, canvas = $('bigmap-canvas'), c = canvas.getContext('2d'), W = 900, k = W / MAP_PX;
+    const s = Math.max(1, W / (canvas.clientWidth || W));
     const at = (x, z) => [toPx(x) * k, toPx(z) * k];
+    const halo = 'rgba(7,11,29,0.9)';
     c.clearRect(0, 0, W, W);
     c.drawImage(this.map, 0, 0, W, W);
-    const dot = (x, z, color, r, label) => {
-      const [px, py] = at(x, z);
-      c.fillStyle = color; c.beginPath(); c.arc(px, py, r, 0, Math.PI * 2); c.fill();
-      if (label) { c.font = '600 15px "Space Grotesk", sans-serif'; c.fillStyle = '#fff'; c.shadowColor = '#000'; c.shadowBlur = 4; c.fillText(label, px + r + 4, py + 5); c.shadowBlur = 0; }
+    c.lineJoin = 'round'; c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    const taken = [];   // boxes already used by marks and labels
+    const reserve = (px, py, r) => taken.push({ l: px - r, r: px + r, t: py - r, b: py + r });
+    const font = (size, weight = 600) => { c.font = `${weight} ${Math.round(size * s)}px "Space Grotesk", sans-serif`; };
+    const text = (str, x, y, color) => { c.lineWidth = 4 * s; c.strokeStyle = halo; c.strokeText(str, x, y); c.fillStyle = color; c.fillText(str, x, y); };
+    // a label tries right, left, above, below and the diagonals of its mark, a little further out each round, and keeps
+    // the first free spot; in a crowd (the campus) it takes the spot that overlaps least
+    const label = (str, px, py, r, color = '#ffffff') => {
+      font(13);
+      const w = c.measureText(str).width, h = 13 * s;
+      const spots = [];
+      for (const d of [1, 1.9, 2.8]) {
+        const gap = r + 4 * s * d, dy = h * 0.35;
+        spots.push([px + gap, py + dy], [px - gap - w, py + dy], [px - w / 2, py - gap], [px - w / 2, py + gap + h * 0.8],
+          [px + gap, py - gap], [px - gap - w, py - gap], [px + gap, py + gap + h * 0.6], [px - gap - w, py + gap + h * 0.6]);
+      }
+      const boxOf = ([x, y]) => ({ l: x - 2, r: x + w + 2, t: y - h, b: y + 3 });
+      const overlap = (bx) => taken.reduce((sum, o) => sum + Math.max(0, Math.min(bx.r, o.r) - Math.max(bx.l, o.l)) * Math.max(0, Math.min(bx.b, o.b) - Math.max(bx.t, o.t)), 0);
+      const inside = (bx) => bx.l >= 0 && bx.r <= W && bx.t >= 0 && bx.b <= W;
+      const candidates = spots.filter((sp) => inside(boxOf(sp)));
+      const spot = candidates.find((sp) => overlap(boxOf(sp)) === 0)
+        || candidates.reduce((best, sp) => (overlap(boxOf(sp)) < overlap(boxOf(best)) ? sp : best), candidates[0] || spots[0]);
+      taken.push(boxOf(spot));
+      text(str, spot[0], spot[1], color);
     };
-    g.collectibles.items.forEach((it) => { if (!it.taken) dot(it.x, it.z, 'rgba(63,224,255,0.55)', 3.5); });
-    g.mentors.list.forEach((m) => dot(m.x, m.z, m.color, 7, g.t(`mentors.${m.id}.name`)));
-    dot(g.car.position.x, g.car.position.z, '#ffffff', 5, g.t('map.car'));
+    const dot = (x, z, color, r) => {
+      const [px, py] = at(x, z);
+      c.fillStyle = color; c.lineWidth = 1.5 * s; c.strokeStyle = halo;
+      c.beginPath(); c.arc(px, py, r * s, 0, Math.PI * 2); c.fill(); c.stroke();
+      reserve(px, py, r * s);
+      return [px, py, r * s];
+    };
+    // facts still to find: hollow gold rings (the cubes in the city are gold)
+    c.strokeStyle = 'rgba(242,209,139,0.8)'; c.lineWidth = 1.5 * s;
+    g.collectibles.items.forEach((it) => { if (!it.taken) { const [px, py] = at(it.x, it.z); c.beginPath(); c.arc(px, py, 3.5 * s, 0, Math.PI * 2); c.stroke(); } });
+    // districts at the outer corners of their quadrants, and north
+    const top = at(0, -CITY.HALF)[1], bottom = at(0, CITY.HALF)[1];
+    font(12);
+    c.textAlign = 'center';
+    [['ia', -1, top + 20 * s], ['data', 1, top + 20 * s], ['net', -1, bottom - 10 * s], ['sec', 1, bottom - 10 * s]].forEach(([id, side, y]) => {
+      const x = at(side * CITY.HALF / 2, 0)[0], str = g.t(`districts.${id}`).toUpperCase(), w = c.measureText(str).width;
+      text(str, x, y, 'rgba(242,209,139,0.95)');
+      taken.push({ l: x - w / 2 - 2, r: x + w / 2 + 2, t: y - 12 * s, b: y + 3 });
+    });
+    font(13, 700);
+    text('N', W / 2, Math.max(top - 6 * s, 14 * s), '#f2d18b');
+    c.textAlign = 'left';
+    // marks first, labels after, so no label covers a mark
+    const marks = g.mentors.list.map((m) => [dot(m.x, m.z, m.color, 6), g.t(`mentors.${m.id}.name`)]);
+    const car = dot(g.car.position.x, g.car.position.z, '#ffffff', 5);
     const o = this.objective.target;
-    if (o) { const [px, py] = at(o.x, o.z); c.strokeStyle = this.objective.color; c.lineWidth = 3; c.beginPath(); c.arc(px, py, 13 + Math.sin(g.time * 4) * 3, 0, Math.PI * 2); c.stroke(); }
+    if (o) { const [px, py] = at(o.x, o.z); c.strokeStyle = this.objective.color; c.lineWidth = 3 * s; c.beginPath(); c.arc(px, py, 13 * s, 0, Math.PI * 2); c.stroke(); }
     const p = g.player, [px, py] = at(p.x, p.z), h = g.mode === 'car' ? g.car.heading : g.avatar.facing;
-    c.save(); c.translate(px, py); c.rotate(-h + Math.PI);
-    c.fillStyle = '#e2b25c'; c.shadowColor = '#e2b25c'; c.shadowBlur = 10;
-    c.beginPath(); c.moveTo(0, -12); c.lineTo(8, 9); c.lineTo(0, 4); c.lineTo(-8, 9); c.closePath(); c.fill();
+    c.save(); c.translate(px, py); c.rotate(-h + Math.PI); c.scale(s, s);
+    c.fillStyle = '#e2b25c'; c.strokeStyle = halo; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(0, -12); c.lineTo(8, 9); c.lineTo(0, 4); c.lineTo(-8, 9); c.closePath(); c.fill(); c.stroke();
     c.restore();
+    reserve(px, py, 12 * s);
+    marks.forEach(([[mx, my, r], name]) => label(name, mx, my, r));
+    if (g.mode === 'foot') label(g.t('map.car'), car[0], car[1], car[2]);
+    // the legend is rebuilt on every opening: current language, and swatches that look like the marks
+    const mentorColors = [...new Set(g.mentors.list.map((m) => m.color))];
     const legend = $('bigmap-legend');
-    if (!legend.childElementCount) {
-      [['#e2b25c', 'map.you'], ['#ffffff', 'map.car'], ['#f2d18b', 'map.mentor'], ['#3fe0ff', 'map.fact'], [this.objective.color, 'map.objective']].forEach(([col, key]) => {
-        const li = document.createElement('li'); const i = document.createElement('i'); i.style.background = col; li.append(i, document.createTextNode(g.t(key))); legend.append(li);
-      });
-    }
+    legend.replaceChildren(...[
+      ['arrow', '#e2b25c', 'map.you'], ['dot', '#ffffff', 'map.car'],
+      ['multi', `conic-gradient(${mentorColors.map((col, i) => `${col} ${(i / mentorColors.length) * 100}% ${((i + 1) / mentorColors.length) * 100}%`).join(', ')})`, 'map.mentor'],
+      ['ring', '#f2d18b', 'map.fact'], ['ring goal', this.objective.color, 'map.objective'],
+    ].map(([kind, col, key]) => {
+      const li = document.createElement('li'); const i = document.createElement('i'); i.className = kind;
+      if (kind.startsWith('ring')) i.style.color = col; else i.style.background = col;
+      li.append(i, document.createTextNode(g.t(key)));
+      return li;
+    }));
   }
 
   // screen boxes of the HUD panels (plus the marker's half size), measured at most once a second

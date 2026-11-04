@@ -171,12 +171,15 @@ body.high-contrast { --glass: rgba(0, 0, 0, .92); --glass-line: rgba(255, 255, 2
 body.high-contrast .glass, body.high-contrast .chip, body.high-contrast .toast { backdrop-filter: none; -webkit-backdrop-filter: none; }
 
 /* full map and photo mode */
-.bigmap-card { width: min(760px, 100%); padding: 1rem; display: grid; gap: .6rem; }
+.bigmap-card { width: min(760px, 100%, calc(100dvh - 190px + 2rem)); padding: 1rem; display: grid; gap: .6rem; }
 .bigmap-card header { display: flex; justify-content: space-between; align-items: center; }
 .bigmap-card h2 { margin: 0; font-size: 1.2rem; }
-#bigmap-canvas { width: 100%; height: auto; aspect-ratio: 1; border-radius: var(--radius-sm); background: #070b1d; }
+#bigmap-canvas { width: min(100%, calc(100dvh - 190px)); height: auto; aspect-ratio: 1; justify-self: center; border-radius: var(--radius-sm); background: #070b1d; }   /* the whole card fits the screen */
 .legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: .82rem; color: var(--text-2); }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: .35rem; vertical-align: middle; }
+.legend i.ring { background: none; border: 2px solid currentColor; }
+.legend i.goal { width: 14px; height: 14px; border-width: 3px; }
+.legend i.arrow { width: 11px; height: 12px; border-radius: 0; clip-path: polygon(50% 0, 100% 100%, 50% 74%, 0 100%); }
 .photo-bar { position: fixed; z-index: 15; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: .6rem; align-items: center; padding: .5rem .6rem .5rem 1rem; font-size: .85rem; flex-wrap: wrap; justify-content: center; width: max-content; max-width: calc(100vw - 24px); }
 body.photo-mode #hud, body.photo-mode #touch { display: none !important; }
 
