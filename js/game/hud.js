@@ -122,13 +122,11 @@ export class Hud {
       c.strokeStyle = 'rgba(255,255,255,0.1)';
       c.beginPath(); c.arc(90, 90, 74, Math.PI * 0.75, Math.PI * 2.25); c.stroke();
       const f = Math.min(kmh / 200, 1);
-      const grd = c.createLinearGradient(0, 180, 180, 0); grd.addColorStop(0, '#3fe0ff'); grd.addColorStop(1, '#e2b25c');
-      c.strokeStyle = grd; c.shadowColor = '#3fe0ff'; c.shadowBlur = 14;
+      c.strokeStyle = '#e2b25c';
       c.beginPath(); c.arc(90, 90, 74, Math.PI * 0.75, Math.PI * (0.75 + 1.5 * f)); c.stroke();
-      c.shadowBlur = 0;
       // inner arc: engine rpm (red near the redline) and the gear
       const n = Math.min(1, g.car.rpm / 6800);
-      c.lineWidth = 4; c.strokeStyle = n > 0.88 ? '#ff5c7a' : 'rgba(255,255,255,0.55)';
+      c.lineWidth = 4; c.strokeStyle = n > 0.88 ? '#ffb4a3' : 'rgba(255,255,255,0.55)';
       c.beginPath(); c.arc(90, 90, 62, Math.PI * 0.75, Math.PI * (0.75 + 1.5 * n)); c.stroke();
       c.fillStyle = '#e2b25c'; c.font = '700 18px "Space Grotesk", sans-serif'; c.textAlign = 'center';
       c.fillText(g.car.speed < -0.5 ? 'R' : String(g.car.gear), 90, 150);
@@ -169,6 +167,12 @@ export class Hud {
     const o = this.objective.target;
     if (o) dot(o.x, o.z, this.objective.color, 6, true);
     c.restore();
+    // north (−z, the top of the big map) on the rim: the map turns with the camera, so the N turns with it (under the objective pin)
+    const north = yaw + Math.PI, nx = R + Math.sin(north) * (R - 12), ny = R - Math.cos(north) * (R - 12);
+    c.fillStyle = 'rgba(7,11,29,0.85)'; c.beginPath(); c.arc(nx, ny, 9, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#f2d18b'; c.font = '700 11px "Space Grotesk", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText('N', nx, ny + 0.5);
+    c.textAlign = 'start'; c.textBaseline = 'alphabetic';
     // edge pin for an objective outside the map
     if (o) {
       const dx = o.x - p.x, dz = o.z - p.z, dist = Math.hypot(dx, dz);
@@ -181,7 +185,7 @@ export class Hud {
     // the player arrow, always pointing up (the map turns with the camera)
     const heading = g.mode === 'car' ? g.car.heading : g.avatar.facing;
     c.save(); c.translate(R, R); c.rotate(-(heading - yaw));
-    c.fillStyle = '#ffffff'; c.shadowColor = '#3fe0ff'; c.shadowBlur = 8;
+    c.fillStyle = '#ffffff'; c.shadowColor = 'rgba(0,0,0,0.6)'; c.shadowBlur = 4; c.shadowOffsetY = 1;
     c.beginPath(); c.moveTo(0, -9); c.lineTo(6.5, 7); c.lineTo(0, 3.5); c.lineTo(-6.5, 7); c.closePath(); c.fill();
     c.restore();
   }
