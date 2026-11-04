@@ -195,6 +195,7 @@ async function boot() {
   ambient.plane.visible = ambient.heli.visible = false;   // shown only for the warm-up; they fly in later
   pipeline.render();
   progress(100, 'boot.ready');
+  $('boot').classList.add('ready');   // the bar has done its job: Play takes its place
 
   const playBtn = $('play');
   playBtn.disabled = false;
@@ -272,7 +273,7 @@ async function boot() {
     const now = performance.now();
     let dt = Math.min((now - last) / 1000, 0.1); last = now;
     input.update(dt);
-    if (game.started && input.padEdges.length) padNav(input.padEdges);
+    if (input.padEdges.length) padNav(input.padEdges);   // title screen too
 
     if (input.take('pause') && game.started) game.menu.toggle();
     if (input.take('mute')) game.hud.toast(t(audio.toggleMute() ? 'hud.muted' : 'hud.unmuted'));
