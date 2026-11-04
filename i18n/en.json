@@ -50,7 +50,10 @@
   "storm": "Storm",
   "character": "Character",
   "master": "Master volume",
-  "ambience": "Ambience (rain, birds)"
+  "ambience": "Ambience (rain, birds)",
+  "groupGame": "Gameplay",
+  "groupSound": "Sound",
+  "groupWorld": "World"
  },
  "menu": {
   "pause": "Pause",
@@ -61,12 +64,19 @@
   "reset": "Reset progress",
   "resume": "Resume",
   "academy": "Go to IsAcademy",
-  "resetConfirm": "Delete missions and facts saved in this browser? Settings are kept.",
   "graduated": "Graduation",
   "facts": "Facts",
   "graphics": "Graphics",
   "achievements": "Achievements",
-  "access": "Accessibility"
+  "access": "Accessibility",
+  "game": "Game",
+  "resetDefaults": "Restore defaults",
+  "resetDone": "Sound, camera and world settings restored.",
+  "resetAsk": "Delete missions, facts and achievements saved in this browser? Settings are kept.",
+  "resetYes": "Delete",
+  "cancel": "Cancel",
+  "newTab": "(opens in a new tab)",
+  "objectiveNow": "Current objective"
  },
  "hud": {
   "objective": "Objective",
@@ -592,7 +602,9 @@
   "fxaa": "FXAA (lighter)",
   "motionBlur": "Motion blur",
   "grain": "Film grain",
-  "hint": "If it stutters, lower the quality or the resolution."
+  "hint": "If it stutters, lower the quality or the resolution.",
+  "groupPerformance": "Performance",
+  "groupEffects": "Effects"
  },
  "people": {
   "greet": [
@@ -714,6 +726,8 @@
   "autoCam": "Automatic camera behind the car",
   "reduceMotion": "Reduce motion (no shake or speed zoom)",
   "vibration": "Vibration on phones and gamepads",
-  "contrast": "High-contrast interface"
+  "contrast": "High-contrast interface",
+  "groupDisplay": "Display",
+  "groupCamera": "Camera and motion"
  }
 }

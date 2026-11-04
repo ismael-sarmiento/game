@@ -50,7 +50,10 @@
   "storm": "Tormenta",
   "character": "Personaje",
   "master": "Volumen general",
-  "ambience": "Ambiente (lluvia, pájaros)"
+  "ambience": "Ambiente (lluvia, pájaros)",
+  "groupGame": "Juego",
+  "groupSound": "Sonido",
+  "groupWorld": "Mundo"
  },
  "menu": {
   "pause": "Pausa",
@@ -61,12 +64,19 @@
   "reset": "Borrar progreso",
   "resume": "Continuar",
   "academy": "Ir a IsAcademy",
-  "resetConfirm": "¿Borrar misiones y curiosidades de este navegador? Los ajustes se conservan.",
   "graduated": "Graduación",
   "facts": "Curiosidades",
   "graphics": "Gráficos",
   "achievements": "Logros",
-  "access": "Accesibilidad"
+  "access": "Accesibilidad",
+  "game": "Partida",
+  "resetDefaults": "Restablecer valores",
+  "resetDone": "Valores de sonido, cámara y mundo restablecidos.",
+  "resetAsk": "¿Borrar misiones, curiosidades y logros de este navegador? Los ajustes se conservan.",
+  "resetYes": "Borrar",
+  "cancel": "Cancelar",
+  "newTab": "(se abre en una pestaña nueva)",
+  "objectiveNow": "Objetivo actual"
  },
  "hud": {
   "objective": "Objetivo",
@@ -592,7 +602,9 @@
   "fxaa": "FXAA (más ligero)",
   "motionBlur": "Desenfoque de movimiento",
   "grain": "Grano de película",
-  "hint": "Si notas tirones, baja la calidad o la resolución."
+  "hint": "Si notas tirones, baja la calidad o la resolución.",
+  "groupPerformance": "Rendimiento",
+  "groupEffects": "Efectos"
  },
  "people": {
   "greet": [
@@ -714,6 +726,8 @@
   "autoCam": "Cámara automática detrás del coche",
   "reduceMotion": "Reducir movimiento (sin temblores ni zoom de velocidad)",
   "vibration": "Vibración en móvil y mando",
-  "contrast": "Interfaz de alto contraste"
+  "contrast": "Interfaz de alto contraste",
+  "groupDisplay": "Pantalla",
+  "groupCamera": "Cámara y movimiento"
  }
 }
