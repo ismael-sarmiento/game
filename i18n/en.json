@@ -664,7 +664,8 @@
   "hint": "Photo mode · drag to frame, wheel to zoom",
   "shoot": "Save photo",
   "exit": "Exit",
-  "saved": "Photo saved to your downloads"
+  "saved": "Photo saved to your downloads",
+  "failed": "This browser could not save the photo."
  },
  "radio": {
   "neo": "Radio · Neo Synth",

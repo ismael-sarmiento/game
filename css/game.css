@@ -181,7 +181,7 @@ body.high-contrast .glass, body.high-contrast .chip, body.high-contrast .toast {
 .legend i.goal { width: 14px; height: 14px; border-width: 3px; }
 .legend i.arrow { width: 11px; height: 12px; border-radius: 0; clip-path: polygon(50% 0, 100% 100%, 50% 74%, 0 100%); }
 .photo-bar { position: fixed; z-index: 15; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; gap: .6rem; align-items: center; padding: .5rem .6rem .5rem 1rem; font-size: .85rem; flex-wrap: wrap; justify-content: center; width: max-content; max-width: calc(100vw - 24px); }
-body.photo-mode #hud, body.photo-mode #touch { display: none !important; }
+body.photo-mode #hud > :not(#toasts), body.photo-mode #touch { display: none !important; }   /* toasts stay: «Foto guardada» must be seen (the shot only takes the 3D canvas) */
 
 /* touch controls */
 #touch { position: fixed; inset: 0; z-index: 11; pointer-events: none; }

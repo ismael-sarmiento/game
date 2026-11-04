@@ -389,7 +389,7 @@ async function boot() {
     if (capture) {
       capture = false;
       renderer.domElement.toBlob((blob) => {
-        if (!blob) return;
+        if (!blob) { game.hud.toast(t('photo.failed'), 'bad'); return; }
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob); a.download = `neo-academia-${Date.now()}.png`; a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 2000);
