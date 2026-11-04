@@ -120,6 +120,7 @@ export class Dialogue {
     $('dialog').hidden = true;
     $('dialog-form').hidden = true;
     this.game.input.enabled = true;
+    this.game.input.flush();   // Enter on the last choice must not count as «use» and reopen the talk
     this.game.ctx.renderer.domElement.focus();
   }
 }
