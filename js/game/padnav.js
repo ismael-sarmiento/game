@@ -1,7 +1,7 @@
-// Gamepad navigation inside the open layer (title screen, pause menu, cards, big map, mentor dialogue): the d-pad or the left stick moves the
+// Gamepad navigation inside the open layer (title screen, pause menu, cards, big map, mentor dialogue, photo bar): the d-pad or the left stick moves the
 // focus, A presses, B goes back (same as Escape) and LB/RB switch the pause-menu tabs. Buttons follow the standard
 // mapping: 0 A, 1 B, 4 LB, 5 RB, 12-15 up/down/left/right.
-const LAYERS = ['boot', 'pause', 'card', 'bigmap', 'dialog'];
+const LAYERS = ['boot', 'pause', 'card', 'bigmap', 'dialog', 'photo'];
 const FOCUSABLE = 'button, a[href], select, input, summary, [tabindex="0"]';
 
 const openLayer = () => LAYERS.map((id) => document.getElementById(id)).find((el) => el && !el.hidden) || null;

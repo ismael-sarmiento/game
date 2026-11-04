@@ -55,7 +55,7 @@ export class Input {
 
   onDragStart(e) {
     if (this.dragId !== null) return;
-    if (e.pointerType === 'touch' && e.clientX < innerWidth * 0.4) return;   // left side belongs to the joystick
+    if (e.pointerType === 'touch' && e.clientX < innerWidth * 0.4 && !document.body.classList.contains('photo-mode')) return;   // left side belongs to the joystick (hidden in photo mode)
     this.dragId = e.pointerId; this.dragLast = { x: e.clientX, y: e.clientY };
     if (e.pointerType !== 'touch') this.lastDevice = 'keyboard';
   }

@@ -258,8 +258,14 @@ async function boot() {
     const on = !document.body.classList.contains('photo-mode');
     document.body.classList.toggle('photo-mode', on);
     $('photo').hidden = !on;
+    if (on) {
+      $('photo-hint').dataset.i18n = isTouch() ? 'photo.hintTouch' : 'photo.hint';   // no wheel or keys on a phone
+      $('photo-hint').textContent = t($('photo-hint').dataset.i18n);
+      $('photo-shot').focus({ preventScroll: true });   // Escape and the gamepad reach the bar
+    } else { input.flush(); renderer.domElement.focus(); }
   }
-  $('photo-shot').addEventListener('click', () => { capture = true; });
+  $('photo-shot').addEventListener('click', () => { capture = true; input.flush(); });   // Enter on the button is not «use»
+  $('photo').addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); togglePhoto(); } });
   $('photo-exit').addEventListener('click', () => togglePhoto());
 
   // main loop
@@ -276,7 +282,7 @@ async function boot() {
     input.update(dt);
     if (input.padEdges.length) padNav(input.padEdges);   // title screen too
 
-    if (input.take('pause') && game.started) game.menu.toggle();
+    if (input.take('pause') && game.started) { if (document.body.classList.contains('photo-mode')) togglePhoto(); else game.menu.toggle(); }   // Esc/P leave photo mode first
     if (input.take('mute')) game.hud.toast(t(audio.toggleMute() ? 'hud.muted' : 'hud.unmuted'));
     if (input.take('map') && game.started) toggleMap();
     if (input.take('photo') && game.started && !game.paused) togglePhoto();

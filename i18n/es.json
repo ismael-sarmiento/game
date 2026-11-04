@@ -661,7 +661,8 @@
   "objective": "Objetivo"
  },
  "photo": {
-  "hint": "Modo foto · arrastra para encuadrar, rueda para acercar",
+  "hint": "Modo foto · arrastra para encuadrar, rueda para acercar · O o Esc para salir",
+  "hintTouch": "Modo foto · arrastra para encuadrar",
   "shoot": "Guardar foto",
   "exit": "Salir",
   "saved": "Foto guardada en tus descargas",

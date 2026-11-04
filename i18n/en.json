@@ -661,7 +661,8 @@
   "objective": "Objective"
  },
  "photo": {
-  "hint": "Photo mode · drag to frame, wheel to zoom",
+  "hint": "Photo mode · drag to frame, scroll to zoom · O or Esc to leave",
+  "hintTouch": "Photo mode · drag to frame",
   "shoot": "Save photo",
   "exit": "Exit",
   "saved": "Photo saved to your downloads",
