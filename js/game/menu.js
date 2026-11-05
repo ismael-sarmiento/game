@@ -1,5 +1,6 @@
 // Pause menu (game summary, settings, graphics, accessibility, controls) and modal cards (facts, quizzes, mission results).
 import { DEFAULTS } from '../core/save.js';
+import { rememberLang } from '../core/i18n.js';
 
 const $ = (id) => document.getElementById(id);
 const pct = (v) => `${Math.round(v * 100)} %`;
@@ -24,7 +25,7 @@ export class Menu {
     };
     bind('set-quality', 'quality', (v) => { game.setAutoQuality(v === 'auto'); if (v !== 'auto') onQuality(v); });
     bind('set-character', 'character', (v) => game.avatar.setVariant(v));
-    bind('set-lang', 'lang', (v) => { $('boot-lang').value = v; onLang(v); });
+    bind('set-lang', 'lang', (v) => { $('boot-lang').value = v; rememberLang(v); onLang(v); });
     const vol = () => game.audio.setVolumes(s.music, s.sfx, s.master, s.ambience);
     ['master', 'music', 'sfx', 'ambience'].forEach((k) => bind(`set-${k}`, k, vol, { show: () => { $(`${k}-value`).textContent = pct(s[k]); } }));
     // accessibility and camera
@@ -67,7 +68,7 @@ export class Menu {
 
     // title screen selectors share the same settings
     $('boot-lang').value = document.documentElement.lang;
-    $('boot-lang').addEventListener('change', (e) => { s.lang = e.target.value; $('set-lang').value = s.lang; game.save.write(); onLang(s.lang); });
+    $('boot-lang').addEventListener('change', (e) => { s.lang = e.target.value; $('set-lang').value = s.lang; game.save.write(); rememberLang(s.lang); onLang(s.lang); });
     $('boot-character').value = s.character;
     $('boot-character').addEventListener('change', (e) => { s.character = e.target.value; $('set-character').value = s.character; game.save.write(); game.avatar.setVariant(s.character); });
     $('boot-quality').value = s.quality;

@@ -2,7 +2,6 @@
 // how data travels (route), how to debug (debug) and why data quality matters (train). After all three, Iris
 // hands out the Neo Academia graduation. Progress lives in save.data.
 import * as THREE from 'three/webgpu';
-import { CONFIG } from '../config.js';
 import { CITY, roadAt, blockAt, rng } from '../world/layout.js';
 import { neonMaterial } from '../world/materials.js';
 
@@ -147,7 +146,7 @@ export class Missions {
       return D.show(m, [L('greet', { n: progress })], this.topicsFor(m));
     }
     if (m.id === 'lia') {
-      const web = { label: L('web'), primary: true, onPick: () => { window.open(CONFIG.ACADEMY_URL, '_blank', 'noopener'); D.close(); } };
+      const web = { label: L('web'), primary: true, onPick: () => { window.open(t('links.academy'), '_blank', 'noopener'); D.close(); } };
       return D.show(m, [L('greet')], [web, ...this.topicsFor(m)]);
     }
     if (m.id === 'echo') {
@@ -380,7 +379,7 @@ export class Missions {
       paragraphs: [result, t(`missions.${id}.lesson`)], note: t('missions.academyLine'),
       actions: [
         { label: t('dialog.continue'), primary: true, onPick: () => this.refreshObjective() },
-        { label: t('missions.learnMore'), href: CONFIG.ACADEMY_URL },
+        { label: t('missions.learnMore'), href: t('links.academy') },
       ],
     });
     this.refreshObjective();
@@ -414,7 +413,7 @@ export class Missions {
       eyebrow: t('graduation.eyebrow'), title: t('graduation.title'), badge: t('graduation.badge'),
       paragraphs: [t('graduation.text'), t('graduation.next')],
       actions: [
-        { label: t('graduation.cta'), primary: true, href: CONFIG.ACADEMY_URL },
+        { label: t('graduation.cta'), primary: true, href: t('links.academy') },
         { label: t('graduation.keep'), onPick: () => this.refreshObjective() },
       ],
       pause: false,

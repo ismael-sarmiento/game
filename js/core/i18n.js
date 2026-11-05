@@ -4,10 +4,21 @@ let lang = 'es';
 
 export const getLang = () => lang;
 
+// The language of the universe: every site on the origin remembers the visitor's explicit choice in «isa-lang»
+// (portada /assets/ds/i18n.js and IsAcademy), so a visitor reading in English arrives here in English.
+const UNIVERSE_LANG = 'isa-lang';
+const universeLang = () => { try { return localStorage.getItem(UNIVERSE_LANG); } catch { return null; } };
+
+// ?lang wins, then the universe's choice, then the language saved with the game, then the browser's
 export function pickLang(saved) {
   const param = new URLSearchParams(location.search).get('lang');
-  const wanted = param || saved || (navigator.language || 'es').slice(0, 2);
+  const wanted = param || universeLang() || saved || (navigator.language || 'es').slice(0, 2);
   return wanted === 'en' ? 'en' : 'es';
+}
+
+// only an explicit choice of the player is shared with the other sites, as they do
+export function rememberLang(next) {
+  try { localStorage.setItem(UNIVERSE_LANG, next === 'en' ? 'en' : 'es'); } catch { /* storage unavailable */ }
 }
 
 export async function loadLang(next) {
@@ -30,6 +41,7 @@ export function applyDom(root = document) {
   root.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
   root.querySelectorAll('[data-i18n-aria]').forEach((el) => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
   root.querySelectorAll('[data-i18n-placeholder]').forEach((el) => { el.setAttribute('placeholder', t(el.dataset.i18nPlaceholder)); });
+  root.querySelectorAll('[data-i18n-href]').forEach((el) => { el.setAttribute('href', t(el.dataset.i18nHref)); });   // links to the universe keep the language
   const title = t('meta.title');
   if (title !== 'meta.title') document.title = title;
 }

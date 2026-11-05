@@ -2,6 +2,11 @@
  "meta": {
   "title": "IsGame · Neo Academia · IsAcademy's open-world game"
  },
+ "links": {
+  "home": "/?lang=en",
+  "academy": "/isacademy/?lang=en",
+  "privacy": "/privacy/?lang=en"
+ },
  "boot": {
   "eyebrow": "A game by IsAcademy",
   "city": "Neo Academia",
@@ -20,6 +25,7 @@
   "hintTouch": "Best with headphones. Joystick to move, E button to interact, ‖ to pause.",
   "back": "← Back to IsAcademy",
   "privacy": "Privacy",
+  "home": "Home",
   "error": "We could not start the game in this browser. Try an up-to-date Chrome, Edge or Safari.",
   "loadingTextures": "Loading textures…",
   "loadingPeople": "People are arriving…",

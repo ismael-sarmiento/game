@@ -74,7 +74,8 @@ async function boot() {
   save.load();
   const settings = save.data.settings;
   if (isTouch()) document.querySelector('.boot-hint').dataset.i18n = 'boot.hintTouch';   // no keyboard on phones
-  await loadLang(pickLang(settings.lang));
+  settings.lang = pickLang(settings.lang);   // both language selectors show the language actually in use
+  await loadLang(settings.lang);
   if (!graphicsSupport()) { bootFailure(t('boot.noGraphics')); return; }
   progress(8, 'boot.loadingLibs');
   await Promise.all([
