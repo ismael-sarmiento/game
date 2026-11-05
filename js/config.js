@@ -3,5 +3,5 @@
 export const CONFIG = {
   AI_ENDPOINT: '',
   ACADEMY_URL: 'https://ismael-sarmiento.github.io/isacademy/',
-  VERSION: '20261029a',
+  VERSION: '20261105a',
 };

@@ -71,7 +71,9 @@ body.pad-nav .pad-focus { outline: 2px solid var(--gold-400); outline-offset: 2p
 select, input[type="text"] { min-height: 40px; padding: .4rem .7rem; border-radius: var(--radius-sm); border: 1px solid var(--glass-line); background: rgba(13, 18, 41, .9); }
 input[type="range"] { accent-color: var(--gold-400); width: 100%; }
 .boot-hint { margin: 0; font-size: .85rem; line-height: 1.45; color: var(--mist-300); text-wrap: balance; }
-.boot-error { margin: 0; color: var(--danger-soft); font-size: .9rem; }
+.boot-error { margin: 0; color: var(--danger-soft); font-size: .95rem; line-height: 1.5; max-width: 42ch; }
+.boot-error-detail { display: block; margin-top: .4rem; font-size: .8rem; color: var(--mist-300); word-break: break-word; }
+#boot.failed .progress, #boot.failed #play, #boot.failed .boot-options, #boot.failed .boot-hint, #boot.failed #boot-status { display: none; }
 .boot-foot { position: fixed; bottom: max(12px, env(safe-area-inset-bottom)); left: 0; right: 0; text-align: center; margin: 0; font-size: .85rem; }
 .boot-foot a { text-decoration: none; opacity: .8; }
 

@@ -19,9 +19,11 @@
   "hint": "Best with headphones. WASD to move, E to interact, Esc to pause.",
   "hintTouch": "Best with headphones. Joystick to move, E button to interact, ‖ to pause.",
   "back": "← Back to IsAcademy",
-  "error": "We could not start the game in this browser. Try an up-to-date Chrome, Edge or Safari",
+  "error": "We could not start the game in this browser. Try an up-to-date Chrome, Edge or Safari.",
   "loadingTextures": "Loading textures…",
-  "loadingPeople": "People are arriving…"
+  "loadingPeople": "People are arriving…",
+  "noGraphics": "Your browser has neither WebGL2 nor WebGPU turned on, and the game needs one of them to draw the city. Try an up-to-date Chrome, Edge, Firefox or Safari, or turn on hardware acceleration in your browser settings.",
+  "errorDetail": "Technical detail: {msg}"
  },
  "settings": {
   "language": "Language",

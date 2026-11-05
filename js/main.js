@@ -49,11 +49,33 @@ const progress = (pct, key) => {
 };
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
 
+// WebGPU or WebGL2 is required; check before loading 20 MB of city (?debug=1&simulate=nogfx shows the notice)
+function graphicsSupport() {
+  if (DEBUG && params.get('simulate') === 'nogfx') return false;
+  if ('gpu' in navigator) return true;
+  try {
+    const gl = document.createElement('canvas').getContext('webgl2');
+    if (gl) { gl.getExtension('WEBGL_lose_context')?.loseContext(); return true; }
+  } catch { /* no WebGL2 either */ }
+  return false;
+}
+
+// the title screen gives up: plain message, technical detail in small print, only the way back stays
+function bootFailure(message, detail = '') {
+  $('boot').classList.add('failed');
+  $('boot-status').textContent = '';
+  const box = $('boot-error');
+  box.hidden = false;
+  box.textContent = message;
+  if (detail) { const small = document.createElement('small'); small.className = 'boot-error-detail'; small.textContent = detail; box.append(small); }
+}
+
 async function boot() {
   save.load();
   const settings = save.data.settings;
   if (isTouch()) document.querySelector('.boot-hint').dataset.i18n = 'boot.hintTouch';   // no keyboard on phones
   await loadLang(pickLang(settings.lang));
+  if (!graphicsSupport()) { bootFailure(t('boot.noGraphics')); return; }
   progress(8, 'boot.loadingLibs');
   await Promise.all([
     document.fonts.load('700 64px "Space Grotesk"'), document.fonts.load('64px Allura'),
@@ -437,8 +459,5 @@ async function boot() {
 
 boot().catch((err) => {
   console.error(err);
-  const box = $('boot-error');
-  box.hidden = false;
-  box.textContent = `${t('boot.error')} (${err && err.message ? err.message : err})`;
-  $('boot-status').textContent = '';
+  bootFailure(t('boot.error'), t('boot.errorDetail', { msg: err && err.message ? err.message : String(err) }));
 });

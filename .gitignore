@@ -3,3 +3,6 @@
 # Private working notes and local tooling: never published
 .private/
 .claude/
+
+# Impeccable design-tool state (local)
+.impeccable/
