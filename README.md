@@ -67,7 +67,9 @@ Abre `http://localhost:8765/`. Parámetros útiles:
 - `worker/isa-game.js`: Worker de Cloudflare para preguntas libres a los mentores con IA. Es opcional y **no está
   desplegado**: sin él, cada mentor responde con sus diálogos escritos.
 - `vendor/`: three.js 0.186.1 y Rapier 0.19.3 (MIT / Apache-2.0), sin cambios salvo los comentarios de source maps.
-- `tools/`: servidor local sin caché, hash de la CSP y generación del follaje.
+- `tools/`: servidor local sin caché, hash de la CSP, generación del follaje y copia de la 404.
+- `404.html`: copia de la 404 del universo (repo de la portada) sin la analítica. Tras cada versión nueva de la portada:
+  `python3 tools/sync_404.py`.
 
 ## Desarrollo
 

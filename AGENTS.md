@@ -31,5 +31,9 @@ served at `/isgame/`. Personal project of Ismael Sarmiento; only the global L0 p
 - Facts (`facts` in `i18n/*.json`) must be real and verifiable; never invent one.
 - NPC text from the network is rendered only with `textContent`, never as HTML.
 - The inline import map is covered by a CSP hash: run `python3 tools/csp_hash.py` after editing it.
+- `404.html` is the universe's 404 (portada repository) without analytics: run `python3 tools/sync_404.py` after every new
+  portada version; never edit it by hand.
+- Links to the other sites are root-relative with `data-i18n-href` (`links.*` in `i18n/*.json`); the language follows the
+  universe's `isa-lang`, and only an explicit choice of the player is stored there.
 - Check desktop and phone portrait (375×812, touch), WebGPU and WebGL2 (`?renderer=webgl`) before publishing.
 - Never add AI co-author lines to commits. Publishing from this machine goes through the GitHub web (the IT hook blocks pushes).
