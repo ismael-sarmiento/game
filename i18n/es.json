@@ -19,6 +19,7 @@
   "hint": "Mejor con auriculares. WASD para moverte, E para interactuar, Esc para pausa.",
   "hintTouch": "Mejor con auriculares. Joystick para moverte, botón E para interactuar, ‖ para pausa.",
   "back": "← Volver a IsAcademy",
+  "privacy": "Privacidad",
   "error": "No hemos podido arrancar el juego en este navegador. Prueba con Chrome, Edge o Safari actualizados.",
   "loadingTextures": "Cargando texturas…",
   "loadingPeople": "Llegando la gente…",

@@ -19,6 +19,7 @@
   "hint": "Best with headphones. WASD to move, E to interact, Esc to pause.",
   "hintTouch": "Best with headphones. Joystick to move, E button to interact, ‖ to pause.",
   "back": "← Back to IsAcademy",
+  "privacy": "Privacy",
   "error": "We could not start the game in this browser. Try an up-to-date Chrome, Edge or Safari.",
   "loadingTextures": "Loading textures…",
   "loadingPeople": "People are arriving…",
