@@ -4,7 +4,7 @@
  },
  "links": {
   "home": "/?lang=en",
-  "academy": "/isacademy/?lang=en",
+  "academy": "/academy/?lang=en",
   "privacy": "/privacy/?lang=en"
  },
  "boot": {

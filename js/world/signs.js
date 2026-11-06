@@ -134,7 +134,7 @@ function drawSlide(g, w, h, kind, t, tr, k) {
     g.font = '600 32px "Space Grotesk", sans-serif';
     let x = 64;
     courses.forEach((c) => { const cw = g.measureText(c).width + 40; g.strokeStyle = '#d9b26a'; g.lineWidth = 2; g.strokeRect(x, 318, cw, 56); g.fillStyle = '#f4efe6'; g.fillText(c, x + 20, 358); x += cw + 16; });
-    g.font = '400 30px "Space Grotesk", sans-serif'; g.fillStyle = '#9fb2c8'; g.fillText('ismael-sarmiento.github.io/isacademy', 64, 470);
+    g.font = '400 30px "Space Grotesk", sans-serif'; g.fillStyle = '#9fb2c8'; g.fillText('isuniverse.dev/academy', 64, 470);
   } else if (kind === 'chart') {
     g.fillStyle = '#e9eef4'; g.font = '600 40px "Space Grotesk", sans-serif'; g.textBaseline = 'alphabetic'; g.fillText(tr('world.screenChart'), 56, 80);
     const n = 14, bw = (w - 140) / n;

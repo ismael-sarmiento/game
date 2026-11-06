@@ -6,13 +6,15 @@ Global roots (L0):
 - Claude Code: `~/.claude/CLAUDE.md`
 - Codex: `~/.codex/AGENTS.md`
 
-Sibling sites on the same origin: portada (`ismael-sarmiento.github.io`), CV Online (`/cv/`) and IsAcademy (`/isacademy/`).
+Sibling sites on the same origin (`https://isuniverse.dev`): portada (repository `ismael-sarmiento.github.io`), IsProfile ·
+CV Online (`/profile/`) and IsAcademy (`/academy/`). Repository `game`, a copy with history of `isgame`, which now only
+redirects `/isgame/` here: never delete it or its redirect pages.
 
 ## Purpose
 
 Entry point for agents working on IsGame, the open-world browser game of IsAcademy ("Neo Academia", a living tech city;
 sober, realistic signage, no neon — owner decision 2026-10-30),
-served at `/isgame/`. Personal project of Ismael Sarmiento; only the global L0 protocols apply
+served at `/game/`. Personal project of Ismael Sarmiento; only the global L0 protocols apply
 (Plan al Milímetro before each phase, close-out recap after each task).
 
 ## Read order
@@ -23,7 +25,7 @@ served at `/isgame/`. Personal project of Ismael Sarmiento; only the global L0 p
 ## Rules
 
 - Static only: no build step, no backend in this repository except `worker/` (deployed separately to Cloudflare by the owner's
-  approval), no API keys anywhere. Relative paths (the game lives under `/isgame/`).
+  approval), no API keys anywhere. Relative paths (the game lives under `/game/`).
 - Libraries are vendored at exact versions in `vendor/` (three.js 0.186.1, Rapier 0.19.3). Upgrade only in a planned phase.
 - Art and sound are generated in code; external assets only if CC0 (owner decision 2026-10-29), listed in `CREDITS.md`.
   Any content must be original: no characters, names, maps or assets from existing games.

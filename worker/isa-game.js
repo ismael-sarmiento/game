@@ -1,7 +1,8 @@
 // isa-game — Cloudflare Worker that lets IsGame mentors answer free questions with Workers AI.
 // Not deployed yet (phase G3). Bindings: AI (Workers AI) and optional KV namespace RATE for per-player limits.
 // Never stores or logs what players write.
-const ALLOWED_ORIGINS = ['https://ismael-sarmiento.github.io', 'http://localhost:8765', 'http://127.0.0.1:8765'];
+// isuniverse.dev since the move (F5); the old origin stays accepted for at least 90 days
+const ALLOWED_ORIGINS = ['https://isuniverse.dev', 'https://ismael-sarmiento.github.io', 'http://localhost:8765', 'http://127.0.0.1:8765'];
 const MODEL = '@cf/meta/llama-3.2-3b-instruct';
 const PER_MINUTE = 6, PER_DAY = 60;
 

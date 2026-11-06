@@ -107,7 +107,7 @@ export function buildLobby({ scene, world, RAPIER }, tower, kitTextures, t) {
     g.font = '500 48px "Space Grotesk", sans-serif'; g.fillStyle = '#efe9dd';
     t('lobby.subjects').forEach((c, i) => g.fillText(c, 70, 350 + i * 84, w - 140));
     g.font = '400 38px "Space Grotesk", sans-serif'; g.fillStyle = '#a9b0ba';
-    g.fillText('ismael-sarmiento.github.io/isacademy', 70, h - 70);
+    g.fillText('isuniverse.dev/academy', 70, h - 70);
   }, 1024, 1300);
   const totem = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3.2, 2.4), new THREE.MeshStandardNodeMaterial({ color: 0x23272d, roughness: 0.55 }));
   totem.position.set(half + 10, 1.6, -9); totem.castShadow = true; group.add(totem);

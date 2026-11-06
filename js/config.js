@@ -2,5 +2,5 @@
 // without it every mentor answers with its written dialogue. Add the Worker origin to the CSP connect-src too.
 export const CONFIG = {
   AI_ENDPOINT: '',
-  VERSION: '20261105c',
+  VERSION: '20261106b',
 };

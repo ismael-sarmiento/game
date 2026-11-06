@@ -3,13 +3,13 @@
 *IsAcademy's open-world browser game: drive and walk a living tech city, talk to its mentors and learn programming,
 data and AI by playing.*
 
-Juego de mundo abierto de [IsAcademy](https://ismael-sarmiento.github.io/isacademy/) que se juega en el navegador. Neo
+Juego de mundo abierto de [IsAcademy](https://isuniverse.dev/academy/) que se juega en el navegador. Neo
 Academia es una ciudad viva, de día y de noche, construida alrededor de la programación, los datos y la inteligencia
 artificial, con el campus de IsAcademy en el centro. Conduces, paseas, hablas con seis mentores y aprendes redes,
 depuración y entrenamiento de modelos con tres misiones, además de 40 curiosidades reales y verificables repartidas por
 la ciudad.
 
-**Jugar:** <https://ismael-sarmiento.github.io/isgame/>
+**Jugar:** <https://isuniverse.dev/game/>
 
 ## Requisitos
 
@@ -74,7 +74,7 @@ Abre `http://localhost:8765/`. Parámetros útiles:
 ## Desarrollo
 
 - Sin paso de compilación: módulos ES servidos tal cual. Todas las rutas son relativas, porque el juego vive en
-  `/isgame/`.
+  `/game/`.
 - Tras editar el import map de `index.html`: `python3 tools/csp_hash.py`.
 - Cada texto visible está en `i18n/es.json` y `i18n/en.json` con las mismas claves; las curiosidades deben ser reales
   y verificables.

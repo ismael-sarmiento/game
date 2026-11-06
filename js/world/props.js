@@ -225,7 +225,7 @@ export function buildBusStops({ scene, world, RAPIER }, t) {
       g.fillStyle = '#d9b26a'; g.fillRect(x + 24, 214, 60, 4);
       g.fillStyle = '#1f2329'; g.font = '600 22px "Space Grotesk", sans-serif';
       String(t('lobby.motto')).split('. ').forEach((line, k) => g.fillText(line.replace(/\.$/, ''), x + 24, 352 + k * 30, 210));
-      g.fillStyle = '#5b6470'; g.font = '400 13px "Space Grotesk", sans-serif'; g.fillText('ismael-sarmiento.github.io/isacademy', x + 24, 480, 210);
+      g.fillStyle = '#5b6470'; g.font = '400 13px "Space Grotesk", sans-serif'; g.fillText('isuniverse.dev/academy', x + 24, 480, 210);
     });
     const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; tx.anisotropy = 4; return tx;
   })();
