@@ -7,7 +7,7 @@ Global roots (L0):
 - Codex: `~/.codex/AGENTS.md`
 
 Sibling sites on the same origin (`https://isuniverse.dev`): portada (repository `ismael-sarmiento.github.io`), IsProfile ·
-CV Online (`/profile/`) and IsAcademy (`/academy/`). Repository `game`, a copy with history of `isgame`, which now only
+IsProfile (`/profile/`) and IsAcademy (`/academy/`). Repository `game`, a copy with history of `isgame`, which now only
 redirects `/isgame/` here: never delete it or its redirect pages.
 
 ## Purpose
