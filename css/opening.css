@@ -1,0 +1,23 @@
+/* The shared opening is scoped: the city and its in-game settings stay dark. */
+:root { --brand-is: 38px; --brand-name: 20px; --brand-name-weight: 500; }
+#boot .brand { display: inline-flex; align-items: baseline; margin: 0; line-height: 1; font-weight: 400; }
+#boot .brand-is { font-family: var(--font-script); font-size: var(--brand-is); line-height: .8; color: var(--gold-400); margin-right: 1px; -webkit-text-stroke: .5px currentColor; }
+#boot .brand-name { font-size: var(--brand-name); font-weight: var(--brand-name-weight); letter-spacing: -.02em; }
+#intro { --bg: #fbf7ef; --text: #1c2547; --text-2: #4a5170; --gold: #956b23; --line: rgba(28, 37, 71, .2); background: var(--bg); color: var(--text); color-scheme: light; overflow-y: auto; padding: max(14vh, 84px) 4vw 32px; }
+:root[data-theme="dark"] #intro { --bg: #0b1026; --text: #f6f1e7; --text-2: #b9bdd3; --gold: #e2b25c; --line: rgba(255, 255, 255, .22); color-scheme: dark; }
+#intro .sig { display: block; height: auto; overflow: visible; }
+#intro .sig .is { font-family: var(--font-script); font-size: 300px; fill: var(--gold); }
+#intro .sig .is-stroke { fill: none; stroke: var(--gold); stroke-width: 1.6; }
+#intro .sig .word { font-family: var(--font-sans); font-weight: 500; font-size: 150px; fill: var(--text); letter-spacing: -3px; }
+#intro .sig .cursor { fill: var(--gold); }
+#intro .intro-hook { line-height: 1.55; text-wrap: balance; }
+#intro .opening-control { display: inline-flex; justify-content: center; align-items: center; min-width: 44px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: transparent; color: var(--text); cursor: pointer; }
+#intro .opening-control:hover { border-color: var(--gold); }
+#intro :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+#intro .opening-control svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+#intro .opening-sun, :root[data-theme="dark"] #intro .opening-moon { display: none; }
+:root[data-theme="dark"] #intro .opening-sun { display: block; }
+#intro .opening-status { color: var(--text-2); max-width: 38ch; margin: 20px auto 0; line-height: 1.5; }
+#intro ::selection { background: var(--gold); color: var(--bg); }
+@media (max-width: 420px) { :root { --brand-is: 34px; --brand-name: 18px; } }
+@media (max-height: 600px) and (min-width: 641px) { #intro { padding-top: 64px; } }

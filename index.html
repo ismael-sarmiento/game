@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-VZmrSv7GJkvfUxXGhXLK7nvGSERjaK4tY83FDzfZP/I='; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-5uCFVg43XG9GZgfyZ6e3hQRi0vOV360lGaaBlL+9cnM='; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>IsGame · Neo Academia · Juego de mundo abierto de IsAcademy</title>
@@ -23,17 +23,40 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/icon-180.png">
-  <link rel="stylesheet" href="css/game.css">
-  <script type="importmap">{"imports":{"three":"./vendor/three/three.webgpu.js","three/webgpu":"./vendor/three/three.webgpu.js","three/tsl":"./vendor/three/three.tsl.js","three/addons/":"./vendor/three/addons/","rapier":"./vendor/rapier/rapier.mjs"}}</script>
-  <script type="module" src="js/main.js"></script>
+  <link rel="stylesheet" href="css/game.css?v=20261109rc1">
+  <link rel="stylesheet" href="/assets/ds/intro.css?v=20261109rc1">
+  <link rel="stylesheet" href="/assets/ds/circuit.css?v=20261109rc1">
+  <link rel="stylesheet" href="css/opening.css?v=20261109rc1">
+  <script type="importmap">{"imports":{"three":"./vendor/three/three.webgpu.js","three/webgpu":"./vendor/three/three.webgpu.js","three/tsl":"./vendor/three/three.tsl.js","three/addons/":"./vendor/three/addons/","rapier":"./vendor/rapier/rapier.mjs","/assets/ds/intro.js":"/assets/ds/intro.js?v=20261109rc1","/assets/ds/signature.js":"/assets/ds/signature.js?v=20261109rc1","/assets/ds/ds.js":"/assets/ds/ds.js?v=20261109rc1","/assets/ds/fx.js":"/assets/ds/fx.js?v=20261109rc1","/assets/ds/favicon.js":"/assets/ds/favicon.js?v=20261109rc1","/assets/ds/frame-guard.js":"/assets/ds/frame-guard.js?v=20261109rc1","/assets/ds/views.js":"/assets/ds/views.js?v=20261109rc1"}}</script>
+  <script type="module" src="js/main.js?v=20261109rc1"></script>
 </head>
 <body>
   <div id="stage" aria-hidden="true"></div>
 
+  <!-- Shared presentation; hidden until its optional module is available. -->
+  <section id="intro" class="intro" hidden role="dialog" aria-modal="true" aria-labelledby="opening-title">
+    <h2 id="opening-title" class="sr-only" data-i18n="opening.label">Entrada de IsGame</h2>
+    <div class="intro-top">
+      <button id="opening-lang" class="opening-control" type="button" aria-label="Idioma" data-i18n-aria="settings.language">EN</button>
+      <button id="opening-theme" class="opening-control" type="button" aria-label="Activar modo oscuro">
+        <svg class="opening-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4L19 5"/></svg>
+        <svg class="opening-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+      <button class="opening-control" type="button" data-action="skip" data-i18n="opening.skip">Saltar intro</button>
+    </div>
+    <div class="intro-stage">
+      <div id="opening-signature" class="intro-sig"></div>
+      <div class="intro-after"><p class="intro-hook" data-i18n="opening.hook">Explora Neo Academia y aprende a pensar jugando</p></div>
+      <div class="intro-actions"><button class="btn btn-primary" type="button" data-action="enter" data-i18n="opening.enter">Preparar mi partida</button></div>
+      <p id="opening-status" class="opening-status" role="status" data-i18n="opening.languageError" hidden>No se ha podido cambiar el idioma. Vuelve a intentarlo.</p>
+    </div>
+    <svg class="ds-circuit ds-circuit--intro" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path pathLength="1" d="M1600 150 H1380 L1340 190 H1180"/><circle cx="1180" cy="190" r="5"/><path pathLength="1" d="M1600 210 H1440 L1400 250 H1290"/><circle cx="1290" cy="250" r="5"/><path pathLength="1" d="M0 720 H200 L240 680 H380"/><circle cx="380" cy="680" r="5"/><path pathLength="1" d="M0 780 H260 L300 740 H460"/><circle cx="460" cy="740" r="5"/></svg>
+  </section>
+
   <!-- title screen -->
   <section id="boot" class="screen" aria-labelledby="boot-title">
     <div class="boot-card">
-      <h1 id="boot-title" class="logo"><span class="logo-is">Is</span><span class="logo-game">Game</span></h1>
+      <div class="topbar"><h1 id="boot-title" class="brand" tabindex="-1"><span class="brand-is">Is</span><span class="brand-name">Game</span></h1></div>
       <p class="boot-city"><span data-i18n="boot.city">Neo Academia</span><span class="boot-by" data-i18n="boot.eyebrow">Un juego de IsAcademy</span></p>
       <p class="boot-lead" data-i18n="boot.lead">Una ciudad de datos e IA que no duerme. Conduce, explora y aprende a pensar con tus mentores.</p>
       <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="boot-status">
@@ -137,8 +160,8 @@
   <!-- cards: facts, quizzes, mission results -->
   <section id="card" class="card-modal" hidden role="dialog" aria-modal="true" aria-labelledby="card-title">
     <div class="card glass">
-      <p class="eyebrow" id="card-eyebrow"></p>
       <h2 id="card-title"></h2>
+      <p class="eyebrow" id="card-eyebrow"></p>
       <div id="card-body"></div>
       <div id="card-actions" class="card-actions"></div>
     </div>
@@ -286,7 +309,7 @@
       </div>
       <div class="menu-actions">
         <button id="resume" class="btn btn-primary" type="button" data-i18n="menu.resume">Continuar</button>
-        <a class="btn btn-ghost" href="/academy/" data-i18n-href="links.academy" target="_blank" rel="noopener"><span data-i18n="menu.academy">Ir a IsAcademy</span><span aria-hidden="true">↗</span><span class="sr-only" data-i18n="menu.newTab">(se abre en una pestaña nueva)</span></a>
+        <a class="btn btn-ghost" href="/academy/" data-i18n-href="links.academy" target="_blank" rel="noopener noreferrer"><span data-i18n="menu.academy">Ir a IsAcademy</span><span aria-hidden="true">↗</span><span class="sr-only" data-i18n="menu.newTab">(se abre en una pestaña nueva)</span></a>
       </div>
     </div>
   </section>

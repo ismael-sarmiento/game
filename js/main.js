@@ -9,7 +9,8 @@ import { Input } from './core/input.js';
 import { Audio } from './core/audio.js';
 import { save } from './core/save.js';
 import { padNav } from './game/padnav.js';
-import { loadLang, t, pickLang } from './core/i18n.js';
+import { loadLang, t, pickLang, rememberLang, getLang } from './core/i18n.js';
+import { initGameOpening } from './opening.js?v=20261109rc1';
 import { buildCity } from './world/city.js';
 import { loadTextures } from './world/textures.js';
 import { loadKit } from './world/kit.js';
@@ -41,11 +42,39 @@ import { blockAt } from './world/layout.js';
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const DEBUG = params.has('debug');
+let opening, activeGame = null, languageQueue = Promise.resolve(), languageChoice = 0;
+
+// Serialize language requests: an older response cannot overwrite the final choice.
+async function setGameLanguage(value) {
+  const next = value === 'en' ? 'en' : 'es';
+  const choice = ++languageChoice;
+  save.data.settings.lang = next;
+  save.write();
+  rememberLang(next);
+  languageQueue = languageQueue.catch(() => {}).then(() => loadLang(next));
+  try { await languageQueue; }
+  catch (error) {
+    if (choice === languageChoice) {
+      save.data.settings.lang = getLang(); save.write(); rememberLang(getLang());
+      for (const id of ['boot-lang', 'set-lang']) $(id).value = getLang();
+    }
+    throw error;
+  }
+  if (choice !== languageChoice) return;
+  for (const id of ['boot-lang', 'set-lang']) $(id).value = next;
+  $('opening-theme').dataset.labelLight = t('opening.themeLight');
+  $('opening-theme').dataset.labelDark = t('opening.themeDark');
+  opening?.refresh();
+  if (activeGame) {
+    activeGame.signs.refresh(); activeGame.hud.refreshTexts();
+    activeGame.missions.refreshObjective(); activeGame.menu.refresh();
+  }
+}
 
 const progress = (pct, key) => {
   $('boot').querySelector('.progress-bar').style.width = `${pct}%`;
   $('boot').querySelector('.progress').setAttribute('aria-valuenow', String(pct));
-  if (key) $('boot-status').textContent = t(key);
+  if (key) { $('boot-status').dataset.i18n = key; $('boot-status').textContent = t(key); }
 };
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
 
@@ -62,6 +91,7 @@ function graphicsSupport() {
 
 // the title screen gives up: plain message, technical detail in small print, only the way back stays
 function bootFailure(message, detail = '') {
+  opening?.dismiss();
   $('boot').classList.add('failed');
   $('boot-status').textContent = '';
   const box = $('boot-error');
@@ -76,6 +106,12 @@ async function boot() {
   if (isTouch()) document.querySelector('.boot-hint').dataset.i18n = 'boot.hintTouch';   // no keyboard on phones
   settings.lang = pickLang(settings.lang);   // both language selectors show the language actually in use
   await loadLang(settings.lang);
+  $('opening-theme').dataset.labelLight = t('opening.themeLight');
+  $('opening-theme').dataset.labelDark = t('opening.themeDark');
+  opening = initGameOpening({
+    onLanguage: setGameLanguage,
+    onSettle() { ($('play').disabled ? $('boot-title') : $('play')).focus({ preventScroll: true }); },
+  });
   if (!graphicsSupport()) { bootFailure(t('boot.noGraphics')); return; }
   progress(8, 'boot.loadingLibs');
   await Promise.all([
@@ -177,8 +213,10 @@ async function boot() {
   game.pipeline = pipeline;
   game.menu = new Menu(game, {
     onQuality(next) { applyQuality(next, false); },
-    onLang: async (lang) => { await loadLang(lang); signs.refresh(); game.hud.refreshTexts(); game.missions.refreshObjective(); game.menu.refresh(); },
+    onLang: (lang) => { void setGameLanguage(lang).catch(() => game.hud.toast(t('opening.languageError'), 'bad')); },
   });
+  activeGame = game;
+  await languageQueue.catch(() => {});   // an optional language change cannot fail an otherwise ready city
 
   function applyQuality(next, auto) {
     if (!PRESETS[next]) return;
@@ -222,8 +260,9 @@ async function boot() {
 
   const playBtn = $('play');
   playBtn.disabled = false;
-  playBtn.focus();
+  if (!opening?.active) playBtn.focus();
   playBtn.addEventListener('click', () => {
+    opening?.dismiss();   // a late optional import must not reopen the intro over a running game
     audio.start();
     audio.setVolumes(settings.music, settings.sfx, settings.master, settings.ambience);
     $('boot').hidden = true;

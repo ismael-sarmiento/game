@@ -746,5 +746,14 @@
   "contrast": "High-contrast interface",
   "groupDisplay": "Display",
   "groupCamera": "Camera and motion"
+ },
+ "opening": {
+  "skip": "Skip intro",
+  "enter": "Prepare my game",
+  "themeLight": "Switch to light mode",
+  "themeDark": "Switch to dark mode",
+  "label": "IsGame introduction",
+  "hook": "Explore Neo Academia and learn to think by playing",
+  "languageError": "The language could not be changed. Please try again."
  }
 }
