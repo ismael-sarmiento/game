@@ -10,7 +10,7 @@ import { Audio } from './core/audio.js';
 import { save } from './core/save.js';
 import { padNav } from './game/padnav.js';
 import { loadLang, t, pickLang, rememberLang, getLang } from './core/i18n.js';
-import { initGameOpening } from './opening.js?v=20261109rc1';
+import { initGameOpening } from './opening.js?v=20261109rc2';
 import { buildCity } from './world/city.js';
 import { loadTextures } from './world/textures.js';
 import { loadKit } from './world/kit.js';

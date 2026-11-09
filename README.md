@@ -76,9 +76,22 @@ Abre `http://localhost:8765/`. Parámetros útiles:
 - Sin paso de compilación: módulos ES servidos tal cual. Todas las rutas son relativas, porque el juego vive en
   `/game/`.
 - Tras editar el import map de `index.html`: `python3 tools/csp_hash.py`.
+- Para preparar una versión: `bash tools/bump-version.sh VERSION`. Coordina CSS, entrada, importaciones compartidas y alias de todos los módulos propios; recalcula la CSP y sincroniza la 404. Es preparación de metadatos, sin compilar ni modificar vendor. Así cambiar `main.js` no deja dependencias relativas con una URL anterior en caché.
 - Cada texto visible está en `i18n/es.json` y `i18n/en.json` con las mismas claves; las curiosidades deben ser reales
   y verificables.
 - Las reglas para agentes están en `AGENTS.md`.
+
+En una partida sin elección guardada, el ajuste de reducir movimiento de cámara sigue `prefers-reduced-motion`. Una preferencia guardada prevalece, y restablecer el progreso conserva los ajustes. Pruebas: `node --test qa/save.test.mjs`.
+
+Tab y Mayús+Tab permanecen dentro de las capas modales de pausa, fichas y mapa; Escape llega a la capa abierta. La pantalla inicial, la barra de foto y el diálogo no modal conservan su navegación de página. La lógica se comparte con la selección de capas del mando en `js/game/padnav.js`.
+
+Regresión de teclado real y tamaños de los cinco menús, en un contexto aislado con datos de prueba:
+
+```bash
+node ../kit/tools/browser_check.mjs 'http://127.0.0.1:8804/game/?debug=1' --flow qa/menu.flow.js --widths 375,1280 --schemes dark --allow-warn
+```
+
+El recorrido abre también una ficha ficticia, cambia y restaura la sensibilidad y comprueba Escape. El envoltorio del expediente 360 de detalle añade axe fijado para auditar cada pestaña; el comando anterior comprueba teclado y controles. No usar `--allow-warn` en las otras webs: aquí se admite la deprecación conocida de Rapier.
 
 ## Créditos
 

@@ -146,7 +146,7 @@ export class Missions {
       return D.show(m, [L('greet', { n: progress })], this.topicsFor(m));
     }
     if (m.id === 'lia') {
-      const web = { label: L('web'), primary: true, onPick: () => { window.open(t('links.academy'), '_blank', 'noopener'); D.close(); } };
+      const web = { label: L('web'), primary: true, onPick: () => { window.open(t('links.academy'), '_blank', 'noopener,noreferrer'); D.close(); } };
       return D.show(m, [L('greet')], [web, ...this.topicsFor(m)]);
     }
     if (m.id === 'echo') {

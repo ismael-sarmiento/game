@@ -1,4 +1,4 @@
-// Gamepad navigation inside the open layer (title screen, pause menu, cards, big map, mentor dialogue, photo bar): the d-pad or the left stick moves the
+// Layer navigation: Tab stays in modal layers; gamepad navigation also works in the title screen, mentor dialogue and photo bar. The d-pad or left stick moves the
 // focus, A presses, B goes back (same as Escape) and LB/RB switch the pause-menu tabs. Buttons follow the standard
 // mapping: 0 A, 1 B, 4 LB, 5 RB, 12-15 up/down/left/right.
 const LAYERS = ['boot', 'pause', 'card', 'bigmap', 'dialog', 'photo'];
@@ -6,7 +6,7 @@ const FOCUSABLE = 'button, a[href], select, input, summary, [tabindex="0"]';
 
 const openLayer = () => LAYERS.map((id) => document.getElementById(id)).find((el) => el && !el.hidden) || null;
 const focusables = (root) => [...root.querySelectorAll(FOCUSABLE)]
-  .filter((el) => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length > 0);
+  .filter((el) => !el.disabled && el.tabIndex >= 0 && !el.closest('[inert]') && el.getClientRects().length > 0);
 const key = (el, name) => el.dispatchEvent(new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true }));
 
 // the ring follows a class, not :focus, so it also shows when the page itself is not the focused window
@@ -73,3 +73,18 @@ const off = (e) => {
 };
 addEventListener('pointerdown', off, true);
 addEventListener('keydown', off, true);
+
+// A modal must not let Tab fall through to the canvas/HUD: Escape would then miss its own handler.
+// Boot, photo and the non-modal mentor panel retain their ordinary page navigation.
+addEventListener('keydown', (event) => {
+  if (event.key !== 'Tab' || event.altKey || event.ctrlKey || event.metaKey) return;
+  const root = openLayer();
+  if (!root?.matches('[aria-modal="true"]') || root.closest('[inert]')) return;
+  const list = focusables(root);
+  if (!list.length) return;
+  const index = list.indexOf(document.activeElement);
+  if (index < 0 || (event.shiftKey ? index === 0 : index === list.length - 1)) {
+    event.preventDefault();
+    focus(event.shiftKey ? list.at(-1) : list[0]);
+  }
+}, true);

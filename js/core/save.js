@@ -1,10 +1,11 @@
 // Progress and settings in this browser only (localStorage can be blocked: every access is guarded).
 const KEY = 'isgame.v1';
+const systemReducedMotion = globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
 
 export const DEFAULTS = {
   settings: {
     lang: '', quality: 'auto', music: 0.55, sfx: 0.8, sens: 1, time: 'auto', cycle: 24, weather: 'auto', fps: false, character: 'woman_casual',
-    master: 0.9, ambience: 0.8, fov: 62, textSize: 1, units: 'kmh', invertY: false, autoCam: true, reduceMotion: false, vibration: true, contrast: false,
+    master: 0.9, ambience: 0.8, fov: 62, textSize: 1, units: 'kmh', invertY: false, autoCam: true, reduceMotion: systemReducedMotion, vibration: true, contrast: false,
     gfx: { scale: 1, reflections: 'auto', occlusion: 'auto', aa: 'auto', motionBlur: false, grain: true },
   },
   missions: {},        // id -> 'done'

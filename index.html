@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-5uCFVg43XG9GZgfyZ6e3hQRi0vOV360lGaaBlL+9cnM='; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-g73yFO3hS0Qh9U1YMSplt6rXE2peE9Xqnt5/5+qL370='; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>IsGame · Neo Academia · Juego de mundo abierto de IsAcademy</title>
@@ -23,12 +23,12 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/icon-180.png">
-  <link rel="stylesheet" href="css/game.css?v=20261109rc1">
-  <link rel="stylesheet" href="/assets/ds/intro.css?v=20261109rc1">
-  <link rel="stylesheet" href="/assets/ds/circuit.css?v=20261109rc1">
-  <link rel="stylesheet" href="css/opening.css?v=20261109rc1">
-  <script type="importmap">{"imports":{"three":"./vendor/three/three.webgpu.js","three/webgpu":"./vendor/three/three.webgpu.js","three/tsl":"./vendor/three/three.tsl.js","three/addons/":"./vendor/three/addons/","rapier":"./vendor/rapier/rapier.mjs","/assets/ds/intro.js":"/assets/ds/intro.js?v=20261109rc1","/assets/ds/signature.js":"/assets/ds/signature.js?v=20261109rc1","/assets/ds/ds.js":"/assets/ds/ds.js?v=20261109rc1","/assets/ds/fx.js":"/assets/ds/fx.js?v=20261109rc1","/assets/ds/favicon.js":"/assets/ds/favicon.js?v=20261109rc1","/assets/ds/frame-guard.js":"/assets/ds/frame-guard.js?v=20261109rc1","/assets/ds/views.js":"/assets/ds/views.js?v=20261109rc1"}}</script>
-  <script type="module" src="js/main.js?v=20261109rc1"></script>
+  <link rel="stylesheet" href="css/game.css?v=20261109rc2">
+  <link rel="stylesheet" href="/assets/ds/intro.css?v=20261109rc2">
+  <link rel="stylesheet" href="/assets/ds/circuit.css?v=20261109rc2">
+  <link rel="stylesheet" href="css/opening.css?v=20261109rc2">
+  <script type="importmap">{"imports":{"three":"./vendor/three/three.webgpu.js","three/webgpu":"./vendor/three/three.webgpu.js","three/tsl":"./vendor/three/three.tsl.js","three/addons/":"./vendor/three/addons/","rapier":"./vendor/rapier/rapier.mjs","/assets/ds/intro.js":"/assets/ds/intro.js?v=20261109rc2","/assets/ds/signature.js":"/assets/ds/signature.js?v=20261109rc2","/assets/ds/ds.js":"/assets/ds/ds.js?v=20261109rc2","/assets/ds/fx.js":"/assets/ds/fx.js?v=20261109rc2","/assets/ds/favicon.js":"/assets/ds/favicon.js?v=20261109rc2","/assets/ds/frame-guard.js":"/assets/ds/frame-guard.js?v=20261109rc2","/assets/ds/views.js":"/assets/ds/views.js?v=20261109rc2","./js/config.js":"./js/config.js?v=20261109rc2","./js/core/audio.js":"./js/core/audio.js?v=20261109rc2","./js/core/i18n.js":"./js/core/i18n.js?v=20261109rc2","./js/core/input.js":"./js/core/input.js?v=20261109rc2","./js/core/quality.js":"./js/core/quality.js?v=20261109rc2","./js/core/renderer.js":"./js/core/renderer.js?v=20261109rc2","./js/core/save.js":"./js/core/save.js?v=20261109rc2","./js/game/achievements.js":"./js/game/achievements.js?v=20261109rc2","./js/game/collectibles.js":"./js/game/collectibles.js?v=20261109rc2","./js/game/dialogue.js":"./js/game/dialogue.js?v=20261109rc2","./js/game/hud.js":"./js/game/hud.js?v=20261109rc2","./js/game/menu.js":"./js/game/menu.js?v=20261109rc2","./js/game/missions.js":"./js/game/missions.js?v=20261109rc2","./js/game/padnav.js":"./js/game/padnav.js?v=20261109rc2","./js/main.js":"./js/main.js?v=20261109rc2","./js/opening.js":"./js/opening.js?v=20261109rc2","./js/player/avatar.js":"./js/player/avatar.js?v=20261109rc2","./js/player/camera.js":"./js/player/camera.js?v=20261109rc2","./js/player/car.js":"./js/player/car.js?v=20261109rc2","./js/world/ambient.js":"./js/world/ambient.js?v=20261109rc2","./js/world/chunks.js":"./js/world/chunks.js?v=20261109rc2","./js/world/city.js":"./js/world/city.js?v=20261109rc2","./js/world/fx.js":"./js/world/fx.js?v=20261109rc2","./js/world/interiors.js":"./js/world/interiors.js?v=20261109rc2","./js/world/kit.js":"./js/world/kit.js?v=20261109rc2","./js/world/landscape.js":"./js/world/landscape.js?v=20261109rc2","./js/world/layout.js":"./js/world/layout.js?v=20261109rc2","./js/world/materials.js":"./js/world/materials.js?v=20261109rc2","./js/world/npcs.js":"./js/world/npcs.js?v=20261109rc2","./js/world/people.js":"./js/world/people.js?v=20261109rc2","./js/world/props.js":"./js/world/props.js?v=20261109rc2","./js/world/robots.js":"./js/world/robots.js?v=20261109rc2","./js/world/signs.js":"./js/world/signs.js?v=20261109rc2","./js/world/sky.js":"./js/world/sky.js?v=20261109rc2","./js/world/textures.js":"./js/world/textures.js?v=20261109rc2","./js/world/timeofday.js":"./js/world/timeofday.js?v=20261109rc2","./js/world/traffic.js":"./js/world/traffic.js?v=20261109rc2","./js/world/trees.js":"./js/world/trees.js?v=20261109rc2","./js/world/vehicles.js":"./js/world/vehicles.js?v=20261109rc2","./js/world/weather.js":"./js/world/weather.js?v=20261109rc2"}}</script>
+  <script type="module" src="js/main.js?v=20261109rc2"></script>
 </head>
 <body>
   <div id="stage" aria-hidden="true"></div>
