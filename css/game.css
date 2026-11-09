@@ -69,6 +69,11 @@ body.pad-nav .pad-focus { outline: 2px solid var(--gold-400); outline-offset: 2p
 .boot-options select { width: 100%; min-height: 44px; font-size: .9rem; }
 .boot-options label { display: grid; gap: .3rem; font-size: .85rem; color: var(--text-2); text-align: left; }
 select, input[type="text"] { min-height: 40px; padding: .4rem .7rem; border-radius: var(--radius-sm); border: 1px solid var(--glass-line); background: rgba(13, 18, 41, .9); }
+/* the select of every IsUniverse site (F10): no system arrow, the same gold chevron drawn in CSS */
+select { appearance: none; -webkit-appearance: none; padding-right: 2.5rem; background-repeat: no-repeat; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--gold-300) 50%), linear-gradient(135deg, var(--gold-300) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 52%, calc(100% - 15px) 52%; background-size: 5px 5px, 5px 5px; }
+select:hover { border-color: var(--gold-400); }
 input[type="range"] { accent-color: var(--gold-400); width: 100%; }
 .boot-hint { margin: 0; font-size: .85rem; line-height: 1.45; color: var(--mist-300); text-wrap: balance; }
 .boot-error { margin: 0; color: var(--danger-soft); font-size: .95rem; line-height: 1.5; max-width: 42ch; }
