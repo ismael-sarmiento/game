@@ -68,8 +68,11 @@ Abre `http://localhost:8765/`. Parámetros útiles:
   desplegado**: sin él, cada mentor responde con sus diálogos escritos.
 - `vendor/`: three.js 0.186.1 y Rapier 0.19.3 (MIT / Apache-2.0), sin cambios salvo los comentarios de source maps.
 - `tools/`: servidor local sin caché, hash de la CSP, generación del follaje y copia de la 404.
-- `404.html`: copia de la 404 del universo (repo de la portada) sin la analítica. Tras cada versión nueva de la portada:
+- `404.html`: copia de la 404 del universo (repo de la portada) sin Cloudflare Web Analytics. Tras cada versión nueva de la portada:
   `python3 tools/sync_404.py`.
+- Visitas: al arrancar, el juego envía una señal anónima de página con el `views.js` compartido (sin cookies ni
+  identificadores; respeta Do Not Track y GPC), así IsPanel mide IsGame como las demás webs. La CSP solo abre `connect-src`
+  al Worker `isa-forms`.
 
 ## Desarrollo
 

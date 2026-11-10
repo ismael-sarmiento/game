@@ -34,8 +34,10 @@ served at `/game/`. Personal project of Ismael Sarmiento; only the global L0 pro
 - NPC text from the network is rendered only with `textContent`, never as HTML.
 - The inline import map is covered by a CSP hash: run `python3 tools/csp_hash.py` after editing it.
 - Prepare release metadata with `bash tools/bump-version.sh VERSION`: it versions all own modules, recomputes CSP and synchronizes the 404 without modifying vendor.
-- `404.html` is the universe's 404 (portada repository) without analytics: run `python3 tools/sync_404.py` after every new
-  portada version; never edit it by hand.
+- `404.html` is the universe's 404 (portada repository) without Cloudflare Web Analytics: run `python3 tools/sync_404.py`
+  after every new portada version; never edit it by hand.
+- Visits: `boot()` sends one anonymous page signal with the shared `/assets/ds/views.js` (no cookie or identifier; DNT/GPC
+  respected), so IsPanel measures IsGame like the other sites (F11). Its CSP `connect-src` allows only the isa-forms Worker.
 - Links to the other sites are root-relative with `data-i18n-href` (`links.*` in `i18n/*.json`); the language follows the
   universe's `isa-lang`, and only an explicit choice of the player is stored there.
 - Check desktop and phone portrait (375×812, touch), WebGPU and WebGL2 (`?renderer=webgl`) before publishing.

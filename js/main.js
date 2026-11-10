@@ -10,7 +10,7 @@ import { Audio } from './core/audio.js';
 import { save } from './core/save.js';
 import { padNav } from './game/padnav.js';
 import { loadLang, t, pickLang, rememberLang, getLang } from './core/i18n.js';
-import { initGameOpening } from './opening.js?v=20261109rc2';
+import { initGameOpening } from './opening.js?v=20261110rc4';
 import { buildCity } from './world/city.js';
 import { loadTextures } from './world/textures.js';
 import { loadKit } from './world/kit.js';
@@ -101,6 +101,9 @@ function bootFailure(message, detail = '') {
 }
 
 async function boot() {
+  // one anonymous page view for IsPanel, like every site of the universe (shared /assets/ds/views.js: no cookie or
+  // identifier, Do Not Track and GPC respected, only on isuniverse.dev); never in the way of the game
+  import('/assets/ds/views.js').then(views => views.countView(), () => {});
   save.load();
   const settings = save.data.settings;
   if (isTouch()) document.querySelector('.boot-hint').dataset.i18n = 'boot.hintTouch';   // no keyboard on phones

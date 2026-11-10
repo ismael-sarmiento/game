@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Copy the universe's 404 page (portada repository) to /game/404.html without Cloudflare Web Analytics.
 
-Unknown /game/... addresses then show the same 404 as every other site of the universe. IsGame promises no
-analytics, so the only change is removing the analytics beacon line; the visit signal of /assets/ds/views.js already
-skips /game/. Run it after every new version of the portada:  python3 tools/sync_404.py
+Unknown /game/... addresses then show the same 404 as every other site of the universe. IsGame does not use
+Cloudflare Web Analytics, so the only change is removing that beacon line; the anonymous page signal of
+/assets/ds/views.js counts /game/ like every other site (F11). Run it after every new version of the portada:  python3 tools/sync_404.py
 """
 import pathlib
 import sys
