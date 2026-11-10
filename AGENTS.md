@@ -1,4 +1,4 @@
-# AGENTS.md — isgame
+# AGENTS.md — game (IsGame)
 
 ## Parent
 
@@ -6,7 +6,7 @@ Global roots (L0):
 - Claude Code: `~/.claude/CLAUDE.md`
 - Codex: `~/.codex/AGENTS.md`
 
-Sibling sites on the same origin (`https://isuniverse.dev`): portada (repository `ismael-sarmiento.github.io`), IsProfile ·
+Sibling sites on the same origin (`https://isuniverse.dev`): portada (repository `ismael-sarmiento.github.io`),
 IsProfile (`/profile/`) and IsAcademy (`/academy/`). Repository `game`, a copy with history of `isgame`, which now only
 redirects `/isgame/` here: never delete it or its redirect pages.
 
@@ -33,6 +33,7 @@ served at `/game/`. Personal project of Ismael Sarmiento; only the global L0 pro
 - Facts (`facts` in `i18n/*.json`) must be real and verifiable; never invent one.
 - NPC text from the network is rendered only with `textContent`, never as HTML.
 - The inline import map is covered by a CSP hash: run `python3 tools/csp_hash.py` after editing it.
+- Prepare release metadata with `bash tools/bump-version.sh VERSION`: it versions all own modules, recomputes CSP and synchronizes the 404 without modifying vendor.
 - `404.html` is the universe's 404 (portada repository) without analytics: run `python3 tools/sync_404.py` after every new
   portada version; never edit it by hand.
 - Links to the other sites are root-relative with `data-i18n-href` (`links.*` in `i18n/*.json`); the language follows the
