@@ -4,13 +4,13 @@ import * as THREE from 'three/webgpu';
 import RAPIER from 'rapier';
 import { CONFIG } from './config.js';
 import { createRenderer, Pipeline } from './core/renderer.js';
-import { PRESETS, initialLevel, AutoQuality, isTouch, effects } from './core/quality.js';
+import { PRESETS, initialLevel, isQualityLevel, AutoQuality, isTouch, effects } from './core/quality.js';
 import { Input } from './core/input.js';
 import { Audio } from './core/audio.js';
 import { save } from './core/save.js';
 import { padNav } from './game/padnav.js';
 import { loadLang, t, pickLang, rememberLang, getLang } from './core/i18n.js';
-import { initGameOpening } from './opening.js?v=20261110rc4';
+import { initGameOpening } from './opening.js?v=20261111a';
 import { buildCity } from './world/city.js';
 import { loadTextures } from './world/textures.js';
 import { loadKit } from './world/kit.js';
@@ -222,7 +222,7 @@ async function boot() {
   await languageQueue.catch(() => {});   // an optional language change cannot fail an otherwise ready city
 
   function applyQuality(next, auto) {
-    if (!PRESETS[next]) return;
+    if (!isQualityLevel(next)) return;
     level = game.level = next;
     Object.assign(preset, PRESETS[next]);
     applyGraphics();

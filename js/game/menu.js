@@ -220,7 +220,7 @@ export class Menu {
   cardAction(a, feedback) {
     const g = this.game;
     const btn = a.href ? document.createElement('a') : document.createElement('button');
-    if (a.href) { btn.href = a.href; btn.target = '_blank'; btn.rel = 'noopener'; } else btn.type = 'button';
+    if (a.href) { btn.href = a.href; btn.target = '_blank'; btn.rel = 'noopener noreferrer'; } else btn.type = 'button';
     btn.className = a.choice ? 'choice' : `btn ${a.primary ? 'btn-primary' : 'btn-ghost'}`;
     btn.textContent = a.label;
     if (a.href) {

@@ -5,12 +5,13 @@ export const PRESETS = {
   low:    { pixelRatio: 1,    shadows: 0,    bloom: false, reflections: false, occlusion: false, aa: 'fxaa', rain: 600, traffic: 14, walkers: 26, drawDistance: 420, detail: 0.55, lights: false },
 };
 
+export const isQualityLevel = level => typeof level === 'string' && Object.hasOwn(PRESETS, level);
 export const isTouch = () => matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 1 && !matchMedia('(pointer: fine)').matches;
 
 export function initialLevel(setting) {
   const param = new URLSearchParams(location.search).get('quality');
-  if (PRESETS[param]) return { level: param, auto: false };
-  if (PRESETS[setting]) return { level: setting, auto: false };
+  if (isQualityLevel(param)) return { level: param, auto: false };
+  if (isQualityLevel(setting)) return { level: setting, auto: false };
   const cores = navigator.hardwareConcurrency || 4;
   const level = isTouch() ? (cores >= 8 ? 'medium' : 'low') : (cores >= 8 ? 'high' : 'medium');
   return { level, auto: true };

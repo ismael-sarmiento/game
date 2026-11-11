@@ -24,7 +24,7 @@ la ciudad.
 python3 tools/serve.py
 ```
 
-Abre `http://localhost:8765/`. Parámetros útiles:
+Abre `http://127.0.0.1:8765/`. El servidor escucha solo en el Mac y sirve las páginas y recursos públicos del juego sin caché ni listados. Para probar los recursos compartidos con el resto de IsUniverse, usa la vista conjunta de `PUBLICAR.md` en el puerto 8804. Parámetros útiles:
 
 | Parámetro | Para qué sirve |
 |---|---|
@@ -70,9 +70,7 @@ Abre `http://localhost:8765/`. Parámetros útiles:
 - `tools/`: servidor local sin caché, hash de la CSP, generación del follaje y copia de la 404.
 - `404.html`: copia de la 404 del universo (repo de la portada) sin Cloudflare Web Analytics. Tras cada versión nueva de la portada:
   `python3 tools/sync_404.py`.
-- Visitas: al arrancar, el juego envía una señal anónima de página con el `views.js` compartido (sin cookies ni
-  identificadores; respeta Do Not Track y GPC), así IsPanel mide IsGame como las demás webs. La CSP solo abre `connect-src`
-  al Worker `isa-forms`.
+- Visitas: al arrancar, el juego envía una señal de página con el `views.js` compartido, sin cookies ni identificador persistente y respetando Do Not Track y GPC. Los agregados omiten IP. El registro privado del servidor puede conservar IP y contexto de conexión durante 30 días. IsPanel mide así IsGame como las demás webs; la CSP solo abre `connect-src` al Worker `isa-forms`.
 
 ## Desarrollo
 
