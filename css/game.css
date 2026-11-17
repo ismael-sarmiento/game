@@ -60,8 +60,12 @@ body.pad-nav .pad-focus { outline: 2px solid var(--gold-400); outline-offset: 2p
 .boot-city { margin: -.3rem 0 0; display: grid; gap: .15rem; font-size: 1.1rem; font-weight: 500; letter-spacing: .02em; color: var(--gold-300); }
 .boot-by { font-size: .9rem; font-weight: 400; letter-spacing: 0; color: var(--text-2); }
 .boot-lead { margin: 0; color: var(--text-2); max-width: 38ch; line-height: 1.5; text-wrap: balance; }
-.progress { width: 100%; height: 6px; border-radius: 99px; background: rgba(255, 255, 255, .08); overflow: hidden; }
-.progress-bar { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--gold-600), var(--gold-300)); transition: width .3s var(--ease-out); }
+/* the loading bar is a native <progress> (Modern Web Guidance, progress): the track is the element, the fill its
+   pseudo-element; WebKit/Blink and Firefox in separate rules, or a browser drops the whole rule */
+.progress { appearance: none; display: block; width: 100%; height: 6px; border: 0; border-radius: 99px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.progress::-webkit-progress-bar { background: transparent; }
+.progress::-webkit-progress-value { background: linear-gradient(90deg, var(--gold-600), var(--gold-300)); border-radius: 99px; transition: inline-size .3s var(--ease-out); }
+.progress::-moz-progress-bar { background: linear-gradient(90deg, var(--gold-600), var(--gold-300)); border-radius: 99px; }
 #boot.ready .progress { display: none; }
 #play { min-width: 220px; min-height: 52px; font-size: 1.05rem; }
 .boot-status { margin: 0; font-size: .85rem; color: var(--text-2); min-height: 1.3em; }
@@ -277,6 +281,7 @@ body.photo-mode #hud > :not(#toasts), body.photo-mode #touch { display: none !im
 }
 @media (prefers-reduced-motion: reduce) {
   .boot-card, .dialog, .card, .prompt { animation: none; }
-  .btn, .progress-bar, .choice, .ach-details summary::after { transition: none; }
+  .btn, .choice, .ach-details summary::after { transition: none; }
+  .progress::-webkit-progress-value { transition: none; }
   .toast { animation: none; opacity: 1; transform: none; }
 }

@@ -13,6 +13,11 @@ export function initGameOpening({ onLanguage, onSettle }) {
   if (!['light', 'dark'].includes(explicitTheme)) explicitTheme = null;
   const theme = explicitTheme === 'light' || explicitTheme === 'dark' ? explicitTheme : media.matches ? 'dark' : 'light';
   root.dataset.theme = theme;
+  // the browser bar follows the theme on screen (the two theme-color metas in index.html)
+  const syncBar = () => document.querySelectorAll('meta[data-theme-color]').forEach(meta => {
+    meta.media = meta.dataset.themeColor === root.dataset.theme ? 'all' : 'not all';
+  });
+  syncBar();
   const refresh = () => {
     langButton.textContent = root.lang === 'en' ? 'ES' : 'EN';
     themeButton.setAttribute('aria-label', themeButton.dataset[root.dataset.theme === 'dark' ? 'labelLight' : 'labelDark']);
@@ -27,13 +32,25 @@ export function initGameOpening({ onLanguage, onSettle }) {
     onSettle?.();
   };
   const controller = { active: false, refresh, dismiss: finish };
+  // The button shows the opposite of what is on screen. Choosing the system's own scheme forgets the choice, so the
+  // game follows the system again; any other choice is remembered (Modern Web Guidance, dark-mode-toggle).
   themeButton.addEventListener('click', () => {
-    explicitTheme = root.dataset.theme === 'dark' ? 'light' : 'dark';
-    root.dataset.theme = explicitTheme;
-    try { localStorage.setItem('isa-theme', explicitTheme); } catch { /* no persistence */ }
-    refresh();
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    explicitTheme = next === (media.matches ? 'dark' : 'light') ? null : next;
+    try { explicitTheme ? localStorage.setItem('isa-theme', explicitTheme) : localStorage.removeItem('isa-theme'); } catch { /* no persistence */ }
+    root.dataset.theme = next;
+    syncBar(); refresh();
   });
-  media.addEventListener('change', () => { if (!explicitTheme) { root.dataset.theme = media.matches ? 'dark' : 'light'; refresh(); } });
+  media.addEventListener('change', () => { if (!explicitTheme) { root.dataset.theme = media.matches ? 'dark' : 'light'; syncBar(); refresh(); } });
+  // a theme chosen on another site of the universe (another tab) is applied here too
+  addEventListener('storage', (event) => {
+    if (event.key !== 'isa-theme' && event.key !== null) return;
+    let saved = null;
+    try { saved = localStorage.getItem('isa-theme'); } catch { /* private browsing */ }
+    explicitTheme = saved === 'light' || saved === 'dark' ? saved : null;
+    root.dataset.theme = explicitTheme ?? (media.matches ? 'dark' : 'light');
+    syncBar(); refresh();
+  });
   langButton.addEventListener('click', async () => {
     const restoreFocus = document.activeElement === langButton;
     langButton.disabled = true;

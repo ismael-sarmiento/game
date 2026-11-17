@@ -26,6 +26,8 @@ if (params.get('audit') === 'fallback') {
   document.getElementById('opening-theme').click();
   check('theme persists explicitly without changing city palette', document.documentElement.dataset.theme !== beforeTheme && localStorage.getItem('isa-theme') === document.documentElement.dataset.theme && previousBackground === getComputedStyle(document.body).backgroundColor);
   document.getElementById('opening-theme').click();
+  // second press = the system scheme again, and the choice is forgotten (Modern Web Guidance, dark-mode-toggle)
+  check('pressing again follows the system and forgets the choice', document.documentElement.dataset.theme === beforeTheme && localStorage.getItem('isa-theme') === null);
   const initialLang = document.documentElement.lang;
   document.getElementById('opening-lang').focus();
   document.getElementById('opening-lang').click();

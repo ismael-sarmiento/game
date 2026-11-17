@@ -10,7 +10,7 @@ import { Audio } from './core/audio.js';
 import { save } from './core/save.js';
 import { padNav } from './game/padnav.js';
 import { loadLang, t, pickLang, rememberLang, getLang } from './core/i18n.js';
-import { initGameOpening } from './opening.js?v=20261111a';
+import { initGameOpening } from './opening.js?v=20261117a';
 import { buildCity } from './world/city.js';
 import { loadTextures } from './world/textures.js';
 import { loadKit } from './world/kit.js';
@@ -72,8 +72,7 @@ async function setGameLanguage(value) {
 }
 
 const progress = (pct, key) => {
-  $('boot').querySelector('.progress-bar').style.width = `${pct}%`;
-  $('boot').querySelector('.progress').setAttribute('aria-valuenow', String(pct));
+  $('boot').querySelector('.progress').value = pct;   // a native <progress>: its value is announced as it is
   if (key) { $('boot-status').dataset.i18n = key; $('boot-status').textContent = t(key); }
 };
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));

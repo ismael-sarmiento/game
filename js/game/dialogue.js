@@ -104,14 +104,11 @@ export class Dialogue {
     $('dialog-form').hidden = true;
     let reply;
     try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 12000);
       const res = await fetch(CONFIG.AI_ENDPOINT, {
-        method: 'POST', signal: ctrl.signal,
+        method: 'POST', signal: AbortSignal.timeout(12000),   // gives up after 12 s; the catch below answers for the mentor
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ npc: this.mentor.id, lang: getLang(), message, history: this.history.slice(-MAX_HISTORY) }),
       });
-      clearTimeout(timer);
       const data = res.ok ? await res.json() : null;
       reply = data && typeof data.reply === 'string' ? data.reply.slice(0, 700) : null;
       if (res.status === 429) reply = g.t('dialog.busy');
