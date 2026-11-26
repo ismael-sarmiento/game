@@ -103,7 +103,7 @@ input[type="range"] { accent-color: var(--gold-400); width: 100%; }
 .tab-panel legend { padding: 0 .4rem; font-size: .75rem; letter-spacing: .14em; text-transform: uppercase; color: var(--gold-300); }
 .tab-panel fieldset .check, .tab-panel fieldset .wide { grid-column: 1 / -1; }
 .range-row { display: flex; justify-content: space-between; align-items: baseline; gap: .8rem; }
-.range-row output { color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.range-row .range-value { color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tab-panel input[type="range"] { height: 44px; margin: 0; cursor: pointer; }
 .tab-panel select { width: 100%; }
 .panel-foot { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; }
